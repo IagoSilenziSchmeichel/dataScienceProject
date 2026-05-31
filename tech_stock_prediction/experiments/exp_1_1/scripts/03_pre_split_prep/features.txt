@@ -1,0 +1,13 @@
+Daily_Return
+Lag_1_Return
+Lag_3_Return
+Lag_7_Return
+RollingMean_7
+RollingMean_30
+RollingVolatility_7
+RollingVolatility_30
+RSI_14
+MACD
+MACD_Signal
+Volume_Change
+Volume_Ratio_20

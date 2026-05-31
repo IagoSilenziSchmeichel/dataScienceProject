@@ -1,0 +1,15 @@
+.idea/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+data/raw/*.csv
+data/processed/*.csv
+models/*.pkl
+experiments/*/data/raw/*.csv
+experiments/*/data/processed/*.csv
+experiments/*/models/*.pkl
+
+.ipynb_checkpoints/

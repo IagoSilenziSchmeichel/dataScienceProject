@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# IntelliJ / PyCharm local state
+.idea/workspace.xml
+.idea/shelf/
+
+# Generated data and models
+tech_stock_prediction/experiments/*/data/raw/*.csv
+tech_stock_prediction/experiments/*/data/processed/*.csv
+tech_stock_prediction/experiments/*/models/*.pkl
+tech_stock_prediction/data/raw/*.csv
+tech_stock_prediction/data/processed/*.csv
+tech_stock_prediction/models/*.pkl
