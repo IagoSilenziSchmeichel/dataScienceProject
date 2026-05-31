@@ -8,6 +8,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+from ensure_venv import restart_with_project_venv
+
+restart_with_project_venv()
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 EXPERIMENT_ROOT = PROJECT_ROOT / "experiments" / "exp_1_1"

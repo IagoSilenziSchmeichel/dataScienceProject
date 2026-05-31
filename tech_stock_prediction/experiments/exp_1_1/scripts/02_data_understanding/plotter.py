@@ -5,6 +5,12 @@ Loads the raw CSV file and prints basic information about the dataset.
 """
 
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+from ensure_venv import restart_with_project_venv
+
+restart_with_project_venv()
 
 import pandas as pd
 import yaml
