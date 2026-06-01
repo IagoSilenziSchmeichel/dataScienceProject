@@ -15,6 +15,7 @@ restart_with_project_venv()
 
 import pandas as pd
 import yaml
+from formatting import save_csv
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
@@ -46,9 +47,9 @@ def main():
     test_data = data[data["Date"].isin(test_dates)].copy()
 
     train_file.parent.mkdir(parents=True, exist_ok=True)
-    train_data.to_csv(train_file, index=False)
-    validation_data.to_csv(validation_file, index=False)
-    test_data.to_csv(test_file, index=False)
+    save_csv(train_data, train_file)
+    save_csv(validation_data, validation_file)
+    save_csv(test_data, test_file)
 
     print("Chronological split saved.")
     print(f"Train rows:      {len(train_data)}")

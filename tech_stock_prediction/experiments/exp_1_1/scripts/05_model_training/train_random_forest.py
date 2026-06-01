@@ -16,6 +16,7 @@ restart_with_project_venv()
 import joblib
 import pandas as pd
 import yaml
+from formatting import format_decimal
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
@@ -30,10 +31,10 @@ def load_feature_columns():
 
 
 def print_metrics(y_true, y_pred):
-    print(f"Accuracy:  {accuracy_score(y_true, y_pred):.4f}")
-    print(f"Precision: {precision_score(y_true, y_pred, zero_division=0):.4f}")
-    print(f"Recall:    {recall_score(y_true, y_pred, zero_division=0):.4f}")
-    print(f"F1-Score:  {f1_score(y_true, y_pred, zero_division=0):.4f}")
+    print(f"Accuracy:  {format_decimal(accuracy_score(y_true, y_pred))}")
+    print(f"Precision: {format_decimal(precision_score(y_true, y_pred, zero_division=0))}")
+    print(f"Recall:    {format_decimal(recall_score(y_true, y_pred, zero_division=0))}")
+    print(f"F1-Score:  {format_decimal(f1_score(y_true, y_pred, zero_division=0))}")
 
 
 def main():

@@ -16,6 +16,7 @@ restart_with_project_venv()
 
 import pandas as pd
 import yaml
+from formatting import format_percent, save_csv
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
@@ -45,11 +46,11 @@ def main():
 
     print("Simple Backtest")
     print("===============")
-    print(f"Strategy Return:     {strategy_total_return:.2%}")
-    print(f"Buy-and-Hold Return: {buy_and_hold_total_return:.2%}")
-    print(f"Difference:          {strategy_total_return - buy_and_hold_total_return:.2%}")
+    print(f"Strategy Return:     {format_percent(strategy_total_return)}")
+    print(f"Buy-and-Hold Return: {format_percent(buy_and_hold_total_return)}")
+    print(f"Difference:          {format_percent(strategy_total_return - buy_and_hold_total_return)}")
 
-    backtest_data.to_csv(results_file, index=False)
+    save_csv(backtest_data, results_file)
     print(f"\nBacktest results saved to: {results_file}")
 
 

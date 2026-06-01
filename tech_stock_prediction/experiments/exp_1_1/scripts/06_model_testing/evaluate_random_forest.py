@@ -15,6 +15,7 @@ restart_with_project_venv()
 import joblib
 import pandas as pd
 import yaml
+from formatting import format_decimal, save_csv
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
 
 
@@ -44,17 +45,17 @@ def main():
     test_predictions = model.predict(x_test)
 
     print("Test results:")
-    print(f"Accuracy:  {accuracy_score(y_test, test_predictions):.4f}")
-    print(f"Precision: {precision_score(y_test, test_predictions, zero_division=0):.4f}")
-    print(f"Recall:    {recall_score(y_test, test_predictions, zero_division=0):.4f}")
-    print(f"F1-Score:  {f1_score(y_test, test_predictions, zero_division=0):.4f}")
+    print(f"Accuracy:  {format_decimal(accuracy_score(y_test, test_predictions))}")
+    print(f"Precision: {format_decimal(precision_score(y_test, test_predictions, zero_division=0))}")
+    print(f"Recall:    {format_decimal(recall_score(y_test, test_predictions, zero_division=0))}")
+    print(f"F1-Score:  {format_decimal(f1_score(y_test, test_predictions, zero_division=0))}")
 
     print("\nConfusion Matrix:")
     print(confusion_matrix(y_test, test_predictions))
 
     results = test_data.copy()
     results["Prediction"] = test_predictions
-    results.to_csv(predictions_file, index=False)
+    save_csv(results, predictions_file)
 
     print(f"\nPredictions saved to: {predictions_file}")
 

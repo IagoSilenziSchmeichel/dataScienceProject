@@ -16,6 +16,7 @@ restart_with_project_venv()
 import pandas as pd
 import yaml
 import features2 as features
+from formatting import save_csv
 
 import targets
 
@@ -47,7 +48,7 @@ def main():
     feature_data = feature_data.sort_values(["Date", "Ticker"]).reset_index(drop=True)
 
     feature_data_file.parent.mkdir(parents=True, exist_ok=True)
-    feature_data.to_csv(feature_data_file, index=False)
+    save_csv(feature_data, feature_data_file)
 
     print(f"\nFeature data saved to: {feature_data_file}")
     print(f"Rows after feature engineering: {len(feature_data)}")

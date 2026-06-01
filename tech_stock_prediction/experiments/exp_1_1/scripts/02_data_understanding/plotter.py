@@ -14,6 +14,10 @@ restart_with_project_venv()
 
 import pandas as pd
 import yaml
+from formatting import set_pandas_display_options
+
+
+set_pandas_display_options(pd)
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]

@@ -16,6 +16,7 @@ restart_with_project_venv()
 import pandas as pd
 import yfinance as yf
 import yaml
+from formatting import save_csv
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
@@ -58,7 +59,7 @@ def main():
     raw_data = raw_data.sort_values(["Date", "Ticker"]).reset_index(drop=True)
 
     raw_data_file.parent.mkdir(parents=True, exist_ok=True)
-    raw_data.to_csv(raw_data_file, index=False)
+    save_csv(raw_data, raw_data_file)
 
     print(f"\nRaw data saved to: {raw_data_file}")
     print(f"Rows: {len(raw_data)}")
