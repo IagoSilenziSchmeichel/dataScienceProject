@@ -15,8 +15,8 @@ restart_with_project_venv()
 
 import pandas as pd
 import yaml
+import features2 as features
 
-import features
 import targets
 
 

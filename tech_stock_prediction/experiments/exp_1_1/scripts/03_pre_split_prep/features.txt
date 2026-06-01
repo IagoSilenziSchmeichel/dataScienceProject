@@ -11,3 +11,10 @@ MACD
 MACD_Signal
 Volume_Change
 Volume_Ratio_20
+
+Distance_to_MA_200
+Momentum_5
+Momentum_10
+Momentum_20
+Price_Position_20
+High_Low_Range
