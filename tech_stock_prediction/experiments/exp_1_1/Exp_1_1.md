@@ -207,6 +207,24 @@ The strategy return is compared with a simple equal-weighted buy-and-hold return
 
 ---
 
+## Step 9 - Dummy Baseline
+
+Prints a naive classification baseline that always predicts `1` (stock rises).
+Because the market rises slightly more often than it falls, this trivial
+strategy already reaches an accuracy equal to the share of rising days
+(about 52% on the test set).
+
+**Script**
+
+[scripts/08_baseline/dummy_baseline.py](scripts/08_baseline/dummy_baseline.py)
+
+The script prints, at the end of every pipeline run, the Always-Yes baseline
+metrics (Accuracy, Precision, Recall, F1-Score) directly next to the Random
+Forest metrics on the same test set. This makes it obvious whether the model
+actually beats a model that always says "up".
+
+---
+
 ## Configuration
 
 The experiment configuration is stored in:
@@ -237,6 +255,7 @@ python scripts/04_split_data/split.py
 python scripts/05_model_training/train_random_forest.py
 python scripts/06_model_testing/evaluate_random_forest.py
 python scripts/07_backtesting/simple_backtest.py
+python scripts/08_baseline/dummy_baseline.py
 ```
 
 ---
