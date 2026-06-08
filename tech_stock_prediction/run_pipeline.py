@@ -25,6 +25,7 @@ SCRIPTS = [
     "scripts/06_model_testing/evaluate_random_forest.py",
     "scripts/07_backtesting/simple_backtest.py",
     "scripts/08_baseline/dummy_baseline.py",
+    "scripts/09_visualization/generate_all_plots.py",
 ]
 
 
