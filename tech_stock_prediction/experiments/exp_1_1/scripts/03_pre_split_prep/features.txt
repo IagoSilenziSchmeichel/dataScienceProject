@@ -18,16 +18,3 @@ Momentum_10
 Momentum_20
 Price_Position_20
 High_Low_Range
-
-revenue_growth
-eps
-profit_margin
-operating_margin
-free_cash_flow
-debt_to_equity
-roe
-
-actual_eps
-expected_eps
-eps_surprise
-revenue_surprise

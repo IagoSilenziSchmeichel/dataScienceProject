@@ -19,6 +19,12 @@ For every selected stock and every trading day from `2019-01-01`, the target is:
 - Rolling volatility over 7 and 30 trading days
 - RSI over 14 trading days
 - MACD and MACD signal line
+- Volume change and volume ratio
+- Trend and momentum indicators
+
+Fundamental and earnings features were tested in the feature group analysis,
+but they are not used in the final model because they did not improve the
+non-trivial model performance.
 
 ### Procedure Overview:
 
@@ -93,7 +99,7 @@ Creates the features and the target before splitting the data. Feature engineeri
 
 **Feature Engineering Script**
 
-[scripts/03_pre_split_prep/features.py](scripts/03_pre_split_prep/features.py)
+[scripts/03_pre_split_prep/features3.py](scripts/03_pre_split_prep/features3.py)
 
 **Target Computation Script**
 
@@ -137,9 +143,10 @@ The split is not random because stock price data is time series data. A random s
 
 ## Step 5 - Post-Split Preparation
 
-No additional post-split preparation is needed in this simple baseline experiment.
-
-The feature values are already numeric and can be used directly by the Random Forest model.
+The selected model features are normalized per ticker after the chronological
+split. The mean and standard deviation are calculated only on the training set
+and then applied to validation and test data. This avoids data leakage and helps
+compare stocks with different volatility levels.
 
 ---
 
@@ -207,7 +214,7 @@ The strategy return is compared with a simple equal-weighted buy-and-hold return
 
 ---
 
-## Step 9 - Dummy Baseline
+## Step 8 - Dummy Baseline
 
 Prints a naive classification baseline that always predicts `1` (stock rises).
 Because the market rises slightly more often than it falls, this trivial
@@ -222,6 +229,47 @@ The script prints, at the end of every pipeline run, the Always-Yes baseline
 metrics (Accuracy, Precision, Recall, F1-Score) directly next to the Random
 Forest metrics on the same test set. This makes it obvious whether the model
 actually beats a model that always says "up".
+
+---
+
+## Step 9 - Visualization
+
+Creates presentation-ready plots from the generated data, predictions and
+backtest results.
+
+**Script**
+
+[scripts/09_visualization/generate_all_plots.py](scripts/09_visualization/generate_all_plots.py)
+
+The plots are saved to:
+
+[plots](plots)
+
+---
+
+## Step 10 - Feature Group Analysis
+
+Tests which feature groups improve the model and which ones make it worse.
+The script tests all non-empty combinations of the five feature groups:
+technical, volume, trend/momentum, fundamental and earnings features. This
+creates 31 Random Forest runs with the same model settings, so the feature
+sets can be compared fairly.
+
+**Script**
+
+[scripts/10_feature_analysis/feature_group_analysis.py](scripts/10_feature_analysis/feature_group_analysis.py)
+
+**Outputs**
+
+- [data/processed/feature_group_results.csv](data/processed/feature_group_results.csv)
+- [data/processed/feature_importance_results.csv](data/processed/feature_importance_results.csv)
+- [plots/16_feature_group_comparison.png](plots/16_feature_group_comparison.png)
+- [plots/18_feature_importance_top15.png](plots/18_feature_importance_top15.png)
+
+This makes it easier to explain whether new features actually improved the
+model or only added noise. The result table also includes the share of
+`Prediction = 1`, so we can detect models that look good only because they
+almost always predict rising prices.
 
 ---
 
@@ -256,15 +304,15 @@ python scripts/05_model_training/train_random_forest.py
 python scripts/06_model_testing/evaluate_random_forest.py
 python scripts/07_backtesting/simple_backtest.py
 python scripts/08_baseline/dummy_baseline.py
+python scripts/09_visualization/generate_all_plots.py
+python scripts/10_feature_analysis/feature_group_analysis.py
 ```
 
 ---
 
 ## Next Steps
 
-- Add a random baseline for comparison.
-- Plot feature distributions and correlations.
 - Evaluate performance separately for each ticker.
 - Add transaction costs to the backtest.
 - Compare Random Forest with Logistic Regression.
-- Use feature importance to explain the model in the presentation.
+- Compare the final feature set with Logistic Regression or another simple model.

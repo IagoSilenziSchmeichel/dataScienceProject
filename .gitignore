@@ -16,6 +16,7 @@ venv/
 tech_stock_prediction/experiments/*/data/raw/*.csv
 tech_stock_prediction/experiments/*/data/processed/*.csv
 tech_stock_prediction/experiments/*/models/*.pkl
+tech_stock_prediction/experiments/*/plots/*.png
 tech_stock_prediction/data/raw/*.csv
 tech_stock_prediction/data/processed/*.csv
 tech_stock_prediction/models/*.pkl
