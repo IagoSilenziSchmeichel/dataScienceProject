@@ -26,7 +26,6 @@ SCRIPTS = [
     "scripts/07_backtesting/simple_backtest.py",
     "scripts/08_baseline/dummy_baseline.py",
     "scripts/09_visualization/generate_all_plots.py",
-    "scripts/10_feature_analysis/feature_group_analysis.py",
 ]
 
 
