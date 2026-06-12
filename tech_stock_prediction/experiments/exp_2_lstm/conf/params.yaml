@@ -1,0 +1,38 @@
+# LSTM experiment configuration
+
+DATA:
+  # We reuse the processed Random Forest data from experiment exp_1_1.
+  # This makes the LSTM comparable to the Random Forest model.
+  TRAIN_FILE: "../exp_1_1/data/processed/train.csv"
+  VALIDATION_FILE: "../exp_1_1/data/processed/validation.csv"
+  TEST_FILE: "../exp_1_1/data/processed/test.csv"
+
+  # Feature list from the Random Forest experiment
+  FEATURE_PATH: "../exp_1_1/scripts/03_pre_split_prep/features.txt"
+
+  # Output file for created LSTM sequences
+  SEQUENCE_FILE: "data/processed/lstm_sequences.npz"
+
+  # Metadata for the test sequences, needed for evaluation and backtesting
+  TEST_METADATA_FILE: "data/processed/lstm_test_metadata.csv"
+
+MODEL:
+  TARGET: "Target"
+
+  # Number of past days used as one input sequence
+  SEQUENCE_LENGTH: 30
+
+  HIDDEN_SIZE: 64
+  NUM_LAYERS: 1
+  DROPOUT: 0.2
+
+  EPOCHS: 20
+  BATCH_SIZE: 32
+  LEARNING_RATE: 0.001
+  RANDOM_STATE: 42
+
+  MODEL_FILE: "models/lstm_model.pth"
+
+RESULTS:
+  PREDICTIONS_FILE: "data/processed/lstm_test_predictions.csv"
+  BACKTEST_FILE: "data/processed/lstm_backtest_results.csv"
