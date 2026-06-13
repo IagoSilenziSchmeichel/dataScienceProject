@@ -13,6 +13,12 @@ Example:
 
 from pathlib import Path
 import random
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+from ensure_venv import restart_with_project_venv
+
+restart_with_project_venv()
 
 import numpy as np
 import pandas as pd

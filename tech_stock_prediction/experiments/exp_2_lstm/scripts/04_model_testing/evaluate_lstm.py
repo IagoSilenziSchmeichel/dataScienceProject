@@ -14,6 +14,12 @@ It also compares the LSTM to a simple Always-Yes baseline.
 """
 
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+from ensure_venv import restart_with_project_venv
+
+restart_with_project_venv()
 
 import numpy as np
 import pandas as pd
@@ -103,7 +109,7 @@ def create_test_loader(X_test, y_test, batch_size):
     return loader
 
 
-def predict(model, test_loader, device):
+def predict(model, test_loader, device, threshold):
     """
     Create predictions and probabilities for the test set.
     """
@@ -120,7 +126,7 @@ def predict(model, test_loader, device):
             logits = model(X_batch)
 
             probabilities = torch.sigmoid(logits)
-            predictions = (probabilities >= 0.49).int()
+            predictions = (probabilities >= threshold).int()
 
             all_targets.extend(y_batch.numpy())
             all_probabilities.extend(probabilities.cpu().numpy())
@@ -162,6 +168,7 @@ def main():
     predictions_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["PREDICTIONS_FILE"]
 
     batch_size = PARAMS["MODEL"]["BATCH_SIZE"]
+    threshold = PARAMS["MODEL"].get("PREDICTION_THRESHOLD", 0.50)
 
     if not sequence_file.exists():
         raise FileNotFoundError(f"Sequence file not found: {sequence_file}")
@@ -186,6 +193,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
+    print(f"Prediction threshold: {threshold:.2f}")
 
     checkpoint = load_checkpoint(model_file, device)
 
@@ -211,6 +219,7 @@ def main():
         model,
         test_loader,
         device,
+        threshold,
     )
 
     print()

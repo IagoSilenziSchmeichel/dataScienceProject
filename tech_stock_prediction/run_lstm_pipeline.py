@@ -1,20 +1,21 @@
 """
-Run LSTM Pipeline.
+Run the complete LSTM experiment pipeline from one file.
 
-This script runs the LSTM experiment pipeline from the project root.
-The actual LSTM experiment is stored in:
-
-experiments/exp_2_lstm/
+This is useful when IntelliJ run configurations are confusing or when the LSTM
+steps should be executed in the correct order.
 """
 
 from pathlib import Path
 import subprocess
 import sys
 
+from ensure_venv import restart_with_project_venv
+
+restart_with_project_venv()
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 EXPERIMENT_ROOT = PROJECT_ROOT / "experiments" / "exp_2_lstm"
-
 
 SCRIPTS = [
     "scripts/01_data_preparation/prepare_lstm_data.py",
@@ -22,28 +23,18 @@ SCRIPTS = [
     "scripts/03_model_training/train_lstm.py",
     "scripts/04_model_testing/evaluate_lstm.py",
     "scripts/05_backtesting/backtest_lstm.py",
+    "scripts/08_threshold_backtest/threshold_backtest.py",
 ]
 
 
 def main():
-    if not EXPERIMENT_ROOT.exists():
-        raise FileNotFoundError(f"LSTM experiment folder not found: {EXPERIMENT_ROOT}")
-
     for script in SCRIPTS:
+        print("\n" + "=" * 80, flush=True)
+        print(f"Running {script}", flush=True)
+        print("=" * 80, flush=True)
+
         script_path = EXPERIMENT_ROOT / script
-
-        print("\n" + "=" * 80)
-        print(f"Running {script}")
-        print("=" * 80)
-
-        if not script_path.exists():
-            raise FileNotFoundError(f"Script not found: {script_path}")
-
-        subprocess.run(
-            [sys.executable, str(script_path)],
-            cwd=EXPERIMENT_ROOT,
-            check=True,
-        )
+        subprocess.run([sys.executable, str(script_path)], cwd=PROJECT_ROOT, check=True)
 
 
 if __name__ == "__main__":
