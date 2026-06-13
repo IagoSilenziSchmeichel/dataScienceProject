@@ -20,7 +20,7 @@ MODEL:
   TARGET: "Target"
 
   # Number of past days used as one input sequence
-  SEQUENCE_LENGTH: 30
+  SEQUENCE_LENGTH: 20
 
   HIDDEN_SIZE: 64
   NUM_LAYERS: 1

@@ -120,7 +120,7 @@ def predict(model, test_loader, device):
             logits = model(X_batch)
 
             probabilities = torch.sigmoid(logits)
-            predictions = (probabilities >= 0.5).int()
+            predictions = (probabilities >= 0.49).int()
 
             all_targets.extend(y_batch.numpy())
             all_probabilities.extend(probabilities.cpu().numpy())
