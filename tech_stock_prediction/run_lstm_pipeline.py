@@ -23,7 +23,6 @@ SCRIPTS = [
     "scripts/03_model_training/train_lstm.py",
     "scripts/04_model_testing/evaluate_lstm.py",
     "scripts/05_backtesting/backtest_lstm.py",
-    "scripts/08_threshold_backtest/threshold_backtest.py",
 ]
 
 
