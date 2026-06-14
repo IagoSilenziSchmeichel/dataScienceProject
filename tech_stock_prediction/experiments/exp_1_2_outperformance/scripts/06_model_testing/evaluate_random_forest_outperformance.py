@@ -1,7 +1,5 @@
 """
-Model Testing.
-
-Loads the trained model, evaluates it on the test set and stores predictions.
+Evaluate the outperformance Random Forest model.
 """
 
 from pathlib import Path
@@ -21,11 +19,10 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precisio
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
 PARAMS = yaml.safe_load(open(EXPERIMENT_ROOT / "conf" / "params.yaml"))
-VALIDATION_PREDICTIONS_FILE = "data/processed/validation_predictions.csv"
 
 
 def load_feature_columns():
-    feature_path = EXPERIMENT_ROOT / PARAMS["DATA_PREP"]["FEATURE_PATH"]
+    feature_path = EXPERIMENT_ROOT / PARAMS["SOURCE"]["FEATURE_PATH"]
     return [line.strip() for line in open(feature_path) if line.strip()]
 
 
@@ -53,22 +50,35 @@ def evaluate_and_save_predictions(
     print("\nConfusion Matrix:")
     print(confusion_matrix(y_true, predictions))
 
-    results = data.copy()
+    columns = [
+        "Date",
+        "Ticker",
+        "Close",
+        "Future_Return",
+        "Daily_Average_Future_Return",
+    ]
+    results = data[columns].copy()
     results["Actual"] = y_true
     results["Prediction"] = predictions
     results["Probability"] = probabilities
+
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     save_csv(results, output_file)
 
     print(f"\nPredictions saved to: {output_file}")
-    print("Saved columns include: Date, Ticker, Close, Actual, Prediction, Probability")
 
 
 def main():
+    print("Evaluating outperformance Random Forest")
+    print("=======================================")
+
     validation_file = EXPERIMENT_ROOT / PARAMS["DATA_PREP"]["VALIDATION_FILE"]
     test_file = EXPERIMENT_ROOT / PARAMS["DATA_PREP"]["TEST_FILE"]
     model_file = EXPERIMENT_ROOT / PARAMS["MODELING"]["MODEL_FILE"]
-    validation_predictions_file = EXPERIMENT_ROOT / VALIDATION_PREDICTIONS_FILE
-    predictions_file = EXPERIMENT_ROOT / PARAMS["BACKTEST"]["PREDICTIONS_FILE"]
+    validation_predictions_file = (
+        EXPERIMENT_ROOT / PARAMS["PREDICTIONS"]["VALIDATION_FILE"]
+    )
+    test_predictions_file = EXPERIMENT_ROOT / PARAMS["PREDICTIONS"]["TEST_FILE"]
 
     feature_columns = load_feature_columns()
     target_column = PARAMS["MODELING"]["TARGET"]
@@ -92,7 +102,7 @@ def main():
         model,
         feature_columns,
         target_column,
-        predictions_file,
+        test_predictions_file,
     )
 
 
