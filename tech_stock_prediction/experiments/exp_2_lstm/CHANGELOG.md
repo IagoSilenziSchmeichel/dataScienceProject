@@ -1,6 +1,79 @@
 # LSTM Experiment Changelog
 
-## Aktuelle Erweiterung: LSTM-Tuning und Top-K Backtest
+## Aktuelle Erweiterung: Feature-Normalisierung und erweitertes Top-K
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/experiments/exp_2_lstm/conf/params.yaml`
+- `scripts/02_sequence_creation/create_sequences.py`
+- `scripts/03_model_training/train_lstm.py`
+- `scripts/04_model_testing/evaluate_lstm.py`
+- `scripts/10_top_k_backtest/top_k_backtest.py`
+- `tech_stock_prediction/experiments/exp_2_lstm/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/CHANGELOG.md`
+
+### Neue generierte Dateien
+
+- `models/lstm_feature_scaler.pkl`
+
+Diese Datei entsteht beim Erstellen der LSTM-Sequenzen. Sie wird nicht
+committed, weil sie in `.gitignore` ueber `experiments/*/models/*.pkl`
+ausgeschlossen ist.
+
+### Was wurde fachlich ergaenzt?
+
+Die LSTM-Features werden jetzt vor der Sequenz-Erstellung mit einem
+`StandardScaler` normalisiert. Der Scaler wird nur auf den Trainingsdaten
+gefittet. Validation- und Testdaten werden danach nur transformiert.
+
+Das verhindert Data Leakage, weil keine Informationen aus Validation oder Test
+in die Vorbereitung der Trainingsdaten einfliessen.
+
+Die Normalisierung ist fuer LSTM sinnvoll, weil neuronale Netze mit Gradient
+Descent lernen. Features auf sehr unterschiedlichen Skalen koennen das Training
+erschweren. Beim Random Forest war das weniger wichtig, weil Baum-Modelle mit
+Split-Schwellen arbeiten.
+
+Der Top-K Backtest testet jetzt:
+
+- Top 1
+- Top 2
+- Top 3
+- Top 4
+- Top 5
+
+Top 2 und Top 4 helfen, die Handelsentscheidung feiner zu vergleichen.
+
+### Ausfuehrung
+
+Die komplette LSTM-Pipeline kann so gestartet werden:
+
+```bash
+python tech_stock_prediction/run_lstm_pipeline.py
+```
+
+Oder in IntelliJ mit:
+
+```text
+11 Run LSTM Pipeline
+```
+
+Wichtige Ergebnisdateien:
+
+- `data/processed/lstm_test_predictions.csv`
+- `data/processed/lstm_backtest_results.csv`
+- `data/processed/lstm_threshold_results.csv`
+- `data/processed/lstm_top_k_results.csv`
+- `data/processed/lstm_tuning_results.csv`
+
+Beim Interpretieren ist besonders wichtig:
+
+- `lstm_backtest_results.csv`: einfache Strategie mit `Prediction = 1`
+- `lstm_threshold_results.csv`: strengere Wahrscheinlichkeitsgrenzen
+- `lstm_top_k_results.csv`: nur die staerksten Signale pro Tag
+- `lstm_tuning_results.csv`: Validation-Vergleich verschiedener LSTM-Settings
+
+## Vorherige Erweiterung: LSTM-Tuning und Top-K Backtest
 
 ### Geaenderte Dateien
 

@@ -13,6 +13,10 @@ DATA:
   # Output file for created LSTM sequences
   SEQUENCE_FILE: "data/processed/lstm_sequences.npz"
 
+  # Scaler for LSTM input features.
+  # It is fitted only on train data and then reused for validation/test.
+  SCALER_FILE: "models/lstm_feature_scaler.pkl"
+
   # Metadata for the test sequences, needed for evaluation and backtesting
   TEST_METADATA_FILE: "data/processed/lstm_test_metadata.csv"
 
@@ -23,6 +27,9 @@ MODEL:
   SEQUENCE_LENGTH: 20
 
   HIDDEN_SIZE: 64
+
+  # With NUM_LAYERS = 1, PyTorch does not apply LSTM dropout internally.
+  # With NUM_LAYERS > 1, dropout is used between LSTM layers.
   NUM_LAYERS: 1
   DROPOUT: 0.2
 

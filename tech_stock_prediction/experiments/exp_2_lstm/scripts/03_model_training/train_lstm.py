@@ -154,6 +154,13 @@ def main():
     print(f"Validation shape: {X_validation.shape}")
     print(f"Input size:       {input_size}")
     print(f"Features:         {len(feature_columns)}")
+    print(f"Hidden size:      {hidden_size}")
+    print(f"LSTM layers:      {num_layers}")
+
+    if num_layers == 1:
+        print("Dropout:          disabled inside LSTM because NUM_LAYERS = 1")
+    else:
+        print(f"Dropout:          {dropout}")
 
     train_loader = create_data_loader(
         X_train,

@@ -36,6 +36,33 @@ Aktuell:
 PREDICTION_THRESHOLD: 0.50
 ```
 
+## Feature-Normalisierung
+
+Vor der Sequenz-Erstellung werden die LSTM-Features mit einem `StandardScaler`
+normalisiert.
+
+Wichtig:
+
+- Der Scaler wird nur auf den Trainingsdaten gefittet
+- Validation-Daten werden nur transformiert
+- Test-Daten werden nur transformiert
+- Dadurch vermeiden wir Data Leakage
+
+Warum ist das wichtig?
+
+Ein LSTM lernt mit Gradient Descent. Wenn einzelne Features sehr grosse Werte
+haben und andere sehr kleine Werte, kann das Training instabiler werden.
+Normalisierung bringt die Features auf eine vergleichbare Skala.
+
+Beim Random Forest war das weniger wichtig, weil Entscheidungsbaeume mit
+Schwellenwerten arbeiten und nicht direkt Gewichte ueber Gradienten lernen.
+
+Der trainierte Scaler wird gespeichert unter:
+
+```text
+models/lstm_feature_scaler.pkl
+```
+
 ## Warum Thresholds?
 
 Das LSTM gibt fuer jede Zeile eine Wahrscheinlichkeit aus. Eine einfache
@@ -147,10 +174,14 @@ Top-K nutzt stattdessen die Wahrscheinlichkeiten des LSTM:
 
 - Pro Tag werden die Aktien nach Wahrscheinlichkeit sortiert
 - Es werden nur die besten Signale gekauft
-- Getestet werden Top 1, Top 3 und Top 5 Aktien pro Tag
+- Getestet werden Top 1, Top 2, Top 3, Top 4 und Top 5 Aktien pro Tag
 
 Dadurch pruefen wir, ob die hoechsten Modellwahrscheinlichkeiten wirklich die
 besseren Tradingentscheidungen liefern.
+
+Top 2 und Top 4 wurden ergaenzt, damit wir nicht nur sehr grobe Spruenge
+zwischen 1, 3 und 5 Aktien vergleichen. So sehen wir genauer, wie stark die
+Strategie von der Anzahl gekaufter Aktien pro Tag abhaengt.
 
 Das Skript liegt hier:
 
@@ -184,8 +215,18 @@ Deshalb betrachten wir jetzt nicht nur Klassifikationsmetriken, sondern auch:
 data/processed/lstm_threshold_results.csv
 data/processed/lstm_top_k_results.csv
 data/processed/lstm_tuning_results.csv
+models/lstm_feature_scaler.pkl
 ```
 
 Diese CSV-Dateien sind generierte Ergebnisse. Sie koennen lokal angeschaut
 werden, gehoeren aber normalerweise nicht in Git, weil sie jederzeit durch die
 Skripte neu erzeugt werden koennen.
+
+## Naechster Vergleich
+
+Nach dieser Erweiterung sollten wir vergleichen:
+
+- Standard-LSTM ohne neue Normalisierung gegen Standard-LSTM mit Normalisierung
+- Top 1 bis Top 5 im Backtest
+- Ob Top-K stabiler ist als die einfache Regel `Prediction = 1 -> kaufen`
+- Optional spaeter: `NUM_LAYERS = 2`, damit LSTM-Dropout technisch aktiv wird

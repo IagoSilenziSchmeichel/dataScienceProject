@@ -21,7 +21,7 @@ from formatting import format_decimal, format_percent, save_csv
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
 PARAMS = yaml.safe_load(open(EXPERIMENT_ROOT / "conf" / "params.yaml"))
 
-TOP_K_VALUES = [1, 3, 5]
+TOP_K_VALUES = [1, 2, 3, 4, 5]
 
 
 def require_columns(data, required_columns, file_name):

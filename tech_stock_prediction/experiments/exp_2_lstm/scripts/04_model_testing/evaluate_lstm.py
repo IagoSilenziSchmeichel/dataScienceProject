@@ -207,6 +207,11 @@ def main():
     model.load_state_dict(checkpoint["model_state_dict"])
 
     print(f"Loaded model from: {model_file}")
+    print(f"LSTM layers: {checkpoint['num_layers']}")
+    if checkpoint["num_layers"] == 1:
+        print("Dropout: disabled inside LSTM because num_layers = 1")
+    else:
+        print(f"Dropout: {checkpoint['dropout']}")
     print(f"Best validation F1 from training: {checkpoint['best_validation_f1']:.5f}")
 
     test_loader = create_test_loader(

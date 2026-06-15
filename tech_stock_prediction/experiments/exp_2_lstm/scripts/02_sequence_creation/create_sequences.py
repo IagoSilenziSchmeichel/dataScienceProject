@@ -15,6 +15,7 @@ Target value of the last day in the sequence
 """
 
 from pathlib import Path
+import pickle
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
@@ -25,6 +26,7 @@ restart_with_project_venv()
 import numpy as np
 import pandas as pd
 import yaml
+from sklearn.preprocessing import StandardScaler
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
@@ -104,6 +106,36 @@ def check_feature_values(data, feature_columns, dataset_name):
         )
 
 
+def scale_features(train_data, validation_data, test_data, feature_columns, scaler_file):
+    """
+    Standardize LSTM input features without data leakage.
+
+    LSTMs learn with gradient descent, so features on very different scales can
+    make training unstable. Random Forests are less sensitive to this because
+    they split by feature thresholds instead of learning weights with gradients.
+
+    Important:
+    The scaler is fitted only on the training data. Validation and test data
+    are transformed with this already fitted scaler.
+    """
+    scaler = StandardScaler()
+
+    train_scaled = train_data.copy()
+    validation_scaled = validation_data.copy()
+    test_scaled = test_data.copy()
+
+    train_scaled[feature_columns] = scaler.fit_transform(train_data[feature_columns])
+    validation_scaled[feature_columns] = scaler.transform(validation_data[feature_columns])
+    test_scaled[feature_columns] = scaler.transform(test_data[feature_columns])
+
+    scaler_file.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(scaler_file, "wb") as file:
+        pickle.dump(scaler, file)
+
+    return train_scaled, validation_scaled, test_scaled
+
+
 def create_sequences_for_dataset(data, feature_columns, target_column, sequence_length):
     """
     Create LSTM sequences for one dataset.
@@ -168,6 +200,7 @@ def main():
     feature_path = EXPERIMENT_ROOT / PARAMS["DATA"]["FEATURE_PATH"]
 
     sequence_file = EXPERIMENT_ROOT / PARAMS["DATA"]["SEQUENCE_FILE"]
+    scaler_file = EXPERIMENT_ROOT / PARAMS["DATA"]["SCALER_FILE"]
     test_metadata_file = EXPERIMENT_ROOT / PARAMS["DATA"]["TEST_METADATA_FILE"]
 
     target_column = PARAMS["MODEL"]["TARGET"]
@@ -186,6 +219,19 @@ def main():
     check_feature_values(train_data, feature_columns, "Train data")
     check_feature_values(validation_data, feature_columns, "Validation data")
     check_feature_values(test_data, feature_columns, "Test data")
+
+    train_data, validation_data, test_data = scale_features(
+        train_data,
+        validation_data,
+        test_data,
+        feature_columns,
+        scaler_file,
+    )
+
+    print("\nFeature normalization:")
+    print("StandardScaler fitted on train data only.")
+    print("Validation and test data transformed with the train scaler.")
+    print(f"Scaler saved to: {scaler_file}")
 
     X_train, y_train, _ = create_sequences_for_dataset(
         train_data,
