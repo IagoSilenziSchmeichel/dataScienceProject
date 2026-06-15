@@ -1,0 +1,37 @@
+%YAML 1.2
+---
+
+# Same pipeline as exp_1_1, but applied to a single index ETF (QQQ) instead of
+# 10 individual tech stocks. The idea: an index already bundles many stocks into
+# one homogeneous price series, so the cross-sectional "pooling" problem of the
+# 10 single stocks disappears. We use the exact same features, split, model and
+# baseline so the two experiments are directly comparable.
+
+# START_DATE history note:
+#   '2019-01-01' = direct comparison run vs. the 10 single stocks (exp_1_1).
+#   '1999-01-01' = full QQQ history (ETF inception was March 1999) for more data.
+DATA_ACQUISITION:
+  START_DATE: '1999-01-01'
+  RAW_DATA_FILE: 'data/raw/index_raw.csv'
+  TICKERS: ['QQQ']
+
+DATA_PREP:
+  FEATURE_DATA_FILE: 'data/processed/index_features.csv'
+  TRAIN_FILE: 'data/processed/train.csv'
+  VALIDATION_FILE: 'data/processed/validation.csv'
+  TEST_FILE: 'data/processed/test.csv'
+  TRAIN_RATIO: 0.70
+  VALIDATION_RATIO: 0.15
+  TEST_RATIO: 0.15
+  FEATURE_PATH: 'scripts/03_pre_split_prep/features.txt'
+
+MODELING:
+  TARGET: 'Target'
+  MODEL_FILE: 'models/random_forest_index.pkl'
+  N_ESTIMATORS: 100
+  MAX_DEPTH: 5
+  RANDOM_STATE: 42
+
+BACKTEST:
+  PREDICTIONS_FILE: 'data/processed/test_predictions.csv'
+  RESULTS_FILE: 'data/processed/backtest_results.csv'
