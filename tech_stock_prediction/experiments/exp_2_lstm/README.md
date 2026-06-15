@@ -22,6 +22,7 @@ Die Pipeline fuehrt diese Schritte aus:
 4. LSTM testen
 5. Einfacher Backtest
 6. Threshold Backtest
+7. Top-K Backtest
 
 Der feste Threshold fuer die normale LSTM-Evaluation steht in:
 
@@ -107,3 +108,84 @@ models/lstm_model.pth
 ```
 
 Sie werden ueber `.gitignore` ausgeschlossen.
+
+## Warum LSTM-Tuning?
+
+Das LSTM hat mehrere Stellschrauben. Zum Beispiel:
+
+- Wie viele vergangene Tage als Sequenz genutzt werden
+- Wie gross das LSTM ist
+- Wie stark Dropout regularisiert
+- Wie schnell das Modell lernt
+
+Das Tuning-Skript testet mehrere einfache Kombinationen und vergleicht sie auf
+dem Validation-Set. Das ist wichtig, weil das Test-Set nicht zum Optimieren
+benutzt werden sollte.
+
+Das Skript liegt hier:
+
+```text
+scripts/09_lstm_tuning/lstm_tuning.py
+```
+
+Die Ergebnisse werden gespeichert unter:
+
+```text
+data/processed/lstm_tuning_results.csv
+```
+
+Die normale Pipeline startet das Tuning nicht automatisch, weil es deutlich
+laenger dauern kann. In `run_lstm_pipeline.py` kann dafuer `RUN_TUNING = True`
+gesetzt werden.
+
+## Warum Top-K Backtesting?
+
+`Prediction = 1 -> kaufen` ist sehr einfach, aber fuer Trading oft zu grob.
+Wenn das Modell sehr oft `steigt` sagt, entstehen zu viele Kaufsignale.
+
+Top-K nutzt stattdessen die Wahrscheinlichkeiten des LSTM:
+
+- Pro Tag werden die Aktien nach Wahrscheinlichkeit sortiert
+- Es werden nur die besten Signale gekauft
+- Getestet werden Top 1, Top 3 und Top 5 Aktien pro Tag
+
+Dadurch pruefen wir, ob die hoechsten Modellwahrscheinlichkeiten wirklich die
+besseren Tradingentscheidungen liefern.
+
+Das Skript liegt hier:
+
+```text
+scripts/10_top_k_backtest/top_k_backtest.py
+```
+
+Die Ergebnisse werden gespeichert unter:
+
+```text
+data/processed/lstm_top_k_results.csv
+```
+
+## Warum schlaegt das Modell Buy-and-Hold bisher nicht?
+
+Das LSTM erkennt viele steigende Tage, deshalb sind Recall und F1 besser als
+beim Random Forest. Fuer eine Handelsstrategie reicht das aber noch nicht
+automatisch aus. Wenn zu viele Signale gekauft werden, nimmt die Strategie auch
+viele schwache oder falsche Signale mit.
+
+Deshalb betrachten wir jetzt nicht nur Klassifikationsmetriken, sondern auch:
+
+- Wie viele Kaufsignale entstehen
+- Welche Wahrscheinlichkeiten besonders stark sind
+- Ob Top-K-Auswahl bessere Renditen liefert
+- Ob Strategy Return naeher an Buy-and-Hold herankommt
+
+## Wichtige neue Ergebnisdateien
+
+```text
+data/processed/lstm_threshold_results.csv
+data/processed/lstm_top_k_results.csv
+data/processed/lstm_tuning_results.csv
+```
+
+Diese CSV-Dateien sind generierte Ergebnisse. Sie koennen lokal angeschaut
+werden, gehoeren aber normalerweise nicht in Git, weil sie jederzeit durch die
+Skripte neu erzeugt werden koennen.
