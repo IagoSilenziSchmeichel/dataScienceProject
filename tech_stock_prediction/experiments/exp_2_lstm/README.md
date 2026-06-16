@@ -23,6 +23,25 @@ Die Pipeline fuehrt diese Schritte aus:
 5. Einfacher Backtest
 6. Threshold Backtest
 7. Top-K Backtest
+8. Tuned Final Test
+9. Ergebnisvergleich erstellen
+10. Outperformance-LSTM testen
+11. Ergebnisplots erstellen
+
+## Saubere Vergleichslogik
+
+Die LSTM-Auswertung trennt jetzt zwei Arten von Vergleichen:
+
+- `native_period`: Jedes Modell wird auf seinem eigenen verfuegbaren Testzeitraum bewertet.
+- `common_overlap_period`: Alle Modelle werden nur auf dem gemeinsamen ueberschneidenden Zeitraum bewertet.
+
+Das ist wichtig, weil unterschiedliche `sequence_length`-Werte unterschiedlich
+viele erste Testtage verlieren. Eine Sequenzlaenge von 60 startet spaeter als
+eine Sequenzlaenge von 10.
+
+Buy-and-Hold darf deshalb nur dann unterschiedlich sein, wenn auch der
+Testzeitraum unterschiedlich ist. Fuer jeden Backtest wird Buy-and-Hold immer
+auf exakt demselben Zeitraum wie die Strategie berechnet.
 
 Der feste Threshold fuer die normale LSTM-Evaluation steht in:
 
@@ -165,6 +184,58 @@ Die normale Pipeline startet das Tuning nicht automatisch, weil es deutlich
 laenger dauern kann. In `run_lstm_pipeline.py` kann dafuer `RUN_TUNING = True`
 gesetzt werden.
 
+## Finaler Test mit Tuning
+
+Das Tuning allein ist noch kein finales Testergebnis. Es zeigt nur, welche
+Konfiguration auf dem Validation-Set gut war.
+
+Deshalb gibt es jetzt einen zusaetzlichen finalen Tuned-Test:
+
+```text
+scripts/12_tuned_final_test/tuned_final_test.py
+```
+
+Dieses Skript macht:
+
+- beste Konfiguration nach Validation-F1 auswaehlen
+- beste Konfiguration nach Validation-Strategy-Return auswaehlen
+- mit diesen Konfigurationen ein neues LSTM trainieren
+- dafuer Train + Validation als Trainingsdaten verwenden
+- danach ehrlich auf dem Testset evaluieren
+
+Dadurch wird das Tuning wirklich in finale Testergebnisse eingebaut.
+
+Die Ergebnisse werden gespeichert unter:
+
+```text
+data/processed/lstm_tuned_final_results.csv
+data/processed/lstm_tuned_top_k_results.csv
+```
+
+Wichtig: Unterschiedliche `sequence_length`-Werte erzeugen unterschiedlich
+lange Testzeiträume. Deshalb wird jedes Tuned-Ergebnis gegen Buy-and-Hold im
+gleichen Zeitraum verglichen.
+
+## Ergebnisvergleich
+
+Die zentrale Zusammenfassung wird hier gespeichert:
+
+```text
+data/processed/lstm_model_comparison_summary.csv
+```
+
+Sie enthaelt:
+
+- Standard-LSTM mit einfacher `Prediction = 1` Regel
+- Standard-LSTM mit bester Top-K-Regel
+- Tuned-LSTM nach bestem Validation-F1
+- Tuned-LSTM nach bestem Validation-Strategy-Return
+- native Zeitraeume
+- gemeinsamen ueberschneidenden Zeitraum
+
+Diese Datei ist die wichtigste Datei, wenn Ergebnisse fair verglichen werden
+sollen.
+
 ## Warum Top-K Backtesting?
 
 `Prediction = 1 -> kaufen` ist sehr einfach, aber fuer Trading oft zu grob.
@@ -195,6 +266,72 @@ Die Ergebnisse werden gespeichert unter:
 data/processed/lstm_top_k_results.csv
 ```
 
+## Outperformance-LSTM
+
+Bisher hat das Standard-LSTM vorhergesagt, ob eine Aktie am naechsten Tag
+absolut steigt. Fuer eine Top-K-Strategie ist aber oft die bessere Frage:
+
+```text
+Welche Aktie ist morgen staerker als der Markt?
+```
+
+Deshalb gibt es jetzt eine zusaetzliche LSTM-Variante:
+
+```text
+scripts/14_outperformance_lstm/outperformance_lstm.py
+```
+
+Dieses Modell sagt nicht mehr direkt `steigt` oder `faellt` voraus, sondern:
+
+```text
+Outperform_QQQ_Target = 1, wenn die Aktie morgen eine bessere Rendite als QQQ hat
+```
+
+Warum passt das besser zu Top-K?
+
+- Top-K kauft nur die besten Signale pro Tag
+- Dafuer ist ein Ranking zwischen Aktien wichtig
+- Outperformance fragt genau nach relativer Staerke
+- Absolute Steigt/Faellt-Vorhersagen sind schwer, weil der Gesamtmarkt viele Aktien gleichzeitig bewegt
+
+Neu eingebaute Marktfeatures:
+
+- `QQQ_Return`
+- `SPY_Return`
+- `VIX_Change`
+- `QQQ_Momentum_20`
+- `SPY_Momentum_20`
+- `QQQ_Distance_to_MA200`
+- `SPY_Distance_to_MA200`
+
+Neu eingebaute Relative-Strength-Features:
+
+- `Relative_Return_QQQ`
+- `Relative_Return_SPY`
+- `Relative_Momentum_20_QQQ`
+- `Relative_Momentum_20_SPY`
+
+Wichtig: Die Future-Markt-Rendite wird nur fuer das Target genutzt, nicht als
+Feature. So vermeiden wir Lookahead und Data Leakage.
+
+Die wichtigsten Ergebnisdateien sind:
+
+```text
+data/processed/lstm_outperformance_predictions.csv
+data/processed/lstm_outperformance_results.csv
+data/processed/lstm_outperformance_top_k_results.csv
+data/processed/lstm_outperformance_comparison_summary.csv
+plots/09_outperformance_lstm_metrics.png
+plots/10_outperformance_top_k_return.png
+plots/11_outperformance_cumulative_comparison.png
+```
+
+Nur das Outperformance-LSTM kann so gestartet werden:
+
+```bash
+python tech_stock_prediction/experiments/exp_2_lstm/scripts/14_outperformance_lstm/outperformance_lstm.py
+```
+
 ## Warum schlaegt das Modell Buy-and-Hold bisher nicht?
 
 Das LSTM erkennt viele steigende Tage, deshalb sind Recall und F1 besser als
@@ -215,6 +352,12 @@ Deshalb betrachten wir jetzt nicht nur Klassifikationsmetriken, sondern auch:
 data/processed/lstm_threshold_results.csv
 data/processed/lstm_top_k_results.csv
 data/processed/lstm_tuning_results.csv
+data/processed/lstm_tuned_final_results.csv
+data/processed/lstm_tuned_top_k_results.csv
+data/processed/lstm_model_comparison_summary.csv
+data/processed/lstm_outperformance_results.csv
+data/processed/lstm_outperformance_top_k_results.csv
+data/processed/lstm_outperformance_comparison_summary.csv
 models/lstm_feature_scaler.pkl
 ```
 
@@ -230,3 +373,33 @@ Nach dieser Erweiterung sollten wir vergleichen:
 - Top 1 bis Top 5 im Backtest
 - Ob Top-K stabiler ist als die einfache Regel `Prediction = 1 -> kaufen`
 - Optional spaeter: `NUM_LAYERS = 2`, damit LSTM-Dropout technisch aktiv wird
+
+## Ergebnisplots
+
+Die wichtigsten LSTM-Ergebnisse werden als PNG-Dateien gespeichert unter:
+
+```text
+plots/
+```
+
+Das Plot-Skript liegt hier:
+
+```text
+scripts/11_visualization/generate_lstm_plots.py
+```
+
+Es erzeugt diese Visualisierungen:
+
+- Trainingsverlauf
+- Testmetriken
+- Confusion Matrix
+- kumulierte Rendite LSTM vs. Buy-and-Hold
+- Threshold Backtest
+- Top-K Backtest
+- Tuning-Vergleich
+- Gesamtvergleich aller Modelle
+- Outperformance-LSTM Metriken
+- Outperformance Top-K Backtest
+- kumulierter Vergleich Standard-LSTM vs. Outperformance-LSTM vs. Buy-and-Hold
+
+Die Plots sind generierte Dateien und gehoeren nicht in Git.

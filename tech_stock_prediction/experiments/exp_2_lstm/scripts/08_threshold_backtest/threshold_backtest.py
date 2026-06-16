@@ -24,8 +24,6 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
 PARAMS = yaml.safe_load(open(EXPERIMENT_ROOT / "conf" / "params.yaml"))
 
-THRESHOLDS = [0.50, 0.55, 0.60, 0.65, 0.70]
-
 
 def require_columns(data, required_columns, file_name):
     missing_columns = [column for column in required_columns if column not in data.columns]
@@ -91,9 +89,14 @@ def calculate_strategy_results(predictions, threshold):
     daily_returns = result_data.groupby("Date")[["Strategy_Return", "Buy_And_Hold_Return"]].mean()
     strategy_total_return = (1 + daily_returns["Strategy_Return"]).prod() - 1
     buy_and_hold_total_return = (1 + daily_returns["Buy_And_Hold_Return"]).prod() - 1
+    test_start = daily_returns.index.min()
+    test_end = daily_returns.index.max()
 
     return {
         "Threshold": threshold,
+        "Test_Start": test_start.date().isoformat(),
+        "Test_End": test_end.date().isoformat(),
+        "Number_Of_Trading_Days": len(daily_returns),
         "Accuracy": accuracy_score(y_true, y_pred),
         "Precision": precision_score(y_true, y_pred, zero_division=0),
         "Recall": recall_score(y_true, y_pred, zero_division=0),
@@ -156,7 +159,8 @@ def print_results(results):
 def main():
     predictions_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["PREDICTIONS_FILE"]
     test_file = EXPERIMENT_ROOT / PARAMS["DATA"]["TEST_FILE"]
-    output_file = EXPERIMENT_ROOT / "data" / "processed" / "lstm_threshold_results.csv"
+    output_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["THRESHOLD_RESULTS_FILE"]
+    thresholds = PARAMS["MODEL"].get("THRESHOLDS", [0.50, 0.55, 0.60, 0.65, 0.70])
 
     predictions = load_predictions(predictions_file)
     test_next_close = load_test_next_close(test_file)
@@ -171,7 +175,7 @@ def main():
     predictions["Future_Return"] = predictions["Next_Close"] / predictions["Close"] - 1
 
     rows = []
-    for threshold in THRESHOLDS:
+    for threshold in thresholds:
         rows.append(calculate_strategy_results(predictions, threshold))
 
     results = pd.DataFrame(rows)

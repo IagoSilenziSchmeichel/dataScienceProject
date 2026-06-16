@@ -27,6 +27,7 @@ import torch.nn as nn
 import yaml
 from formatting import format_decimal, format_percent, save_csv
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
 
@@ -113,6 +114,25 @@ def check_columns(data, feature_columns, target_column, dataset_name):
 
     if missing_columns:
         raise ValueError(f"{dataset_name} is missing columns: {missing_columns}")
+
+
+def scale_features(train_data, validation_data, feature_columns):
+    """
+    Scale features for the tuning run without data leakage.
+
+    The scaler is fitted only on the training data. The validation data is only
+    transformed with that fitted scaler, because validation is used for model
+    selection.
+    """
+    scaler = StandardScaler()
+
+    train_scaled = train_data.copy()
+    validation_scaled = validation_data.copy()
+
+    train_scaled[feature_columns] = scaler.fit_transform(train_data[feature_columns])
+    validation_scaled[feature_columns] = scaler.transform(validation_data[feature_columns])
+
+    return train_scaled, validation_scaled
 
 
 def create_sequences(data, feature_columns, target_column, sequence_length):
@@ -304,7 +324,7 @@ def main():
     train_file = EXPERIMENT_ROOT / PARAMS["DATA"]["TRAIN_FILE"]
     validation_file = EXPERIMENT_ROOT / PARAMS["DATA"]["VALIDATION_FILE"]
     feature_path = EXPERIMENT_ROOT / PARAMS["DATA"]["FEATURE_PATH"]
-    output_file = EXPERIMENT_ROOT / "data" / "processed" / "lstm_tuning_results.csv"
+    output_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["TUNING_RESULTS_FILE"]
 
     target_column = PARAMS["MODEL"]["TARGET"]
     feature_columns = load_feature_columns(feature_path)
@@ -314,6 +334,14 @@ def main():
 
     check_columns(train_data, feature_columns, target_column, "Train data")
     check_columns(validation_data, feature_columns, target_column, "Validation data")
+
+    train_data, validation_data = scale_features(
+        train_data,
+        validation_data,
+        feature_columns,
+    )
+
+    print("Feature scaling: StandardScaler fitted on train data only.")
 
     configurations = build_configurations()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

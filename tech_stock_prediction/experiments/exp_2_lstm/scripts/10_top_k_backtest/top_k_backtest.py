@@ -21,8 +21,6 @@ from formatting import format_decimal, format_percent, save_csv
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
 PARAMS = yaml.safe_load(open(EXPERIMENT_ROOT / "conf" / "params.yaml"))
 
-TOP_K_VALUES = [1, 2, 3, 4, 5]
-
 
 def require_columns(data, required_columns, file_name):
     missing_columns = [column for column in required_columns if column not in data.columns]
@@ -119,9 +117,20 @@ def calculate_top_k_result(predictions, top_k):
 
     strategy_return = (1 + daily_results["Strategy_Return"]).prod() - 1
     buy_and_hold_return = (1 + daily_results["Buy_And_Hold_Return"]).prod() - 1
+    test_start = daily_results.index.min()
+    test_end = daily_results.index.max()
+
+    if strategy_return > 1.0:
+        print(
+            "Warning: Top-K result is very high. "
+            "Check whether this result is dominated by a short period or single stock."
+        )
 
     return {
+        "model_name": "standard_lstm",
         "top_k": top_k,
+        "test_start": test_start.date().isoformat(),
+        "test_end": test_end.date().isoformat(),
         "strategy_return": strategy_return,
         "buy_and_hold_return": buy_and_hold_return,
         "difference": strategy_return - buy_and_hold_return,
@@ -153,11 +162,12 @@ def print_results(results):
 
 def main():
     predictions = prepare_backtest_data()
-    output_file = EXPERIMENT_ROOT / "data" / "processed" / "lstm_top_k_results.csv"
+    output_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["STANDARD_TOP_K_FILE"]
+    top_k_values = PARAMS["MODEL"].get("TOP_K_VALUES", [1, 2, 3, 4, 5])
 
     rows = []
 
-    for top_k in TOP_K_VALUES:
+    for top_k in top_k_values:
         rows.append(calculate_top_k_result(predictions, top_k))
 
     results = pd.DataFrame(rows)

@@ -20,6 +20,11 @@ EXPERIMENT_ROOT = PROJECT_ROOT / "experiments" / "exp_2_lstm"
 # Tuning trains several LSTM models and can take much longer.
 # Keep it False for the normal team pipeline.
 RUN_TUNING = False
+RUN_TUNED_FINAL_TEST = True
+
+TUNING_RESULTS_FILE = (
+    EXPERIMENT_ROOT / "data" / "processed" / "lstm_tuning_results.csv"
+)
 
 SCRIPTS = [
     "scripts/01_data_preparation/prepare_lstm_data.py",
@@ -29,18 +34,35 @@ SCRIPTS = [
     "scripts/05_backtesting/backtest_lstm.py",
     "scripts/08_threshold_backtest/threshold_backtest.py",
     "scripts/10_top_k_backtest/top_k_backtest.py",
+    "scripts/14_outperformance_lstm/outperformance_lstm.py",
+    "scripts/11_visualization/generate_lstm_plots.py",
 ]
 
 TUNING_SCRIPTS = [
     "scripts/09_lstm_tuning/lstm_tuning.py",
 ]
 
+TUNED_FINAL_TEST_SCRIPT = "scripts/12_tuned_final_test/tuned_final_test.py"
+COMPARISON_SCRIPT = "scripts/13_comparison/compare_lstm_results.py"
+
 
 def main():
     scripts_to_run = SCRIPTS.copy()
 
     if RUN_TUNING:
-        scripts_to_run.extend(TUNING_SCRIPTS)
+        insert_position = 3
+        scripts_to_run[insert_position:insert_position] = TUNING_SCRIPTS
+
+    if RUN_TUNED_FINAL_TEST:
+        if RUN_TUNING or TUNING_RESULTS_FILE.exists():
+            scripts_to_run.insert(-1, TUNED_FINAL_TEST_SCRIPT)
+            scripts_to_run.insert(-1, COMPARISON_SCRIPT)
+        else:
+            print(
+                "Skipping tuned final test because lstm_tuning_results.csv is missing. "
+                "Run scripts/09_lstm_tuning/lstm_tuning.py first or set RUN_TUNING = True.",
+                flush=True,
+            )
 
     for script in scripts_to_run:
         print("\n" + "=" * 80, flush=True)

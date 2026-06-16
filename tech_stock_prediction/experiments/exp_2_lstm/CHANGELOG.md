@@ -1,5 +1,89 @@
 # LSTM Experiment Changelog
 
+## Aktuelle Erweiterung: Outperformance-LSTM
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/run_lstm_pipeline.py`
+- `tech_stock_prediction/experiments/exp_2_lstm/conf/params.yaml`
+- `tech_stock_prediction/experiments/exp_2_lstm/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/CHANGELOG.md`
+
+### Neue Dateien
+
+- `scripts/14_outperformance_lstm/outperformance_lstm.py`
+- `scripts/14_outperformance_lstm/__init__.py`
+
+### Neue generierte Dateien
+
+- `data/processed/lstm_outperformance_predictions.csv`
+- `data/processed/lstm_outperformance_results.csv`
+- `data/processed/lstm_outperformance_top_k_results.csv`
+- `data/processed/lstm_outperformance_comparison_summary.csv`
+- `plots/09_outperformance_lstm_metrics.png`
+- `plots/10_outperformance_top_k_return.png`
+- `plots/11_outperformance_cumulative_comparison.png`
+
+### Was wurde fachlich ergaenzt?
+
+Das neue LSTM sagt nicht mehr nur voraus, ob eine Aktie morgen steigt.
+Stattdessen sagt es voraus, ob eine Aktie morgen QQQ schlaegt.
+
+Das passt besser zur Top-K-Strategie. Top-K kauft pro Tag nur die Aktien mit den
+staerksten Modellwahrscheinlichkeiten. Dafuer ist ein relatives Ranking oft
+sinnvoller als eine einfache absolute Steigt/Faellt-Vorhersage.
+
+Neu hinzugekommen sind Marktfeatures fuer QQQ, SPY und VIX:
+
+- QQQ Return
+- SPY Return
+- VIX Veraenderung
+- QQQ Momentum 20 Tage
+- SPY Momentum 20 Tage
+- Abstand von QQQ zum 200-Tage-Durchschnitt
+- Abstand von SPY zum 200-Tage-Durchschnitt
+
+Zusaetzlich berechnet das Skript Relative-Strength-Features. Damit sieht das
+Modell, ob eine Aktie staerker oder schwaecher als QQQ/SPY war.
+
+Das neue Target ist:
+
+```text
+Outperform_QQQ_Target = 1, wenn die Aktie am naechsten Handelstag besser laeuft als QQQ
+```
+
+Die naechste QQQ-Rendite wird nur fuer das Target benutzt, nicht als Feature.
+Dadurch entsteht kein Lookahead.
+
+### Ausfuehrung
+
+Die komplette LSTM-Pipeline kann wie gewohnt gestartet werden:
+
+```bash
+python tech_stock_prediction/run_lstm_pipeline.py
+```
+
+Nur das neue Outperformance-LSTM kann so gestartet werden:
+
+```bash
+python tech_stock_prediction/experiments/exp_2_lstm/scripts/14_outperformance_lstm/outperformance_lstm.py
+```
+
+### Interpretation
+
+Wichtige Dateien:
+
+- `lstm_outperformance_results.csv`: Klassifikationsmetriken und einfache Strategie
+- `lstm_outperformance_top_k_results.csv`: Top 1 bis Top 5 Outperformance-Strategien
+- `lstm_outperformance_comparison_summary.csv`: kurze Zusammenfassung
+- `plots/11_outperformance_cumulative_comparison.png`: kumulierter Vergleich gegen Standard-LSTM und Buy-and-Hold
+
+Wichtig beim Vergleichen:
+
+- Nicht nur Accuracy anschauen
+- Besonders Top-K Strategy Return gegen Buy-and-Hold vergleichen
+- Pruefen, ob Outperformance-LSTM bessere Rankings liefert als das Standard-LSTM
+
 ## Aktuelle Erweiterung: Feature-Normalisierung und erweitertes Top-K
 
 ### Geaenderte Dateien
@@ -9,12 +93,39 @@
 - `scripts/03_model_training/train_lstm.py`
 - `scripts/04_model_testing/evaluate_lstm.py`
 - `scripts/10_top_k_backtest/top_k_backtest.py`
+- `scripts/09_lstm_tuning/lstm_tuning.py`
+- `scripts/12_tuned_final_test/tuned_final_test.py`
+- `scripts/13_comparison/compare_lstm_results.py`
+- `scripts/11_visualization/generate_lstm_plots.py`
+- `tech_stock_prediction/run_lstm_pipeline.py`
 - `tech_stock_prediction/experiments/exp_2_lstm/README.md`
 - `tech_stock_prediction/experiments/exp_2_lstm/CHANGELOG.md`
+
+### Neue Dateien
+
+- `scripts/11_visualization/generate_lstm_plots.py`
+- `scripts/11_visualization/__init__.py`
+- `scripts/12_tuned_final_test/tuned_final_test.py`
+- `scripts/12_tuned_final_test/__init__.py`
+- `scripts/13_comparison/compare_lstm_results.py`
+- `scripts/13_comparison/__init__.py`
 
 ### Neue generierte Dateien
 
 - `models/lstm_feature_scaler.pkl`
+- `plots/01_lstm_training_history.png`
+- `plots/02_lstm_test_metrics.png`
+- `plots/03_lstm_confusion_matrix.png`
+- `plots/04_lstm_cumulative_backtest.png`
+- `plots/05_lstm_threshold_backtest.png`
+- `plots/06_lstm_top_k_backtest.png`
+- `plots/07_lstm_tuning_f1.png`
+- `data/processed/lstm_tuned_final_results.csv`
+- `data/processed/lstm_tuned_top_k_results.csv`
+- `data/processed/lstm_tuned_test_predictions_*.csv`
+- `data/processed/lstm_standard_results.csv`
+- `data/processed/lstm_standard_top_k_results.csv`
+- `data/processed/lstm_model_comparison_summary.csv`
 
 Diese Datei entsteht beim Erstellen der LSTM-Sequenzen. Sie wird nicht
 committed, weil sie in `.gitignore` ueber `experiments/*/models/*.pkl`
@@ -44,6 +155,19 @@ Der Top-K Backtest testet jetzt:
 
 Top 2 und Top 4 helfen, die Handelsentscheidung feiner zu vergleichen.
 
+Zusaetzlich wurde ein Plot-Skript ergaenzt. Es visualisiert die wichtigsten
+Ergebnisse fuer die Praesentation.
+
+Das Tuning wurde ausserdem richtig in finale Testergebnisse eingebaut. Vorher
+wurden Tuning-Konfigurationen nur auf dem Validation-Set verglichen. Jetzt
+werden die besten Validation-Konfigurationen genommen, neu mit Train +
+Validation trainiert und danach auf dem Testset bewertet.
+
+Die Ergebnisse werden jetzt in einer zentralen Summary zusammengefuehrt. Dabei
+werden native Testzeitraeume und der gemeinsame ueberschneidende Zeitraum
+getrennt ausgewiesen. So ist sichtbar, wann Buy-and-Hold wegen einer anderen
+Sequenzlaenge unterschiedlich ist.
+
 ### Ausfuehrung
 
 Die komplette LSTM-Pipeline kann so gestartet werden:
@@ -65,6 +189,10 @@ Wichtige Ergebnisdateien:
 - `data/processed/lstm_threshold_results.csv`
 - `data/processed/lstm_top_k_results.csv`
 - `data/processed/lstm_tuning_results.csv`
+- `data/processed/lstm_tuned_final_results.csv`
+- `data/processed/lstm_tuned_top_k_results.csv`
+- `data/processed/lstm_model_comparison_summary.csv`
+- `plots/*.png`
 
 Beim Interpretieren ist besonders wichtig:
 
@@ -72,6 +200,9 @@ Beim Interpretieren ist besonders wichtig:
 - `lstm_threshold_results.csv`: strengere Wahrscheinlichkeitsgrenzen
 - `lstm_top_k_results.csv`: nur die staerksten Signale pro Tag
 - `lstm_tuning_results.csv`: Validation-Vergleich verschiedener LSTM-Settings
+- `lstm_tuned_final_results.csv`: echte Testmetriken der besten Tuning-Modelle
+- `lstm_tuned_top_k_results.csv`: Top-K Backtest der besten Tuning-Modelle
+- `lstm_model_comparison_summary.csv`: wichtigste faire Gesamtuebersicht
 
 ## Vorherige Erweiterung: LSTM-Tuning und Top-K Backtest
 

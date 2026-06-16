@@ -6,7 +6,7 @@
 
 Prediction of the next trading day's price direction for large tech stocks.
 
-For every selected stock and every trading day from `2019-01-01`, the target is:
+For every selected stock and every trading day from `2016-01-01`, the target is:
 
 - `1`: next trading day's close price is higher than today's close price
 - `0`: next trading day's close price is lower than or equal to today's close price

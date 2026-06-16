@@ -20,6 +20,11 @@ DATA:
   # Metadata for the test sequences, needed for evaluation and backtesting
   TEST_METADATA_FILE: "data/processed/lstm_test_metadata.csv"
 
+MARKET:
+  QQQ_TICKER: "QQQ"
+  SPY_TICKER: "SPY"
+  VIX_TICKER: "^VIX"
+
 MODEL:
   TARGET: "Target"
 
@@ -38,9 +43,22 @@ MODEL:
   LEARNING_RATE: 0.001
   RANDOM_STATE: 42
   PREDICTION_THRESHOLD: 0.50
+  THRESHOLDS: [0.50, 0.55, 0.60, 0.65, 0.70]
+  TOP_K_VALUES: [1, 2, 3, 4, 5]
 
   MODEL_FILE: "models/lstm_model.pth"
 
 RESULTS:
   PREDICTIONS_FILE: "data/processed/lstm_test_predictions.csv"
   BACKTEST_FILE: "data/processed/lstm_backtest_results.csv"
+  STANDARD_RESULTS_FILE: "data/processed/lstm_standard_results.csv"
+  STANDARD_TOP_K_FILE: "data/processed/lstm_standard_top_k_results.csv"
+  THRESHOLD_RESULTS_FILE: "data/processed/lstm_threshold_results.csv"
+  TUNING_RESULTS_FILE: "data/processed/lstm_tuning_results.csv"
+  TUNED_FINAL_RESULTS_FILE: "data/processed/lstm_tuned_final_results.csv"
+  TUNED_TOP_K_RESULTS_FILE: "data/processed/lstm_tuned_top_k_results.csv"
+  COMPARISON_SUMMARY_FILE: "data/processed/lstm_model_comparison_summary.csv"
+  OUTPERFORMANCE_PREDICTIONS_FILE: "data/processed/lstm_outperformance_predictions.csv"
+  OUTPERFORMANCE_RESULTS_FILE: "data/processed/lstm_outperformance_results.csv"
+  OUTPERFORMANCE_TOP_K_FILE: "data/processed/lstm_outperformance_top_k_results.csv"
+  OUTPERFORMANCE_COMPARISON_FILE: "data/processed/lstm_outperformance_comparison_summary.csv"

@@ -22,6 +22,8 @@ restart_with_project_venv()
 import numpy as np
 import pandas as pd
 import yaml
+from formatting import save_csv
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
@@ -56,6 +58,7 @@ def main():
 
     predictions_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["PREDICTIONS_FILE"]
     backtest_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["BACKTEST_FILE"]
+    standard_results_file = EXPERIMENT_ROOT / PARAMS["RESULTS"]["STANDARD_RESULTS_FILE"]
     test_file = EXPERIMENT_ROOT / PARAMS["DATA"]["TEST_FILE"]
 
     if not predictions_file.exists():
@@ -144,6 +147,9 @@ def main():
     strategy_total_return = daily_returns["Strategy_Cumulative"].iloc[-1] - 1
     buy_hold_total_return = daily_returns["Buy_Hold_Cumulative"].iloc[-1] - 1
     difference = strategy_total_return - buy_hold_total_return
+    test_start = daily_returns["Date"].min()
+    test_end = daily_returns["Date"].max()
+    number_of_trading_days = len(daily_returns)
 
     total_predictions = len(predictions)
     total_buy_signals = int(predictions["Prediction"].sum())
@@ -165,6 +171,8 @@ def main():
     print(f"Win rate of buy signals: {win_rate:.2%}")
 
     print("\nPortfolio comparison:")
+    print(f"Test period:             {test_start.date()} to {test_end.date()}")
+    print(f"Trading days:            {number_of_trading_days}")
     print(f"Strategy Return:         {strategy_total_return:.5%}")
     print(f"Buy-and-Hold Return:     {buy_hold_total_return:.5%}")
     print(f"Difference:              {difference:.5%}")
@@ -172,7 +180,47 @@ def main():
     backtest_file.parent.mkdir(parents=True, exist_ok=True)
     daily_returns.to_csv(backtest_file, index=False)
 
+    y_true = predictions["Actual"].astype(int)
+    y_pred = predictions["Prediction"].astype(int)
+    matrix = confusion_matrix(y_true, y_pred)
+
+    standard_results = pd.DataFrame(
+        [
+            {
+                "model_name": "standard_lstm",
+                "selection_method": "standard_config",
+                "sequence_length": PARAMS["MODEL"]["SEQUENCE_LENGTH"],
+                "hidden_size": PARAMS["MODEL"]["HIDDEN_SIZE"],
+                "num_layers": PARAMS["MODEL"]["NUM_LAYERS"],
+                "dropout": PARAMS["MODEL"]["DROPOUT"],
+                "learning_rate": PARAMS["MODEL"]["LEARNING_RATE"],
+                "threshold": PARAMS["MODEL"].get("PREDICTION_THRESHOLD", 0.50),
+                "test_start": test_start.date().isoformat(),
+                "test_end": test_end.date().isoformat(),
+                "number_of_trading_days": number_of_trading_days,
+                "total_predictions": total_predictions,
+                "accuracy": accuracy_score(y_true, y_pred),
+                "precision": precision_score(y_true, y_pred, zero_division=0),
+                "recall": recall_score(y_true, y_pred, zero_division=0),
+                "f1_score": f1_score(y_true, y_pred, zero_division=0),
+                "predicted_up_share": signal_rate,
+                "confusion_true_0_pred_0": matrix[0, 0],
+                "confusion_true_0_pred_1": matrix[0, 1],
+                "confusion_true_1_pred_0": matrix[1, 0],
+                "confusion_true_1_pred_1": matrix[1, 1],
+                "simple_strategy_return": strategy_total_return,
+                "buy_and_hold_return": buy_hold_total_return,
+                "difference": difference,
+                "average_trade_return": average_trade_return,
+                "win_rate": win_rate,
+            }
+        ]
+    )
+
+    save_csv(standard_results, standard_results_file)
+
     print(f"\nBacktest results saved to: {backtest_file}")
+    print(f"Standard result summary saved to: {standard_results_file}")
 
 
 if __name__ == "__main__":
