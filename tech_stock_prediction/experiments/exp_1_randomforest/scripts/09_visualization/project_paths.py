@@ -1,11 +1,11 @@
 """
-Central project paths for the tech stock prediction experiment.
+Local project paths for the market features experiment.
 """
 
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 EXPERIMENT_ROOT = PROJECT_ROOT / "experiments" / "exp_1_randomforest"
 
 CONF_DIR = EXPERIMENT_ROOT / "conf"

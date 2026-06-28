@@ -8,7 +8,7 @@
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
     <option name="SDK_HOME" value="$PROJECT_DIR$/.venv/bin/python" />
-    <option name="SDK_NAME" value="Python 3.12 (data-scienceProject)" />
+    <option name="SDK_NAME" value="Python 3.12" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tech_stock_prediction" />
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />

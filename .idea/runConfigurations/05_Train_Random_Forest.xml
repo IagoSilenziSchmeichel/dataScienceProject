@@ -9,13 +9,13 @@
     </envs>
     <option name="SDK_HOME" value="$PROJECT_DIR$/.venv/bin/python" />
     <option name="SDK_NAME" value="Python 3.9 (02-uci-pm25-IagoSilenziSchmeichel-1)" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tech_stock_prediction/experiments/exp_1_1" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tech_stock_prediction/experiments/exp_1_randomforest" />
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tech_stock_prediction/experiments/exp_1_1/scripts/05_model_training/train_random_forest.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tech_stock_prediction/experiments/exp_1_randomforest/scripts/05_model_training/tune_random_forest.py" />
     <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />

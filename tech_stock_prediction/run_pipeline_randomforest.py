@@ -1,5 +1,5 @@
 """
-Run the final Random Forest experiment pipeline from one file.
+Run the complete exp_1_randomforest pipeline.
 """
 
 from pathlib import Path
@@ -33,9 +33,9 @@ SCRIPTS = [
 
 def main():
     for script in SCRIPTS:
-        print("\n" + "=" * 80)
-        print(f"Running {script}")
-        print("=" * 80)
+        print("\n" + "=" * 80, flush=True)
+        print(f"Running {script}", flush=True)
+        print("=" * 80, flush=True)
 
         script_path = EXPERIMENT_ROOT / script
         subprocess.run([sys.executable, str(script_path)], cwd=PROJECT_ROOT, check=True)

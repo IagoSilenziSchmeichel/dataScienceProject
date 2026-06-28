@@ -1,3 +1,3 @@
 # Experiments
 
-- [Exp_1_1.md](experiments/exp_1_1/Exp_1_1.md)
+- Final Random Forest experiment: [exp_1_randomforest](experiments/exp_1_randomforest)
