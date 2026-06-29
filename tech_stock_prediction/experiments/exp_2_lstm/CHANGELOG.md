@@ -1,5 +1,165 @@
 # LSTM Experiment Changelog
 
+## Aktuelle Erweiterung: Robustheitspruefung
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/run_lstm_pipeline.py`
+- `tech_stock_prediction/experiments/exp_2_lstm/conf/params.yaml`
+- `tech_stock_prediction/experiments/exp_2_lstm/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/CHANGELOG.md`
+
+### Neue Dateien
+
+- `scripts/16_robustness/robustness_check.py`
+- `scripts/16_robustness/__init__.py`
+
+### Neue generierte Dateien
+
+- `data/processed/lstm_robustness_walk_forward_summary.csv`
+- `data/processed/lstm_robustness_sensitivity_summary.csv`
+- `data/processed/lstm_robustness_concentration_summary.csv`
+- `reports/lstm_robustness_report.md`
+- `plots/lstm_robustness_walk_forward_difference.png`
+- `plots/lstm_robustness_top_k_sensitivity.png`
+- `plots/lstm_robustness_cost_sensitivity.png`
+- `plots/lstm_robustness_concentration.png`
+
+### Was wurde fachlich ergaenzt?
+
+Die zwei aktuell besten Varianten werden jetzt auf Robustheit geprueft:
+
+- `standard_lstm` mit `Technical + Market`
+- `outperformance_lstm` mit `Technical + Relative Strength`
+
+Es wird keine neue Modellarchitektur eingefuehrt. Stattdessen wird dieselbe
+LSTM-Logik ueber mehrere Walk-Forward-Fenster neu trainiert und getestet.
+
+Geprueft werden:
+
+- mehrere Testfenster
+- Top-K von 1 bis 5
+- Transaktionskosten von 0 %, 0.05 %, 0.10 % und 0.20 %
+- Sharpe Ratio
+- Max Drawdown
+- Volatilitaet
+- Turnover
+- Anzahl Trades
+- Konzentration auf einzelne Aktien oder wenige Handelstage
+
+### Ausfuehrung
+
+Separat starten:
+
+```bash
+python tech_stock_prediction/experiments/exp_2_lstm/scripts/16_robustness/robustness_check.py
+```
+
+Oder in `run_lstm_pipeline.py` aktivieren:
+
+```text
+RUN_ROBUSTNESS_CHECK = True
+```
+
+Die normale Pipeline startet diesen Check bewusst nicht automatisch, weil
+mehrere LSTMs neu trainiert werden.
+
+## Aktuelle Erweiterung: Feature-Gruppen-Ablation
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/run_lstm_pipeline.py`
+- `tech_stock_prediction/experiments/exp_2_lstm/conf/params.yaml`
+- `tech_stock_prediction/experiments/exp_2_lstm/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/CHANGELOG.md`
+
+### Neue Dateien
+
+- `scripts/15_feature_ablation/lstm_feature_ablation.py`
+- `scripts/15_feature_ablation/__init__.py`
+
+### Neue generierte Dateien
+
+- `data/processed/lstm_feature_ablation_summary.csv`
+- `plots/lstm_feature_ablation_returns.png`
+- `plots/lstm_feature_ablation_sharpe.png`
+- `plots/lstm_feature_ablation_drawdown.png`
+- `plots/lstm_feature_ablation_top_k.png`
+
+### Was wurde fachlich ergaenzt?
+
+Es wurde eine Feature-Gruppen-Ablation fuer das LSTM ergaenzt. Dabei wird nicht
+blind ein neues Modell gebaut, sondern dieselbe LSTM-Struktur mit
+unterschiedlichen Featuregruppen getestet.
+
+Getestet werden:
+
+- Technical only
+- Technical + Volatility
+- Technical + Volume
+- Technical + Momentum/Trend
+- Technical + Market
+- Technical + Relative Strength
+- Final Feature Set
+
+Fuer jede Gruppe werden zwei Varianten trainiert:
+
+- Standard-LSTM mit Target `Target`
+- Outperformance-LSTM mit Target `Outperform_QQQ_Target`
+
+Danach wird fuer jede Variante ein Top-K Backtest auf den Testdaten berechnet.
+Zusaetzlich zu Return und Difference werden jetzt auch realistischere
+Backtest-Metriken gespeichert:
+
+- Transaktionskosten von 0.1 Prozent
+- Sharpe Ratio
+- Max Drawdown
+- Volatilitaet
+- Anzahl Trades
+- durchschnittlicher Turnover
+
+### Ausfuehrung
+
+Die Ablation wird bewusst nicht automatisch in der normalen Pipeline gestartet,
+weil mehrere LSTMs trainiert werden.
+
+Separat starten:
+
+```bash
+python tech_stock_prediction/experiments/exp_2_lstm/scripts/15_feature_ablation/lstm_feature_ablation.py
+```
+
+Oder in `run_lstm_pipeline.py` aktivieren:
+
+```text
+RUN_FEATURE_ABLATION = True
+```
+
+### Interpretation
+
+Die wichtigste Datei ist:
+
+```text
+data/processed/lstm_feature_ablation_summary.csv
+```
+
+Wichtigste Spalten:
+
+- `feature_group`: getestete Featuregruppe
+- `model_name`: Standard-LSTM oder Outperformance-LSTM
+- `best_top_k`: beste Anzahl gekaufter Aktien pro Tag
+- `f1_score`: Klassifikationsmetrik auf Testdaten
+- `strategy_return`: Top-K Rendite nach Transaktionskosten
+- `buy_and_hold_return`: Vergleichsrendite im gleichen Zeitraum
+- `difference`: Strategy Return minus Buy-and-Hold
+- `sharpe_ratio`: Rendite im Verhaeltnis zum Risiko
+- `max_drawdown`: groesster zwischenzeitlicher Verlust
+- `number_of_trades`: Anzahl Positionswechsel
+- `average_turnover`: durchschnittlicher Portfolio-Wechsel
+
+Die Plots zeigen Returns, Sharpe Ratio, Max Drawdown und das beste Top-K je
+Featuregruppe.
+
 ## Aktuelle Erweiterung: Outperformance-LSTM
 
 ### Geaenderte Dateien

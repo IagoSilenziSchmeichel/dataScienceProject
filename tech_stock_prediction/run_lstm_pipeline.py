@@ -21,6 +21,8 @@ EXPERIMENT_ROOT = PROJECT_ROOT / "experiments" / "exp_2_lstm"
 # Keep it False for the normal team pipeline.
 RUN_TUNING = False
 RUN_TUNED_FINAL_TEST = True
+RUN_FEATURE_ABLATION = False
+RUN_ROBUSTNESS_CHECK = False
 
 TUNING_RESULTS_FILE = (
     EXPERIMENT_ROOT / "data" / "processed" / "lstm_tuning_results.csv"
@@ -44,6 +46,8 @@ TUNING_SCRIPTS = [
 
 TUNED_FINAL_TEST_SCRIPT = "scripts/12_tuned_final_test/tuned_final_test.py"
 COMPARISON_SCRIPT = "scripts/13_comparison/compare_lstm_results.py"
+FEATURE_ABLATION_SCRIPT = "scripts/15_feature_ablation/lstm_feature_ablation.py"
+ROBUSTNESS_CHECK_SCRIPT = "scripts/16_robustness/robustness_check.py"
 
 
 def main():
@@ -63,6 +67,12 @@ def main():
                 "Run scripts/09_lstm_tuning/lstm_tuning.py first or set RUN_TUNING = True.",
                 flush=True,
             )
+
+    if RUN_FEATURE_ABLATION:
+        scripts_to_run.insert(-1, FEATURE_ABLATION_SCRIPT)
+
+    if RUN_ROBUSTNESS_CHECK:
+        scripts_to_run.insert(-1, ROBUSTNESS_CHECK_SCRIPT)
 
     for script in scripts_to_run:
         print("\n" + "=" * 80, flush=True)

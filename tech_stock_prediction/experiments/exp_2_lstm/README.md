@@ -403,3 +403,130 @@ Es erzeugt diese Visualisierungen:
 - kumulierter Vergleich Standard-LSTM vs. Outperformance-LSTM vs. Buy-and-Hold
 
 Die Plots sind generierte Dateien und gehoeren nicht in Git.
+
+## Feature-Gruppen-Ablation
+
+Die Feature-Gruppen-Ablation prueft, welche Featuregruppen dem LSTM wirklich
+helfen. Dabei wird keine neue Modellart eingefuehrt. Stattdessen bleibt die
+LSTM-Architektur gleich und nur die Featureliste wird veraendert.
+
+Das Skript liegt hier:
+
+```text
+scripts/15_feature_ablation/lstm_feature_ablation.py
+```
+
+Getestete Featuregruppen:
+
+```text
+Technical only
+Technical + Volatility
+Technical + Volume
+Technical + Momentum/Trend
+Technical + Market
+Technical + Relative Strength
+Final Feature Set
+```
+
+Fuer jede Featuregruppe werden zwei Targets getestet:
+
+```text
+standard_lstm: Aktie steigt morgen
+outperformance_lstm: Aktie schlaegt morgen QQQ
+```
+
+Der Scaler wird nur auf den Trainingsdaten gefittet. Validation- und Testdaten
+werden nur transformiert. Der Split bleibt chronologisch.
+
+Zusaetzliche Backtest-Metriken:
+
+```text
+Transaktionskosten: 0.1 %
+Sharpe Ratio
+Max Drawdown
+Volatilitaet
+Anzahl Trades
+Turnover
+```
+
+Die Ablation kann separat gestartet werden:
+
+```bash
+python tech_stock_prediction/experiments/exp_2_lstm/scripts/15_feature_ablation/lstm_feature_ablation.py
+```
+
+Die normale Pipeline startet sie nicht automatisch, weil mehrere LSTMs
+trainiert werden und der Lauf dadurch laenger dauert. In `run_lstm_pipeline.py`
+kann dafuer `RUN_FEATURE_ABLATION = True` gesetzt werden.
+
+Ergebnisdateien:
+
+```text
+data/processed/lstm_feature_ablation_summary.csv
+plots/lstm_feature_ablation_returns.png
+plots/lstm_feature_ablation_sharpe.png
+plots/lstm_feature_ablation_drawdown.png
+plots/lstm_feature_ablation_top_k.png
+```
+
+Interpretation:
+
+- `difference` zeigt Strategy Return minus Buy-and-Hold
+- positive Werte bedeuten besser als Buy-and-Hold
+- ein guter Wert sollte nicht nur hohe Rendite haben, sondern auch Risiko und Turnover beachten
+- `best_top_k` zeigt, welches Top-K pro Featuregruppe am besten funktioniert hat
+
+## Robustheitspruefung
+
+Die Robustheitspruefung untersucht die zwei aktuell besten Varianten genauer:
+
+```text
+standard_lstm + Technical + Market
+outperformance_lstm + Technical + Relative Strength
+```
+
+Dabei wird keine neue Modellarchitektur gebaut. Es wird dieselbe LSTM-Struktur
+auf mehreren Walk-Forward-Zeitfenstern erneut trainiert und getestet.
+
+Das Skript liegt hier:
+
+```text
+scripts/16_robustness/robustness_check.py
+```
+
+Geprueft wird:
+
+```text
+Walk-Forward-Validation
+Top-K Sensitivitaet: 1 bis 5
+Transaktionskosten: 0 %, 0.05 %, 0.10 %, 0.20 %
+Sharpe Ratio
+Max Drawdown
+Volatilitaet
+Turnover
+Anzahl Trades
+Renditekonzentration nach Aktie und Handelstag
+```
+
+Separat starten:
+
+```bash
+python tech_stock_prediction/experiments/exp_2_lstm/scripts/16_robustness/robustness_check.py
+```
+
+Die normale Pipeline startet den Check nicht automatisch, weil mehrere LSTMs
+neu trainiert werden. In `run_lstm_pipeline.py` kann dafuer
+`RUN_ROBUSTNESS_CHECK = True` gesetzt werden.
+
+Ergebnisdateien:
+
+```text
+data/processed/lstm_robustness_walk_forward_summary.csv
+data/processed/lstm_robustness_sensitivity_summary.csv
+data/processed/lstm_robustness_concentration_summary.csv
+reports/lstm_robustness_report.md
+plots/lstm_robustness_walk_forward_difference.png
+plots/lstm_robustness_top_k_sensitivity.png
+plots/lstm_robustness_cost_sensitivity.png
+plots/lstm_robustness_concentration.png
+```
