@@ -9,3 +9,5 @@ matplotlib
 seaborn
 lxml
 torch
+alpaca-py
+python-dotenv

@@ -1,0 +1,8 @@
+Daily_Return
+Lag_1_Return
+Lag_3_Return
+Lag_7_Return
+RSI_14
+MACD
+Relative_Return_QQQ
+Relative_Momentum_20_QQQ

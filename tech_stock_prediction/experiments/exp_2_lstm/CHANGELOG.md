@@ -1,5 +1,121 @@
 # LSTM Experiment Changelog
 
+## Aktuelle Erweiterung: Finaler Alpaca-Export
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/alpaca_trading/signal_generator.py`
+- `tech_stock_prediction/alpaca_trading/paper_trading_engine.py`
+- `tech_stock_prediction/alpaca_trading/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/CHANGELOG.md`
+
+### Neue Dateien
+
+- `tech_stock_prediction/experiments/exp_2_lstm/conf/outperformance_alpaca_features.txt`
+- `tech_stock_prediction/experiments/exp_2_lstm/scripts/17_export_alpaca_model/export_outperformance_alpaca_model.py`
+- `tech_stock_prediction/experiments/exp_2_lstm/scripts/17_export_alpaca_model/__init__.py`
+
+### Neue generierte Dateien
+
+- `tech_stock_prediction/experiments/exp_2_lstm/models/outperformance_lstm_model.pth`
+- `tech_stock_prediction/experiments/exp_2_lstm/models/outperformance_lstm_scaler.pkl`
+- `tech_stock_prediction/experiments/exp_2_lstm/data/processed/lstm_outperformance_alpaca_export_summary.csv`
+
+### Was wurde fachlich geaendert?
+
+Fuer Alpaca wird jetzt explizit die finale Variante exportiert:
+
+- Outperformance-LSTM
+- Featuregruppe `Technical + Relative Strength`
+- Benchmark `QQQ` fuer Tech-Universen
+- Top-K-Strategie mit Standardwert `TOP_K=1`
+
+Der Signal-Generator laedt nicht das Standard-LSTM, sondern erwartet bewusst
+die separaten Outperformance-Dateien. Dadurch wird verhindert, dass im Paper
+Trading aus Versehen das falsche Modell verwendet wird.
+
+### Ausfuehrung
+
+Finales Modell exportieren:
+
+```bash
+python tech_stock_prediction/experiments/exp_2_lstm/scripts/17_export_alpaca_model/export_outperformance_alpaca_model.py
+```
+
+Nur Signale testen:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only
+```
+
+Dry-Run testen:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --dry-run
+```
+
+Erst danach Paper Orders senden:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --execute
+```
+
+`--execute` braucht Alpaca Paper-Trading-Keys in der lokalen `.env`.
+
+## Aktuelle Erweiterung: Struktur aufgeraeumt
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/run_lstm_pipeline.py`
+- `tech_stock_prediction/experiments/exp_2_lstm/conf/params.yaml`
+- `tech_stock_prediction/experiments/exp_2_lstm/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/CHANGELOG.md`
+
+### Neue Dateien
+
+- `tech_stock_prediction/experiments/exp_2_lstm/conf/lstm_features.txt`
+
+### Verschobene Dateien
+
+Diese alten Zwischenexperimente wurden nicht geloescht, sondern nach
+`scripts/archive/` verschoben:
+
+- `scripts/archive/08_threshold_backtest/`
+- `scripts/archive/09_lstm_tuning/`
+- `scripts/archive/12_tuned_final_test/`
+- `scripts/archive/13_comparison/`
+
+### Was wurde fachlich geaendert?
+
+Die normale LSTM-Hauptpipeline enthaelt jetzt nur noch die aktuell relevanten
+Schritte:
+
+- Data Preparation
+- Sequence Creation
+- Model Training
+- Model Testing
+- Backtesting
+- Top-K Backtest
+- Outperformance-LSTM
+- Feature-Ablation
+- Robustheitspruefung
+- Visualization
+
+Threshold-Backtest, LSTM-Tuning, Tuned-Final-Test und der alte
+Modellvergleich bleiben im Archiv erhalten. Sie werden nicht mehr
+standardmaessig ausgefuehrt.
+
+Zusaetzlich besitzt `exp_2_lstm` jetzt eine eigene Featureliste unter
+`conf/lstm_features.txt`. Dadurch haengt die LSTM-Pipeline nicht mehr von einem
+entfernten Random-Forest-Skriptordner ab.
+
+### Warum ist das sinnvoll?
+
+Die Projektstruktur zeigt jetzt klarer, was zur aktuellen Hauptpipeline gehoert
+und was aeltere Experimente waren. Dadurch koennen Teammitglieder schneller
+erkennen, welche Skripte fuer den aktuellen Stand wichtig sind.
+
 ## Aktuelle Erweiterung: Robustheitspruefung
 
 ### Geaenderte Dateien

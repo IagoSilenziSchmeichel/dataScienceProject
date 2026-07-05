@@ -7,8 +7,10 @@ DATA:
   VALIDATION_FILE: "../exp_1_1/data/processed/validation.csv"
   TEST_FILE: "../exp_1_1/data/processed/test.csv"
 
-  # Feature list from the Random Forest experiment
-  FEATURE_PATH: "../exp_1_1/scripts/03_pre_split_prep/features.txt"
+  # LSTM feature list.
+  # Stored inside exp_2_lstm so the LSTM pipeline does not depend on archived
+  # or removed Random Forest script folders.
+  FEATURE_PATH: "conf/lstm_features.txt"
 
   # Output file for created LSTM sequences
   SEQUENCE_FILE: "data/processed/lstm_sequences.npz"
