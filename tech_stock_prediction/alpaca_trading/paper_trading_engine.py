@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+import uuid
 
 import pandas as pd
 
@@ -38,6 +39,7 @@ class DailyCycleResult:
     mode: str
     portfolio_value: float | None
     cash: float | None
+    buying_power: float | None
     planned_orders: list[dict]
 
 
@@ -77,6 +79,7 @@ class PaperTradingEngine:
             signals_only: bool = False,
             universe_count: int = 1,
             allow_existing_positions: bool = False,
+            run_id: str | None = None,
     ):
         self.universe_name = universe_name
         self.top_k = top_k
@@ -85,18 +88,20 @@ class PaperTradingEngine:
         self.signals_only = signals_only
         self.universe_count = universe_count
         self.allow_existing_positions = allow_existing_positions
+        self.run_id = run_id or f"single_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}"
 
     def run_daily_cycle(self) -> DailyCycleResult:
         """Run one signal and paper-trading cycle."""
         benchmark = get_benchmark_for_universe(self.universe_name)
         settings = load_alpaca_settings(
-            require_keys=not self.signals_only,
+            require_keys=not self.signals_only and not self.dry_run,
             dry_run_override=self.dry_run,
             top_k_override=self.top_k,
             timeframe_override=self.timeframe,
         )
 
         signals = generate_signals(self.universe_name, self.top_k, settings.timeframe)
+        signals = self.add_run_context(signals, benchmark)
         append_csv(signals, SIGNALS_LOG)
 
         selected = signals[signals["selected"]].copy()
@@ -104,9 +109,11 @@ class PaperTradingEngine:
 
         if self.signals_only:
             record_trading_documentation(
+                run_id=self.run_id,
                 universe=self.universe_name,
                 timeframe=settings.timeframe,
                 benchmark=benchmark,
+                top_k=self.top_k,
                 mode="signals_only",
                 signals=signals,
                 account=None,
@@ -129,6 +136,7 @@ class PaperTradingEngine:
                 mode="SIGNALS_ONLY",
                 portfolio_value=None,
                 cash=None,
+                buying_power=None,
                 planned_orders=[],
             )
 
@@ -150,9 +158,11 @@ class PaperTradingEngine:
             time_in_force=settings.time_in_force,
             dry_run=settings.dry_run,
         )
+        position_log = self.add_position_log_context(position_log, benchmark)
 
         submitted_orders = []
         for order in orders:
+            self.add_order_context(order, benchmark)
             if order["action"] == "hold":
                 submitted_orders.append(order)
                 continue
@@ -178,9 +188,11 @@ class PaperTradingEngine:
 
         mode = "DRY_RUN" if settings.dry_run else "EXECUTE"
         record_trading_documentation(
+            run_id=self.run_id,
             universe=self.universe_name,
             timeframe=settings.timeframe,
             benchmark=benchmark,
+            top_k=self.top_k,
             mode=mode.lower(),
             signals=signals,
             account=account,
@@ -204,8 +216,37 @@ class PaperTradingEngine:
             mode=mode,
             portfolio_value=account["portfolio_value"],
             cash=account["cash"],
+            buying_power=account["buying_power"],
             planned_orders=submitted_orders,
         )
+
+    def add_run_context(self, signals: pd.DataFrame, benchmark: str) -> pd.DataFrame:
+        """Add common server-run columns to the signal log."""
+        signals = signals.copy()
+        signals["run_id"] = self.run_id
+        signals["timestamp"] = datetime.now(timezone.utc).isoformat()
+        signals["benchmark"] = benchmark
+        signals["top_k"] = self.top_k
+        return signals
+
+    def add_order_context(self, order: dict, benchmark: str) -> None:
+        """Add common server-run columns to each order row."""
+        order["run_id"] = self.run_id
+        order["timestamp"] = datetime.now(timezone.utc).isoformat()
+        order["benchmark"] = benchmark
+        order["top_k"] = self.top_k
+
+    def add_position_log_context(self, position_log: pd.DataFrame, benchmark: str) -> pd.DataFrame:
+        """Add common server-run columns to the rebalancing position log."""
+        if position_log.empty:
+            return position_log
+
+        position_log = position_log.copy()
+        position_log["run_id"] = self.run_id
+        position_log["timestamp"] = datetime.now(timezone.utc).isoformat()
+        position_log["benchmark"] = benchmark
+        position_log["top_k"] = self.top_k
+        return position_log
 
     def build_performance_row(
             self,
@@ -245,7 +286,9 @@ class PaperTradingEngine:
             [
                 {
                     "date": signals["date"].iloc[0],
+                    "run_id": self.run_id,
                     "generated_at": generated_at,
+                    "timestamp": generated_at,
                     "timeframe": signals["timeframe"].iloc[0],
                     "bar_timestamp": signals["bar_timestamp"].iloc[0],
                     "test_run_id": signals["test_run_id"].iloc[0],
@@ -254,6 +297,7 @@ class PaperTradingEngine:
                     "test_period_end": signals["test_period_end"].iloc[0],
                     "universe": self.universe_name,
                     "benchmark": signals["benchmark"].iloc[0],
+                    "top_k": self.top_k,
                     "portfolio_value": account["portfolio_value"],
                     "cash": account["cash"],
                     "benchmark_value": benchmark_value,

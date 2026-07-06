@@ -18,23 +18,57 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from config.stock_universes import get_benchmark_for_universe
+from config.stock_universes import get_universe
+from config.stock_universes import list_available_universes
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 LOG_DIR = PROJECT_ROOT / "alpaca_trading" / "logs"
 REPORT_DIR = PROJECT_ROOT / "alpaca_trading" / "reports"
 
+SCHEDULER_LOG_FILE = LOG_DIR / "scheduler_log.csv"
+UNIVERSE_POSITION_REGISTRY_FILE = LOG_DIR / "universe_position_registry.csv"
 TRADING_SNAPSHOTS_FILE = LOG_DIR / "trading_snapshots.csv"
 POSITIONS_HISTORY_FILE = LOG_DIR / "positions_history.csv"
 ORDERS_HISTORY_FILE = LOG_DIR / "orders_history.csv"
 SIGNAL_HISTORY_FILE = LOG_DIR / "signal_history.csv"
 PERFORMANCE_HISTORY_FILE = LOG_DIR / "performance_history.csv"
 DAILY_SUMMARY_FILE = REPORT_DIR / "daily_summary.md"
+MULTI_UNIVERSE_SUMMARY_FILE = REPORT_DIR / "multi_universe_summary.md"
+
+SCHEDULER_LOG_COLUMNS = [
+    "timestamp",
+    "run_id",
+    "mode",
+    "command",
+    "status",
+    "return_code",
+    "message",
+]
+
+UNIVERSE_POSITION_REGISTRY_COLUMNS = [
+    "run_id",
+    "timestamp",
+    "universe",
+    "benchmark",
+    "timeframe",
+    "top_k",
+    "ticker",
+    "opened_at",
+    "last_seen_at",
+    "target_weight",
+    "current_status",
+    "alpaca_order_id",
+]
 
 TRADING_SNAPSHOT_COLUMNS = [
+    "run_id",
     "timestamp",
     "universe",
     "timeframe",
     "benchmark",
+    "top_k",
     "portfolio_value",
     "cash",
     "buying_power",
@@ -47,7 +81,12 @@ TRADING_SNAPSHOT_COLUMNS = [
 ]
 
 POSITIONS_HISTORY_COLUMNS = [
+    "run_id",
     "timestamp",
+    "universe",
+    "benchmark",
+    "timeframe",
+    "top_k",
     "symbol",
     "quantity",
     "entry_price",
@@ -58,7 +97,12 @@ POSITIONS_HISTORY_COLUMNS = [
 ]
 
 ORDERS_HISTORY_COLUMNS = [
+    "run_id",
     "timestamp",
+    "universe",
+    "benchmark",
+    "timeframe",
+    "top_k",
     "symbol",
     "action",
     "quantity",
@@ -69,7 +113,12 @@ ORDERS_HISTORY_COLUMNS = [
 ]
 
 SIGNAL_HISTORY_COLUMNS = [
+    "run_id",
     "timestamp",
+    "universe",
+    "benchmark",
+    "timeframe",
+    "top_k",
     "symbol",
     "predicted_probability",
     "selected_for_top_k",
@@ -77,9 +126,12 @@ SIGNAL_HISTORY_COLUMNS = [
 ]
 
 PERFORMANCE_HISTORY_COLUMNS = [
+    "run_id",
     "timestamp",
     "universe",
+    "benchmark",
     "timeframe",
+    "top_k",
     "portfolio_return",
     "benchmark_return",
     "outperformance",
@@ -97,6 +149,8 @@ def ensure_csv_file(file_path: Path, columns: list[str]) -> None:
 
 def ensure_documentation_files() -> None:
     """Create all append-only documentation CSVs before writing a run."""
+    ensure_csv_file(SCHEDULER_LOG_FILE, SCHEDULER_LOG_COLUMNS)
+    ensure_csv_file(UNIVERSE_POSITION_REGISTRY_FILE, UNIVERSE_POSITION_REGISTRY_COLUMNS)
     ensure_csv_file(TRADING_SNAPSHOTS_FILE, TRADING_SNAPSHOT_COLUMNS)
     ensure_csv_file(POSITIONS_HISTORY_FILE, POSITIONS_HISTORY_COLUMNS)
     ensure_csv_file(ORDERS_HISTORY_FILE, ORDERS_HISTORY_COLUMNS)
@@ -110,6 +164,16 @@ def append_rows(rows: pd.DataFrame, file_path: Path) -> None:
         return
 
     file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if file_path.exists():
+        existing_header = file_path.read_text(encoding="utf-8").splitlines()[0].split(",")
+        new_header = list(rows.columns)
+        if existing_header != new_header:
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+            legacy_path = file_path.with_name(f"{file_path.stem}_legacy_{timestamp}{file_path.suffix}")
+            file_path.rename(legacy_path)
+            print(f"Archived old documentation schema: {legacy_path}")
+
     write_header = not file_path.exists()
     rows.to_csv(file_path, mode="a", header=write_header, index=False)
 
@@ -123,12 +187,22 @@ def safe_float(value: Any) -> float | None:
         return None
 
 
+def find_universe_for_ticker(ticker: str, fallback_universe: str) -> str:
+    """Map an open position back to the configured stock universe."""
+    for universe_name in list_available_universes():
+        if ticker in get_universe(universe_name):
+            return universe_name
+    return fallback_universe
+
+
 def build_trading_snapshot(
     *,
+    run_id: str,
     timestamp: str,
     universe: str,
     timeframe: str,
     benchmark: str,
+    top_k: int,
     signals: pd.DataFrame,
     account: dict | None,
     positions: list[dict],
@@ -138,10 +212,12 @@ def build_trading_snapshot(
     probabilities = selected["probability"] if not selected.empty else signals["probability"]
 
     row = {
+        "run_id": run_id,
         "timestamp": timestamp,
         "universe": universe,
         "timeframe": timeframe,
         "benchmark": benchmark,
+        "top_k": top_k,
         "portfolio_value": account.get("portfolio_value") if account else "",
         "cash": account.get("cash") if account else "",
         "buying_power": account.get("buying_power") if account else "",
@@ -156,14 +232,31 @@ def build_trading_snapshot(
     return pd.DataFrame([row], columns=TRADING_SNAPSHOT_COLUMNS)
 
 
-def build_positions_history(timestamp: str, positions: list[dict]) -> pd.DataFrame:
+def build_positions_history(
+    *,
+    run_id: str,
+    timestamp: str,
+    universe: str,
+    benchmark: str,
+    timeframe: str,
+    top_k: int,
+    positions: list[dict],
+) -> pd.DataFrame:
     rows = []
 
     for position in positions:
+        symbol = position.get("ticker", "")
+        position_universe = find_universe_for_ticker(symbol, universe)
+        position_benchmark = get_benchmark_for_universe(position_universe)
         rows.append(
             {
+                "run_id": run_id,
                 "timestamp": timestamp,
-                "symbol": position.get("ticker", ""),
+                "universe": position_universe,
+                "benchmark": position_benchmark,
+                "timeframe": timeframe,
+                "top_k": top_k,
+                "symbol": symbol,
                 "quantity": position.get("quantity", ""),
                 "entry_price": position.get("entry_price", ""),
                 "current_price": position.get("current_price", ""),
@@ -188,13 +281,28 @@ def order_status(order: dict) -> str:
     return "planned"
 
 
-def build_orders_history(timestamp: str, orders: list[dict]) -> pd.DataFrame:
+def build_orders_history(
+    *,
+    run_id: str,
+    timestamp: str,
+    universe: str,
+    benchmark: str,
+    timeframe: str,
+    top_k: int,
+    orders: list[dict],
+) -> pd.DataFrame:
     rows = []
 
     for order in orders:
+        order_universe = order.get("universe", universe)
         rows.append(
             {
+                "run_id": run_id,
                 "timestamp": timestamp,
+                "universe": order_universe,
+                "benchmark": get_benchmark_for_universe(order_universe),
+                "timeframe": order.get("timeframe", timeframe),
+                "top_k": top_k,
                 "symbol": order.get("ticker", ""),
                 "action": order.get("action", ""),
                 "quantity": order.get("quantity", ""),
@@ -208,10 +316,24 @@ def build_orders_history(timestamp: str, orders: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=ORDERS_HISTORY_COLUMNS)
 
 
-def build_signal_history(timestamp: str, signals: pd.DataFrame) -> pd.DataFrame:
+def build_signal_history(
+    *,
+    run_id: str,
+    timestamp: str,
+    universe: str,
+    benchmark: str,
+    timeframe: str,
+    top_k: int,
+    signals: pd.DataFrame,
+) -> pd.DataFrame:
     return pd.DataFrame(
         {
+            "run_id": run_id,
             "timestamp": timestamp,
+            "universe": universe,
+            "benchmark": benchmark,
+            "timeframe": timeframe,
+            "top_k": top_k,
             "symbol": signals["ticker"],
             "predicted_probability": signals["probability"],
             "selected_for_top_k": signals["selected"],
@@ -238,9 +360,12 @@ def latest_previous_performance(universe: str, timeframe: str) -> pd.Series | No
 
 def build_performance_history(
     *,
+    run_id: str,
     timestamp: str,
     universe: str,
+    benchmark: str,
     timeframe: str,
+    top_k: int,
     account: dict | None,
     benchmark_value: float | None,
 ) -> pd.DataFrame:
@@ -261,9 +386,12 @@ def build_performance_history(
     return pd.DataFrame(
         [
             {
+                "run_id": run_id,
                 "timestamp": timestamp,
                 "universe": universe,
+                "benchmark": benchmark,
                 "timeframe": timeframe,
+                "top_k": top_k,
                 "portfolio_return": portfolio_return,
                 "benchmark_return": benchmark_return,
                 "outperformance": outperformance,
@@ -273,6 +401,83 @@ def build_performance_history(
         ],
         columns=PERFORMANCE_HISTORY_COLUMNS,
     )
+
+
+def build_universe_position_registry(
+    *,
+    run_id: str,
+    timestamp: str,
+    universe: str,
+    benchmark: str,
+    timeframe: str,
+    top_k: int,
+    orders: list[dict],
+    signals: pd.DataFrame,
+) -> pd.DataFrame:
+    """Track which selected or traded ticker belongs to which universe."""
+    selected_tickers = set(signals[signals["selected"]]["ticker"].tolist())
+    order_by_ticker = {order.get("ticker", ""): order for order in orders}
+    target_weight = 1 / max(len(selected_tickers), 1)
+    rows = []
+
+    for ticker in sorted(selected_tickers | set(order_by_ticker.keys())):
+        order = order_by_ticker.get(ticker, {})
+        action = order.get("action", "selected")
+        if action == "sell":
+            status = "closed"
+        elif action == "buy":
+            status = "opened"
+        elif action == "hold":
+            status = "held"
+        else:
+            status = "selected_signal"
+
+        rows.append(
+            {
+                "run_id": run_id,
+                "timestamp": timestamp,
+                "universe": universe,
+                "benchmark": benchmark,
+                "timeframe": timeframe,
+                "top_k": top_k,
+                "ticker": ticker,
+                "opened_at": timestamp if status in {"opened", "selected_signal"} else "",
+                "last_seen_at": timestamp,
+                "target_weight": target_weight if ticker in selected_tickers else 0.0,
+                "current_status": status,
+                "alpaca_order_id": order.get("alpaca_order_id", ""),
+            }
+        )
+
+    return pd.DataFrame(rows, columns=UNIVERSE_POSITION_REGISTRY_COLUMNS)
+
+
+def append_scheduler_log(
+    *,
+    run_id: str,
+    mode: str,
+    command: str,
+    status: str,
+    return_code: int | None,
+    message: str,
+) -> None:
+    """Record one scheduler decision or subprocess result."""
+    ensure_csv_file(SCHEDULER_LOG_FILE, SCHEDULER_LOG_COLUMNS)
+    rows = pd.DataFrame(
+        [
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "run_id": run_id,
+                "mode": mode,
+                "command": command,
+                "status": status,
+                "return_code": return_code if return_code is not None else "",
+                "message": message,
+            }
+        ],
+        columns=SCHEDULER_LOG_COLUMNS,
+    )
+    append_rows(rows, SCHEDULER_LOG_FILE)
 
 
 def load_csv(file_path: Path) -> pd.DataFrame:
@@ -402,6 +607,112 @@ def save_trade_activity() -> None:
     plt.close(fig)
 
 
+def save_multi_universe_portfolio_vs_benchmark() -> None:
+    data = load_csv(PERFORMANCE_HISTORY_FILE)
+    plot_file = REPORT_DIR / "multi_universe_portfolio_vs_benchmark.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    if not data.empty:
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data["portfolio_value"] = pd.to_numeric(data["portfolio_value"], errors="coerce")
+        data["benchmark_value"] = pd.to_numeric(data["benchmark_value"], errors="coerce")
+        for universe, group in data.groupby("universe"):
+            group = group.sort_values("timestamp")
+            if group["portfolio_value"].notna().any():
+                ax.plot(group["timestamp"], group["portfolio_value"], marker="o", linewidth=2, label=f"{universe} portfolio")
+            if group["benchmark_value"].notna().any():
+                ax.plot(group["timestamp"], group["benchmark_value"], linestyle="--", alpha=0.65, label=f"{universe} benchmark")
+        ax.set_title("Multi-Universe Portfolio vs Benchmark", fontweight="bold")
+        ax.grid(alpha=0.25)
+        ax.legend(fontsize=8)
+        fig.autofmt_xdate()
+    else:
+        ax.text(0.5, 0.5, "No performance data yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_multi_universe_outperformance() -> None:
+    data = load_csv(PERFORMANCE_HISTORY_FILE)
+    plot_file = REPORT_DIR / "multi_universe_outperformance.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    if not data.empty:
+        data["outperformance"] = pd.to_numeric(data["outperformance"], errors="coerce")
+        latest = data.dropna(subset=["outperformance"]).groupby("universe").tail(1)
+        if not latest.empty:
+            colors = ["#4F8F6F" if value >= 0 else "#B85C5C" for value in latest["outperformance"]]
+            ax.bar(latest["universe"], latest["outperformance"], color=colors)
+            ax.axhline(0, color="black", linewidth=1)
+            ax.set_title("Latest Outperformance by Universe", fontweight="bold")
+            ax.set_ylabel("Outperformance since last run")
+            ax.grid(axis="y", alpha=0.25)
+        else:
+            ax.text(0.5, 0.5, "Not enough return data yet", ha="center", va="center")
+    else:
+        ax.text(0.5, 0.5, "No performance data yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_trade_activity_by_universe() -> None:
+    data = load_csv(ORDERS_HISTORY_FILE)
+    plot_file = REPORT_DIR / "trade_activity_by_universe.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    if not data.empty:
+        trades = data[data["action"].isin(["buy", "sell"])].copy()
+        if not trades.empty:
+            counts = trades.groupby(["universe", "action"]).size().unstack(fill_value=0)
+            counts.plot(kind="bar", ax=ax, color=["#4F8F6F", "#B85C5C"])
+            ax.set_title("Trade Activity by Universe", fontweight="bold")
+            ax.set_xlabel("Universe")
+            ax.set_ylabel("Number of orders")
+            ax.grid(axis="y", alpha=0.25)
+        else:
+            ax.text(0.5, 0.5, "No buy/sell orders yet", ha="center", va="center")
+    else:
+        ax.text(0.5, 0.5, "No order history yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_current_allocation_by_universe() -> None:
+    data = load_csv(POSITIONS_HISTORY_FILE)
+    plot_file = REPORT_DIR / "current_allocation_by_universe.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    if not data.empty:
+        data["market_value"] = pd.to_numeric(data["market_value"], errors="coerce").fillna(0)
+        latest_rows = data.sort_values("timestamp").groupby(["universe", "symbol"]).tail(1)
+        allocation = latest_rows.groupby("universe")["market_value"].sum()
+        allocation = allocation[allocation > 0]
+        if not allocation.empty:
+            ax.pie(allocation, labels=allocation.index, autopct="%1.1f%%", startangle=90)
+            ax.set_title("Current Allocation by Universe", fontweight="bold")
+        else:
+            ax.text(0.5, 0.5, "No open allocation yet", ha="center", va="center")
+    else:
+        ax.text(0.5, 0.5, "No position history yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def update_multi_universe_plots() -> None:
+    save_multi_universe_portfolio_vs_benchmark()
+    save_multi_universe_outperformance()
+    save_trade_activity_by_universe()
+    save_current_allocation_by_universe()
+
+
 def update_plots() -> None:
     performance = load_csv(PERFORMANCE_HISTORY_FILE)
     if not performance.empty:
@@ -426,6 +737,7 @@ def update_plots() -> None:
     save_probability_history()
     save_daily_return_distribution()
     save_trade_activity()
+    update_multi_universe_plots()
 
 
 def update_daily_summary(timestamp: str) -> None:
@@ -518,11 +830,100 @@ def update_daily_summary(timestamp: str) -> None:
     DAILY_SUMMARY_FILE.write_text(content, encoding="utf-8")
 
 
+def format_order_list(orders: list[dict]) -> str:
+    if not orders:
+        return "Keine Orders"
+
+    return "\n".join(
+        f"- {order.get('action', '').upper()} {order.get('ticker', '')} "
+        f"notional={order.get('notional', '')} status={order_status(order)}"
+        for order in orders
+    )
+
+
+def update_multi_universe_summary(
+    *,
+    run_id: str,
+    timestamp: str,
+    mode: str,
+    timeframe: str,
+    top_k: int,
+    results: list[Any],
+    errors: list[dict],
+) -> None:
+    """Write a readable report for the latest all-universes run."""
+    sections = []
+
+    for result in results:
+        orders_text = format_order_list(result.planned_orders)
+        selected = ", ".join(result.selected_tickers) if result.selected_tickers else "Keine"
+        portfolio_value = result.portfolio_value if result.portfolio_value is not None else ""
+        cash = result.cash if result.cash is not None else ""
+        buying_power = result.buying_power if result.buying_power is not None else ""
+        sections.append(
+            f"""## {result.universe}
+
+- Benchmark: {result.benchmark}
+- Top-K: {result.top_k}
+- Timeframe: {result.timeframe}
+- Selected stocks: {selected}
+- Portfolio Value: {portfolio_value}
+- Cash: {cash}
+- Buying Power: {buying_power}
+
+### Orders
+
+{orders_text}
+"""
+        )
+
+    error_text = "Keine Fehler"
+    if errors:
+        error_text = "\n".join(
+            f"- {error.get('universe', '')}: {error.get('message', '')}"
+            for error in errors
+        )
+
+    configured_universes = "\n".join(
+        f"- {universe}: benchmark {get_benchmark_for_universe(universe)}"
+        for universe in list_available_universes()
+    )
+
+    content = f"""# Multi-Universe Paper Trading Summary
+
+## Run
+
+- Zeitpunkt: {timestamp}
+- Run ID: {run_id}
+- Mode: {mode}
+- Timeframe: {timeframe}
+- Top-K: {top_k}
+
+## Configured Universes
+
+{configured_universes}
+
+## Universe Results
+
+{chr(10).join(sections)}
+
+## Fehler / offene Hinweise
+
+{error_text}
+"""
+
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    MULTI_UNIVERSE_SUMMARY_FILE.write_text(content, encoding="utf-8")
+    update_multi_universe_plots()
+
+
 def record_trading_documentation(
     *,
+    run_id: str,
     universe: str,
     timeframe: str,
     benchmark: str,
+    top_k: int,
     mode: str,
     signals: pd.DataFrame,
     account: dict | None,
@@ -536,10 +937,12 @@ def record_trading_documentation(
 
     append_rows(
         build_trading_snapshot(
+            run_id=run_id,
             timestamp=timestamp,
             universe=universe,
             timeframe=timeframe,
             benchmark=benchmark,
+            top_k=top_k,
             signals=signals,
             account=account,
             positions=positions,
@@ -547,14 +950,63 @@ def record_trading_documentation(
         ),
         TRADING_SNAPSHOTS_FILE,
     )
-    append_rows(build_positions_history(timestamp, positions), POSITIONS_HISTORY_FILE)
-    append_rows(build_orders_history(timestamp, orders), ORDERS_HISTORY_FILE)
-    append_rows(build_signal_history(timestamp, signals), SIGNAL_HISTORY_FILE)
     append_rows(
-        build_performance_history(
+        build_positions_history(
+            run_id=run_id,
             timestamp=timestamp,
             universe=universe,
+            benchmark=benchmark,
             timeframe=timeframe,
+            top_k=top_k,
+            positions=positions,
+        ),
+        POSITIONS_HISTORY_FILE,
+    )
+    append_rows(
+        build_orders_history(
+            run_id=run_id,
+            timestamp=timestamp,
+            universe=universe,
+            benchmark=benchmark,
+            timeframe=timeframe,
+            top_k=top_k,
+            orders=orders,
+        ),
+        ORDERS_HISTORY_FILE,
+    )
+    append_rows(
+        build_signal_history(
+            run_id=run_id,
+            timestamp=timestamp,
+            universe=universe,
+            benchmark=benchmark,
+            timeframe=timeframe,
+            top_k=top_k,
+            signals=signals,
+        ),
+        SIGNAL_HISTORY_FILE,
+    )
+    append_rows(
+        build_universe_position_registry(
+            run_id=run_id,
+            timestamp=timestamp,
+            universe=universe,
+            benchmark=benchmark,
+            timeframe=timeframe,
+            top_k=top_k,
+            orders=orders,
+            signals=signals,
+        ),
+        UNIVERSE_POSITION_REGISTRY_FILE,
+    )
+    append_rows(
+        build_performance_history(
+            run_id=run_id,
+            timestamp=timestamp,
+            universe=universe,
+            benchmark=benchmark,
+            timeframe=timeframe,
+            top_k=top_k,
             account=account,
             benchmark_value=benchmark_value,
         ),

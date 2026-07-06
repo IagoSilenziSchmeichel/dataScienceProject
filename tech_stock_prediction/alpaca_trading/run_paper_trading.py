@@ -4,13 +4,16 @@ CLI entry point for Alpaca Paper Trading.
 
 from pathlib import Path
 import argparse
+from datetime import datetime, timezone
 import sys
+import uuid
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from alpaca_trading.paper_trading_engine import PaperTradingEngine
 from alpaca_trading.signal_generator import SignalGenerationError
+from alpaca_trading.trading_documentation import update_multi_universe_summary
 from config.stock_universes import list_available_universes
 
 
@@ -55,6 +58,9 @@ def resolve_universes(args) -> list[str]:
 def main():
     args = parse_args()
     universes = resolve_universes(args)
+    run_id = f"paper_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}"
+    results = []
+    errors = []
 
     if args.execute:
         print("\nTHIS WILL SEND PAPER TRADING ORDERS TO ALPACA.")
@@ -85,14 +91,38 @@ def main():
             signals_only=signals_only,
             universe_count=len(universes),
             allow_existing_positions=args.allow_existing_positions,
+            run_id=run_id,
         )
 
         try:
-            engine.run_daily_cycle()
+            results.append(engine.run_daily_cycle())
         except (RuntimeError, ValueError, SignalGenerationError) as error:
             print("\nPaper Trading run stopped:")
             print(error)
-            sys.exit(1)
+            errors.append({"universe": universe_name, "message": str(error)})
+            if not args.all_universes:
+                sys.exit(1)
+
+    if args.all_universes:
+        if args.execute:
+            mode = "execute"
+        elif args.signals_only:
+            mode = "signals_only"
+        else:
+            mode = "dry_run"
+
+        update_multi_universe_summary(
+            run_id=run_id,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            mode=mode,
+            timeframe=args.timeframe,
+            top_k=args.top_k,
+            results=results,
+            errors=errors,
+        )
+
+    if errors:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

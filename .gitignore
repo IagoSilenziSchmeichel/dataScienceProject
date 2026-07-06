@@ -29,7 +29,7 @@ tech_stock_prediction/experiments/*/hourly/models/*.pth
 tech_stock_prediction/experiments/*/hourly/plots/*.png
 tech_stock_prediction/alpaca_trading/logs/*.csv
 tech_stock_prediction/alpaca_trading/reports/*.png
-tech_stock_prediction/alpaca_trading/reports/daily_summary.md
+tech_stock_prediction/alpaca_trading/reports/*.md
 tech_stock_prediction/data/raw/*.csv
 tech_stock_prediction/data/processed/*.csv
 tech_stock_prediction/models/*.pkl
