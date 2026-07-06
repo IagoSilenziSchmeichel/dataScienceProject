@@ -289,9 +289,10 @@ def build_sequences(
     feature_data: pd.DataFrame,
     feature_columns: list[str],
     sequence_length: int,
-) -> tuple[np.ndarray, list[str], pd.Timestamp]:
+) -> tuple[np.ndarray, list[str], pd.Timestamp, pd.Timestamp]:
     sequences = []
     tickers = []
+    window_start_dates = []
     latest_dates = []
 
     for ticker, ticker_data in feature_data.groupby("Ticker"):
@@ -304,6 +305,7 @@ def build_sequences(
         latest_sequence = ticker_data.tail(sequence_length)[feature_columns].to_numpy()
         sequences.append(latest_sequence)
         tickers.append(ticker)
+        window_start_dates.append(ticker_data.tail(sequence_length)["Date"].min())
         latest_dates.append(ticker_data["Date"].max())
 
     if not sequences:
@@ -311,7 +313,7 @@ def build_sequences(
             "No valid LSTM sequences created. Check downloaded data and feature calculation."
         )
 
-    return np.array(sequences, dtype=np.float32), tickers, max(latest_dates)
+    return np.array(sequences, dtype=np.float32), tickers, min(window_start_dates), max(latest_dates)
 
 
 def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour") -> pd.DataFrame:
@@ -346,7 +348,7 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
         valid_feature_data[final_feature_columns]
     )
 
-    X, sequence_tickers, signal_timestamp = build_sequences(
+    X, sequence_tickers, window_start_timestamp, signal_timestamp = build_sequences(
         scaled_data,
         final_feature_columns,
         sequence_length,
@@ -358,11 +360,19 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
         probabilities = torch.sigmoid(model(torch.tensor(X))).numpy()
 
     generated_at = datetime.now(timezone.utc).isoformat()
+    run_id = (
+        f"{universe_name}_{timeframe}_"
+        f"{generated_at.replace(':', '').replace('-', '').replace('.', '')}"
+    )
     signal_data = pd.DataFrame(
         {
             "date": signal_timestamp.date().isoformat(),
             "timeframe": timeframe,
             "bar_timestamp": signal_timestamp.isoformat(),
+            "test_run_id": run_id,
+            "test_universe": universe_name,
+            "test_period_start": window_start_timestamp.isoformat(),
+            "test_period_end": signal_timestamp.isoformat(),
             "feature_window_end": signal_timestamp.isoformat(),
             "universe": universe_name,
             "benchmark": benchmark,
@@ -382,6 +392,10 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
             "generated_at",
             "timeframe",
             "bar_timestamp",
+            "test_run_id",
+            "test_universe",
+            "test_period_start",
+            "test_period_end",
             "feature_window_end",
             "universe",
             "benchmark",

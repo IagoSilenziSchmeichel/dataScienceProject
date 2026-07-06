@@ -1,5 +1,57 @@
 # LSTM Experiment Changelog
 
+## Aktuelle Erweiterung: Gemeinsamer Alpaca Paper Account
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/alpaca_trading/run_paper_trading.py`
+- `tech_stock_prediction/alpaca_trading/paper_trading_engine.py`
+- `tech_stock_prediction/alpaca_trading/signal_generator.py`
+- `tech_stock_prediction/alpaca_trading/portfolio_rebalancer.py`
+- `tech_stock_prediction/alpaca_trading/README.md`
+
+### Was wurde fachlich geaendert?
+
+Die Alpaca-Pipeline ist jetzt auf einen gemeinsamen Paper-Trading-Account
+ausgelegt:
+
+- Pro Handelslauf wird genau ein Universum gehandelt
+- `--all-universes` ist nur noch fuer `--signals-only` erlaubt
+- `--execute` darf nur mit `--universe` laufen
+- Wenn im Account Positionen aus anderen Universen existieren, stoppt
+  `--execute` standardmaessig
+- Das Risiko kann nur bewusst mit `--allow-existing-positions` bestaetigt werden
+
+Dadurch vermeiden wir, dass mehrere Universums-Tests im selben Paper-Account
+unbemerkt vermischt werden.
+
+### Neue Log-Informationen
+
+Signal-, Order-, Positions- und Performance-Logs enthalten jetzt eindeutige
+Testinformationen:
+
+- `test_run_id`
+- `test_universe`
+- `test_period_start`
+- `test_period_end`
+- `timeframe`
+- `bar_timestamp`
+
+### Ausfuehrung
+
+Signaltest fuer alle Universen:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Hour
+```
+
+Dry-Run oder Execute immer nur fuer ein Universum:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --dry-run --top-k 5 --timeframe 1Hour
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --execute --top-k 5 --timeframe 1Hour
+```
+
 ## Aktuelle Erweiterung: Stündliche Alpaca-Signale
 
 ### Geaenderte Dateien
@@ -56,7 +108,7 @@ python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes
 Stündlicher Dry-Run:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --dry-run --top-k 5 --timeframe 1Hour
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --dry-run --top-k 5 --timeframe 1Hour
 ```
 
 Daily-Signale:

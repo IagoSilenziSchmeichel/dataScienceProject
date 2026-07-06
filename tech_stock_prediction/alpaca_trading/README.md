@@ -12,6 +12,8 @@ Wichtig:
 - Kein Shorting
 - Kein Hebel
 - Keine Optionen
+- Pro Handelslauf genau ein Universum
+- `--all-universes` nur fuer Signaltests, niemals fuer Orders
 
 ## Universen
 
@@ -93,16 +95,14 @@ Signale fuer alle Universen:
 python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Hour
 ```
 
+Wichtig: `--all-universes` ist nur fuer Forschung und Signaltests gedacht.
+Sobald Dry-Run oder Execute genutzt wird, muss genau ein Universum mit
+`--universe` angegeben werden.
+
 Dry Run fuer ein Universum:
 
 ```bash
 python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --dry-run --top-k 5 --timeframe 1Hour
-```
-
-Dry Run fuer alle Universen:
-
-```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --dry-run --top-k 5 --timeframe 1Hour
 ```
 
 Paper Orders fuer ein Universum:
@@ -111,10 +111,12 @@ Paper Orders fuer ein Universum:
 python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --execute --top-k 5 --timeframe 1Hour
 ```
 
-Paper Orders fuer alle Universen:
+Wenn im gemeinsamen Paper-Trading-Account noch Positionen aus einem anderen
+Universum liegen, stoppt `--execute` standardmaessig. Entweder zuerst die alten
+Positionen schliessen oder das Risiko bewusst bestaetigen:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --execute --top-k 5 --timeframe 1Hour
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --execute --top-k 5 --timeframe 1Hour --allow-existing-positions
 ```
 
 Daily ist weiterhin moeglich:
@@ -138,12 +140,15 @@ python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes
 - benoetigt Alpaca Paper-Trading-Keys
 - sendet keine Orders
 - zeigt nur, welche Orders geplant waeren
+- nur mit `--universe`, nicht mit `--all-universes`
 
 `--execute`
 
 - sendet Paper-Trading-Orders an Alpaca
 - funktioniert nur gegen `https://paper-api.alpaca.markets`
 - gibt vorher eine klare Warnung aus
+- nur mit `--universe`, nicht mit `--all-universes`
+- stoppt bei fremden bestehenden Positionen, ausser `--allow-existing-positions` wird bewusst gesetzt
 
 ## Logs
 
@@ -155,6 +160,16 @@ Die Engine schreibt CSV-Logs:
 - `logs/paper_performance.csv`
 
 Diese Logdateien sind generiert und werden nicht committed.
+
+Alle Logs enthalten eindeutige Testinformationen:
+
+- `universe`
+- `test_universe`
+- `test_run_id`
+- `timeframe`
+- `bar_timestamp`
+- `test_period_start`
+- `test_period_end`
 
 ## Modell-Dateien
 

@@ -49,8 +49,24 @@ def parse_args():
         default="1Hour",
         help="Trading timeframe for signal generation.",
     )
+    parser.add_argument(
+        "--allow-existing-positions",
+        action="store_true",
+        help=(
+            "Acknowledge existing positions outside the selected universe. "
+            "Only useful for --execute."
+        ),
+    )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.all_universes and not args.signals_only:
+        parser.error("--all-universes is only allowed with --signals-only. Use --universe for dry-run or execute.")
+
+    if args.allow_existing_positions and not args.execute:
+        parser.error("--allow-existing-positions is only useful together with --execute.")
+
+    return args
 
 
 def resolve_universes(args) -> list[str]:
@@ -68,6 +84,7 @@ def main():
         print("\nTHIS WILL SEND PAPER TRADING ORDERS TO ALPACA.")
         print("Mode: EXECUTE")
         print("Endpoint: https://paper-api.alpaca.markets")
+        print(f"Universe: {args.universe}")
         dry_run = False
         signals_only = False
     elif args.signals_only:
@@ -85,6 +102,7 @@ def main():
             dry_run=dry_run,
             signals_only=signals_only,
             universe_count=len(universes),
+            allow_existing_positions=args.allow_existing_positions,
         )
         try:
             engine.run_daily_cycle()

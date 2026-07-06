@@ -15,6 +15,7 @@ from alpaca_trading.alpaca_config import load_alpaca_settings
 from alpaca_trading.portfolio_rebalancer import build_rebalance_orders
 from alpaca_trading.signal_generator import generate_signals
 from config.stock_universes import get_benchmark_for_universe
+from config.stock_universes import get_universe
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -72,6 +73,7 @@ class PaperTradingEngine:
         dry_run: bool = True,
         signals_only: bool = False,
         universe_count: int = 1,
+        allow_existing_positions: bool = False,
     ):
         self.universe_name = universe_name
         self.top_k = top_k
@@ -79,6 +81,7 @@ class PaperTradingEngine:
         self.dry_run = dry_run
         self.signals_only = signals_only
         self.universe_count = universe_count
+        self.allow_existing_positions = allow_existing_positions
 
     def run_daily_cycle(self) -> DailyCycleResult:
         """Run one signal and paper-trading cycle."""
@@ -119,6 +122,7 @@ class PaperTradingEngine:
         client = AlpacaPaperClient(settings)
         account = client.get_account_summary()
         positions = client.get_positions()
+        self.warn_or_stop_for_existing_positions(positions, settings.dry_run)
 
         orders, position_log = build_rebalance_orders(
             signals=signals,
@@ -182,6 +186,10 @@ class PaperTradingEngine:
                     "generated_at": generated_at,
                     "timeframe": signals["timeframe"].iloc[0],
                     "bar_timestamp": signals["bar_timestamp"].iloc[0],
+                    "test_run_id": signals["test_run_id"].iloc[0],
+                    "test_universe": signals["test_universe"].iloc[0],
+                    "test_period_start": signals["test_period_start"].iloc[0],
+                    "test_period_end": signals["test_period_end"].iloc[0],
                     "universe": self.universe_name,
                     "benchmark": signals["benchmark"].iloc[0],
                     "portfolio_value": account["portfolio_value"],
@@ -192,6 +200,42 @@ class PaperTradingEngine:
                 }
             ]
         )
+
+    def warn_or_stop_for_existing_positions(self, positions: list[dict], dry_run: bool) -> None:
+        """Protect a shared Paper Trading account from mixed universe tests."""
+        if not positions:
+            return
+
+        universe_tickers = set(get_universe(self.universe_name))
+        outside_positions = [
+            position
+            for position in positions
+            if position["ticker"] not in universe_tickers
+            and abs(float(position.get("quantity", 0.0))) > 0
+        ]
+
+        if not outside_positions:
+            return
+
+        tickers = ", ".join(position["ticker"] for position in outside_positions)
+        message = (
+            "WARNING: Existing positions outside the selected universe were found: "
+            f"{tickers}. This is a shared Paper Trading account. Close old positions "
+            "before testing another universe, or explicitly acknowledge this risk."
+        )
+
+        if dry_run:
+            print(message)
+            return
+
+        if not self.allow_existing_positions:
+            raise RuntimeError(
+                message
+                + " For --execute, close these positions first or rerun with "
+                "--allow-existing-positions."
+            )
+
+        print(message)
 
     def print_summary(
         self,
