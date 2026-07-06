@@ -1,0 +1,565 @@
+"""
+Automatic documentation for Alpaca Paper Trading runs.
+
+This module only records and visualizes run data. It does not change the model,
+training pipeline or trading logic.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+LOG_DIR = PROJECT_ROOT / "alpaca_trading" / "logs"
+REPORT_DIR = PROJECT_ROOT / "alpaca_trading" / "reports"
+
+TRADING_SNAPSHOTS_FILE = LOG_DIR / "trading_snapshots.csv"
+POSITIONS_HISTORY_FILE = LOG_DIR / "positions_history.csv"
+ORDERS_HISTORY_FILE = LOG_DIR / "orders_history.csv"
+SIGNAL_HISTORY_FILE = LOG_DIR / "signal_history.csv"
+PERFORMANCE_HISTORY_FILE = LOG_DIR / "performance_history.csv"
+DAILY_SUMMARY_FILE = REPORT_DIR / "daily_summary.md"
+
+TRADING_SNAPSHOT_COLUMNS = [
+    "timestamp",
+    "universe",
+    "timeframe",
+    "benchmark",
+    "portfolio_value",
+    "cash",
+    "buying_power",
+    "number_of_positions",
+    "selected_top_k",
+    "average_probability",
+    "highest_probability",
+    "lowest_probability",
+    "mode",
+]
+
+POSITIONS_HISTORY_COLUMNS = [
+    "timestamp",
+    "symbol",
+    "quantity",
+    "entry_price",
+    "current_price",
+    "market_value",
+    "unrealized_pl",
+    "unrealized_pl_percent",
+]
+
+ORDERS_HISTORY_COLUMNS = [
+    "timestamp",
+    "symbol",
+    "action",
+    "quantity",
+    "notional",
+    "reason",
+    "alpaca_order_id",
+    "status",
+]
+
+SIGNAL_HISTORY_COLUMNS = [
+    "timestamp",
+    "symbol",
+    "predicted_probability",
+    "selected_for_top_k",
+    "rank",
+]
+
+PERFORMANCE_HISTORY_COLUMNS = [
+    "timestamp",
+    "universe",
+    "timeframe",
+    "portfolio_return",
+    "benchmark_return",
+    "outperformance",
+    "portfolio_value",
+    "benchmark_value",
+]
+
+
+def ensure_csv_file(file_path: Path, columns: list[str]) -> None:
+    """Create a CSV file with headers if it does not exist yet."""
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    if not file_path.exists():
+        pd.DataFrame(columns=columns).to_csv(file_path, index=False)
+
+
+def ensure_documentation_files() -> None:
+    """Create all append-only documentation CSVs before writing a run."""
+    ensure_csv_file(TRADING_SNAPSHOTS_FILE, TRADING_SNAPSHOT_COLUMNS)
+    ensure_csv_file(POSITIONS_HISTORY_FILE, POSITIONS_HISTORY_COLUMNS)
+    ensure_csv_file(ORDERS_HISTORY_FILE, ORDERS_HISTORY_COLUMNS)
+    ensure_csv_file(SIGNAL_HISTORY_FILE, SIGNAL_HISTORY_COLUMNS)
+    ensure_csv_file(PERFORMANCE_HISTORY_FILE, PERFORMANCE_HISTORY_COLUMNS)
+
+
+def append_rows(rows: pd.DataFrame, file_path: Path) -> None:
+    """Append rows to a CSV file and create it if needed."""
+    if rows.empty:
+        return
+
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not file_path.exists()
+    rows.to_csv(file_path, mode="a", header=write_header, index=False)
+
+
+def safe_float(value: Any) -> float | None:
+    try:
+        if value in ("", None):
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def build_trading_snapshot(
+    *,
+    timestamp: str,
+    universe: str,
+    timeframe: str,
+    benchmark: str,
+    signals: pd.DataFrame,
+    account: dict | None,
+    positions: list[dict],
+    mode: str,
+) -> pd.DataFrame:
+    selected = signals[signals["selected"]].copy()
+    probabilities = selected["probability"] if not selected.empty else signals["probability"]
+
+    row = {
+        "timestamp": timestamp,
+        "universe": universe,
+        "timeframe": timeframe,
+        "benchmark": benchmark,
+        "portfolio_value": account.get("portfolio_value") if account else "",
+        "cash": account.get("cash") if account else "",
+        "buying_power": account.get("buying_power") if account else "",
+        "number_of_positions": len(positions),
+        "selected_top_k": ",".join(selected["ticker"].tolist()),
+        "average_probability": probabilities.mean() if not probabilities.empty else "",
+        "highest_probability": signals["probability"].max() if not signals.empty else "",
+        "lowest_probability": signals["probability"].min() if not signals.empty else "",
+        "mode": mode,
+    }
+
+    return pd.DataFrame([row], columns=TRADING_SNAPSHOT_COLUMNS)
+
+
+def build_positions_history(timestamp: str, positions: list[dict]) -> pd.DataFrame:
+    rows = []
+
+    for position in positions:
+        rows.append(
+            {
+                "timestamp": timestamp,
+                "symbol": position.get("ticker", ""),
+                "quantity": position.get("quantity", ""),
+                "entry_price": position.get("entry_price", ""),
+                "current_price": position.get("current_price", ""),
+                "market_value": position.get("market_value", ""),
+                "unrealized_pl": position.get("unrealized_pl", ""),
+                "unrealized_pl_percent": position.get("unrealized_plpc", ""),
+            }
+        )
+
+    return pd.DataFrame(rows, columns=POSITIONS_HISTORY_COLUMNS)
+
+
+def order_status(order: dict) -> str:
+    if order.get("action") == "hold":
+        return "held"
+    if order.get("dry_run"):
+        return "dry_run"
+    if order.get("alpaca_order_status"):
+        return order["alpaca_order_status"]
+    if order.get("alpaca_order_id"):
+        return "submitted"
+    return "planned"
+
+
+def build_orders_history(timestamp: str, orders: list[dict]) -> pd.DataFrame:
+    rows = []
+
+    for order in orders:
+        rows.append(
+            {
+                "timestamp": timestamp,
+                "symbol": order.get("ticker", ""),
+                "action": order.get("action", ""),
+                "quantity": order.get("quantity", ""),
+                "notional": order.get("notional", ""),
+                "reason": order.get("reason", ""),
+                "alpaca_order_id": order.get("alpaca_order_id", ""),
+                "status": order_status(order),
+            }
+        )
+
+    return pd.DataFrame(rows, columns=ORDERS_HISTORY_COLUMNS)
+
+
+def build_signal_history(timestamp: str, signals: pd.DataFrame) -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "timestamp": timestamp,
+            "symbol": signals["ticker"],
+            "predicted_probability": signals["probability"],
+            "selected_for_top_k": signals["selected"],
+            "rank": signals["rank"],
+        },
+        columns=SIGNAL_HISTORY_COLUMNS,
+    )
+
+
+def latest_previous_performance(universe: str, timeframe: str) -> pd.Series | None:
+    if not PERFORMANCE_HISTORY_FILE.exists():
+        return None
+
+    data = pd.read_csv(PERFORMANCE_HISTORY_FILE)
+    if data.empty or "universe" not in data.columns or "timeframe" not in data.columns:
+        return None
+
+    subset = data[(data["universe"] == universe) & (data["timeframe"] == timeframe)].copy()
+    if subset.empty:
+        return None
+
+    return subset.iloc[-1]
+
+
+def build_performance_history(
+    *,
+    timestamp: str,
+    universe: str,
+    timeframe: str,
+    account: dict | None,
+    benchmark_value: float | None,
+) -> pd.DataFrame:
+    portfolio_value = safe_float(account.get("portfolio_value")) if account else None
+    previous = latest_previous_performance(universe, timeframe)
+    portfolio_return = ""
+    benchmark_return = ""
+    outperformance = ""
+
+    if previous is not None and portfolio_value is not None and benchmark_value is not None:
+        previous_portfolio = safe_float(previous.get("portfolio_value"))
+        previous_benchmark = safe_float(previous.get("benchmark_value"))
+        if previous_portfolio and previous_benchmark:
+            portfolio_return = portfolio_value / previous_portfolio - 1
+            benchmark_return = benchmark_value / previous_benchmark - 1
+            outperformance = portfolio_return - benchmark_return
+
+    return pd.DataFrame(
+        [
+            {
+                "timestamp": timestamp,
+                "universe": universe,
+                "timeframe": timeframe,
+                "portfolio_return": portfolio_return,
+                "benchmark_return": benchmark_return,
+                "outperformance": outperformance,
+                "portfolio_value": portfolio_value if portfolio_value is not None else "",
+                "benchmark_value": benchmark_value if benchmark_value is not None else "",
+            }
+        ],
+        columns=PERFORMANCE_HISTORY_COLUMNS,
+    )
+
+
+def load_csv(file_path: Path) -> pd.DataFrame:
+    if not file_path.exists():
+        return pd.DataFrame()
+
+    return pd.read_csv(file_path)
+
+
+def save_line_plot(data: pd.DataFrame, x: str, y_columns: list[str], title: str, file_name: str) -> None:
+    plot_file = REPORT_DIR / file_name
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    has_line = False
+    for column in y_columns:
+        if column in data.columns:
+            values = pd.to_numeric(data[column], errors="coerce")
+            if values.notna().any():
+                ax.plot(pd.to_datetime(data[x]), values, marker="o", linewidth=2, label=column)
+                has_line = True
+
+    ax.set_title(title, fontweight="bold")
+    ax.grid(alpha=0.25)
+    if has_line:
+        ax.legend()
+        fig.autofmt_xdate()
+    else:
+        ax.text(0.5, 0.5, "Not enough data yet", ha="center", va="center")
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_position_allocation() -> None:
+    data = load_csv(POSITIONS_HISTORY_FILE)
+    plot_file = REPORT_DIR / "position_allocation.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    if not data.empty:
+        latest_timestamp = data["timestamp"].max()
+        latest = data[data["timestamp"] == latest_timestamp].copy()
+        latest["market_value"] = pd.to_numeric(latest["market_value"], errors="coerce").fillna(0)
+        latest = latest[latest["market_value"] > 0]
+        if not latest.empty:
+            ax.pie(latest["market_value"], labels=latest["symbol"], autopct="%1.1f%%", startangle=90)
+            ax.set_title("Current Position Allocation", fontweight="bold")
+        else:
+            ax.text(0.5, 0.5, "No open positions", ha="center", va="center")
+    else:
+        ax.text(0.5, 0.5, "No position history yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_probability_history() -> None:
+    data = load_csv(SIGNAL_HISTORY_FILE)
+    plot_file = REPORT_DIR / "probability_history.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    if not data.empty:
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        selected = data[data["selected_for_top_k"] == True].copy()
+        if selected.empty:
+            ax.text(0.5, 0.5, "No selected signals yet", ha="center", va="center")
+        else:
+            for symbol, group in selected.groupby("symbol"):
+                ax.plot(group["timestamp"], group["predicted_probability"], marker="o", linewidth=1.8, label=symbol)
+            ax.set_title("Selected Signal Probability History", fontweight="bold")
+            ax.set_ylabel("Predicted probability")
+            ax.grid(alpha=0.25)
+            ax.legend()
+            fig.autofmt_xdate()
+    else:
+        ax.text(0.5, 0.5, "No signal history yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_daily_return_distribution() -> None:
+    data = load_csv(PERFORMANCE_HISTORY_FILE)
+    plot_file = REPORT_DIR / "daily_return_distribution.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    if not data.empty and "portfolio_return" in data.columns:
+        returns = pd.to_numeric(data["portfolio_return"], errors="coerce").dropna()
+        if not returns.empty:
+            ax.hist(returns, bins=20, color="#4F8F6F", edgecolor="white")
+            ax.set_title("Portfolio Return Distribution", fontweight="bold")
+            ax.set_xlabel("Return per run")
+            ax.grid(axis="y", alpha=0.25)
+        else:
+            ax.text(0.5, 0.5, "Not enough return data yet", ha="center", va="center")
+    else:
+        ax.text(0.5, 0.5, "No performance history yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_trade_activity() -> None:
+    data = load_csv(ORDERS_HISTORY_FILE)
+    plot_file = REPORT_DIR / "trade_activity.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    if not data.empty:
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data["date"] = data["timestamp"].dt.date
+        counts = data[data["action"].isin(["buy", "sell"])].groupby(["date", "action"]).size().unstack(fill_value=0)
+        if not counts.empty:
+            counts.plot(kind="bar", ax=ax, color=["#4F8F6F", "#B85C5C"])
+            ax.set_title("Trade Activity", fontweight="bold")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Number of orders")
+            ax.grid(axis="y", alpha=0.25)
+        else:
+            ax.text(0.5, 0.5, "No buy/sell orders yet", ha="center", va="center")
+    else:
+        ax.text(0.5, 0.5, "No order history yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def update_plots() -> None:
+    performance = load_csv(PERFORMANCE_HISTORY_FILE)
+    if not performance.empty:
+        save_line_plot(
+            performance,
+            "timestamp",
+            ["portfolio_value", "benchmark_value"],
+            "Portfolio vs Benchmark",
+            "portfolio_vs_benchmark.png",
+        )
+        save_line_plot(
+            performance,
+            "timestamp",
+            ["portfolio_value"],
+            "Portfolio Value",
+            "portfolio_value.png",
+        )
+    else:
+        REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
+    save_position_allocation()
+    save_probability_history()
+    save_daily_return_distribution()
+    save_trade_activity()
+
+
+def update_daily_summary(timestamp: str) -> None:
+    snapshots = load_csv(TRADING_SNAPSHOTS_FILE)
+    positions = load_csv(POSITIONS_HISTORY_FILE)
+    orders = load_csv(ORDERS_HISTORY_FILE)
+    signals = load_csv(SIGNAL_HISTORY_FILE)
+    performance = load_csv(PERFORMANCE_HISTORY_FILE)
+
+    latest_snapshot = snapshots.iloc[-1] if not snapshots.empty else {}
+    latest_performance = performance.iloc[-1] if not performance.empty else {}
+    current_day = str(pd.to_datetime(timestamp).date())
+
+    buys = 0
+    sells = 0
+    if not orders.empty:
+        orders["timestamp"] = pd.to_datetime(orders["timestamp"])
+        today_orders = orders[orders["timestamp"].dt.date.astype(str) == current_day]
+        buys = int((today_orders["action"] == "buy").sum())
+        sells = int((today_orders["action"] == "sell").sum())
+
+    latest_positions = pd.DataFrame()
+    if not positions.empty:
+        latest_timestamp = positions["timestamp"].max()
+        latest_positions = positions[positions["timestamp"] == latest_timestamp].copy()
+
+    top_signals = pd.DataFrame()
+    if not signals.empty:
+        latest_signal_timestamp = signals["timestamp"].max()
+        top_signals = signals[signals["timestamp"] == latest_signal_timestamp].sort_values("rank").head(5)
+
+    best_position = ""
+    worst_position = ""
+    if not latest_positions.empty and "unrealized_pl" in latest_positions.columns:
+        latest_positions["unrealized_pl"] = pd.to_numeric(latest_positions["unrealized_pl"], errors="coerce")
+        if latest_positions["unrealized_pl"].notna().any():
+            best = latest_positions.sort_values("unrealized_pl", ascending=False).iloc[0]
+            worst = latest_positions.sort_values("unrealized_pl", ascending=True).iloc[0]
+            best_position = f"{best['symbol']} ({best['unrealized_pl']})"
+            worst_position = f"{worst['symbol']} ({worst['unrealized_pl']})"
+
+    positions_text = "Keine offenen Positionen"
+    if not latest_positions.empty:
+        positions_text = "\n".join(
+            f"- {row['symbol']}: {row['quantity']} shares, value {row['market_value']}"
+            for _, row in latest_positions.iterrows()
+        )
+
+    top_signals_text = "Keine Signale"
+    if not top_signals.empty:
+        top_signals_text = "\n".join(
+            f"- {row['symbol']}: rank {row['rank']}, probability {float(row['predicted_probability']):.4f}"
+            for _, row in top_signals.iterrows()
+        )
+
+    content = f"""# Daily Alpaca Paper Trading Summary
+
+## Date
+
+{current_day}
+
+## Portfolio
+
+- Portfolio value: {latest_snapshot.get('portfolio_value', '')}
+- Daily return: {latest_performance.get('portfolio_return', '')}
+- Benchmark: {latest_snapshot.get('benchmark', '')}
+- Benchmark value: {latest_performance.get('benchmark_value', '')}
+- Outperformance: {latest_performance.get('outperformance', '')}
+
+## Trading Activity
+
+- Buys: {buys}
+- Sells: {sells}
+
+## Current Positions
+
+{positions_text}
+
+## Top-5 Signals
+
+{top_signals_text}
+
+## Best / Worst Position
+
+- Best position: {best_position}
+- Worst position: {worst_position}
+"""
+
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    DAILY_SUMMARY_FILE.write_text(content, encoding="utf-8")
+
+
+def record_trading_documentation(
+    *,
+    universe: str,
+    timeframe: str,
+    benchmark: str,
+    mode: str,
+    signals: pd.DataFrame,
+    account: dict | None,
+    positions: list[dict],
+    orders: list[dict],
+) -> None:
+    """Write all scientific documentation artifacts for one run."""
+    ensure_documentation_files()
+    timestamp = datetime.now(timezone.utc).isoformat()
+    benchmark_value = safe_float(signals["benchmark_close"].iloc[0]) if "benchmark_close" in signals.columns else None
+
+    append_rows(
+        build_trading_snapshot(
+            timestamp=timestamp,
+            universe=universe,
+            timeframe=timeframe,
+            benchmark=benchmark,
+            signals=signals,
+            account=account,
+            positions=positions,
+            mode=mode,
+        ),
+        TRADING_SNAPSHOTS_FILE,
+    )
+    append_rows(build_positions_history(timestamp, positions), POSITIONS_HISTORY_FILE)
+    append_rows(build_orders_history(timestamp, orders), ORDERS_HISTORY_FILE)
+    append_rows(build_signal_history(timestamp, signals), SIGNAL_HISTORY_FILE)
+    append_rows(
+        build_performance_history(
+            timestamp=timestamp,
+            universe=universe,
+            timeframe=timeframe,
+            account=account,
+            benchmark_value=benchmark_value,
+        ),
+        PERFORMANCE_HISTORY_FILE,
+    )
+
+    update_plots()
+    update_daily_summary(timestamp)

@@ -14,6 +14,7 @@ from alpaca_trading.alpaca_client import AlpacaPaperClient
 from alpaca_trading.alpaca_config import load_alpaca_settings
 from alpaca_trading.portfolio_rebalancer import build_rebalance_orders
 from alpaca_trading.signal_generator import generate_signals
+from alpaca_trading.trading_documentation import record_trading_documentation
 from config.stock_universes import get_benchmark_for_universe
 from config.stock_universes import get_universe
 
@@ -100,6 +101,16 @@ class PaperTradingEngine:
         selected_tickers = selected["ticker"].tolist()
 
         if self.signals_only:
+            record_trading_documentation(
+                universe=self.universe_name,
+                timeframe=settings.timeframe,
+                benchmark=benchmark,
+                mode="signals_only",
+                signals=signals,
+                account=None,
+                positions=[],
+                orders=[],
+            )
             self.print_summary(
                 benchmark=benchmark,
                 selected=selected,
@@ -148,13 +159,25 @@ class PaperTradingEngine:
                 reason=order["reason"],
             )
             order["alpaca_order_id"] = submitted.get("alpaca_order_id", "")
+            order["alpaca_order_status"] = submitted.get("alpaca_order_status", "")
             submitted_orders.append(order)
 
+        latest_positions = client.get_positions()
         append_csv(pd.DataFrame(submitted_orders), ORDERS_LOG)
         append_csv(position_log, POSITIONS_LOG)
         append_csv(self.build_performance_row(signals, account, submitted_orders), PERFORMANCE_LOG)
 
         mode = "DRY_RUN" if settings.dry_run else "EXECUTE"
+        record_trading_documentation(
+            universe=self.universe_name,
+            timeframe=settings.timeframe,
+            benchmark=benchmark,
+            mode=mode.lower(),
+            signals=signals,
+            account=account,
+            positions=latest_positions,
+            orders=submitted_orders,
+        )
         self.print_summary(
             benchmark=benchmark,
             selected=selected,

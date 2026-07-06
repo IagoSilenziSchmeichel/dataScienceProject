@@ -67,6 +67,8 @@ class AlpacaPaperClient:
                 {
                     "ticker": position.symbol,
                     "quantity": float(position.qty),
+                    "entry_price": float(position.avg_entry_price),
+                    "current_price": float(position.current_price),
                     "market_value": float(position.market_value),
                     "unrealized_pl": float(position.unrealized_pl),
                     "unrealized_plpc": float(position.unrealized_plpc),
@@ -131,6 +133,7 @@ class AlpacaPaperClient:
         )
         order = self.trading_client.submit_order(order_data=request)
         order_preview["alpaca_order_id"] = str(order.id)
+        order_preview["alpaca_order_status"] = str(order.status)
 
         return order_preview
 
