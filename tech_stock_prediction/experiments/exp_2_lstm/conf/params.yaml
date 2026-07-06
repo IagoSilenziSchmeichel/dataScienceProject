@@ -1,11 +1,11 @@
 # LSTM experiment configuration
 
 DATA:
-  # We reuse the processed Random Forest data from experiment exp_1_1.
+  # We reuse the processed Random Forest data from experiment exp_1_randomforest.
   # This makes the LSTM comparable to the Random Forest model.
-  TRAIN_FILE: "../exp_1_1/data/processed/train.csv"
-  VALIDATION_FILE: "../exp_1_1/data/processed/validation.csv"
-  TEST_FILE: "../exp_1_1/data/processed/test.csv"
+  TRAIN_FILE: "../exp_1_randomforest/data/processed/train.csv"
+  VALIDATION_FILE: "../exp_1_randomforest/data/processed/validation.csv"
+  TEST_FILE: "../exp_1_randomforest/data/processed/test.csv"
 
   # LSTM feature list.
   # Stored inside exp_2_lstm so the LSTM pipeline does not depend on archived

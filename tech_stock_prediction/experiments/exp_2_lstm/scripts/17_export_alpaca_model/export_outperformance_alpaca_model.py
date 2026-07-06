@@ -117,6 +117,12 @@ def add_outperformance_columns(data, qqq_data):
         lambda values: values / values.shift(20) - 1
     )
 
+    overlapping_benchmark_columns = [
+        column for column in qqq_data.columns if column != "Date" and column in data.columns
+    ]
+    if overlapping_benchmark_columns:
+        data = data.drop(columns=overlapping_benchmark_columns)
+
     merged = data.merge(qqq_data, on="Date", how="left")
     merged["Relative_Return_QQQ"] = merged["Stock_Daily_Return_Raw"] - merged["QQQ_Return"]
     merged["Relative_Momentum_20_QQQ"] = merged["Stock_Momentum_20_Raw"] - merged["QQQ_Momentum_20"]
