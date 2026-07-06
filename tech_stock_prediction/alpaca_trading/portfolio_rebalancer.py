@@ -77,6 +77,8 @@ def build_rebalance_orders(
             {
                 "date": row["date"],
                 "generated_at": generated_at,
+                "timeframe": row.get("timeframe", ""),
+                "bar_timestamp": row.get("bar_timestamp", ""),
                 "universe": universe,
                 "ticker": ticker,
                 "action": action,
@@ -94,6 +96,8 @@ def build_rebalance_orders(
             {
                 "date": row["date"],
                 "generated_at": generated_at,
+                "timeframe": row.get("timeframe", ""),
+                "bar_timestamp": row.get("bar_timestamp", ""),
                 "universe": universe,
                 "ticker": ticker,
                 "quantity": current_position.get("quantity", 0.0),
@@ -114,6 +118,8 @@ def build_rebalance_orders(
             {
                 "date": signals["date"].iloc[0],
                 "generated_at": generated_at,
+                "timeframe": signals["timeframe"].iloc[0],
+                "bar_timestamp": signals["bar_timestamp"].iloc[0],
                 "universe": universe,
                 "ticker": ticker,
                 "action": "sell",
@@ -131,6 +137,8 @@ def build_rebalance_orders(
             {
                 "date": signals["date"].iloc[0],
                 "generated_at": generated_at,
+                "timeframe": signals["timeframe"].iloc[0],
+                "bar_timestamp": signals["bar_timestamp"].iloc[0],
                 "universe": universe,
                 "ticker": ticker,
                 "quantity": current_position.get("quantity", 0.0),

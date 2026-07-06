@@ -17,7 +17,7 @@ class AlpacaPaperClient:
         self.settings = settings
         self.trading_client = None
 
-        if not settings.dry_run:
+        if settings.api_key_id and settings.api_secret_key:
             self.trading_client = self._create_trading_client()
 
     def _create_trading_client(self):
@@ -37,10 +37,11 @@ class AlpacaPaperClient:
 
     def get_account_summary(self) -> dict[str, Any]:
         """Return cash and portfolio value."""
-        if self.settings.dry_run:
+        if self.settings.dry_run and self.trading_client is None:
             return {
                 "portfolio_value": 100000.0,
                 "cash": 100000.0,
+                "buying_power": 100000.0,
                 "dry_run": True,
                 "note": "Simulated account values because DRY_RUN=True.",
             }
@@ -49,12 +50,13 @@ class AlpacaPaperClient:
         return {
             "portfolio_value": float(account.portfolio_value),
             "cash": float(account.cash),
-            "dry_run": False,
+            "buying_power": float(account.buying_power),
+            "dry_run": self.settings.dry_run,
         }
 
     def get_positions(self) -> list[dict[str, Any]]:
         """Return current Alpaca positions."""
-        if self.settings.dry_run:
+        if self.settings.dry_run and self.trading_client is None:
             return []
 
         positions = self.trading_client.get_all_positions()

@@ -34,7 +34,7 @@ def parse_args():
     mode_group.add_argument(
         "--dry-run",
         action="store_true",
-        help="Connect to Alpaca if keys exist, but do not send orders.",
+        help="Connect to Alpaca with keys, but do not send orders.",
     )
     mode_group.add_argument(
         "--execute",
@@ -42,7 +42,13 @@ def parse_args():
         help="Send Paper Trading orders to Alpaca.",
     )
 
-    parser.add_argument("--top-k", type=int, default=1, help="Number of tickers to select.")
+    parser.add_argument("--top-k", type=int, default=5, help="Number of tickers to select.")
+    parser.add_argument(
+        "--timeframe",
+        choices=["1Hour", "1Day"],
+        default="1Hour",
+        help="Trading timeframe for signal generation.",
+    )
 
     return parser.parse_args()
 
@@ -75,6 +81,7 @@ def main():
         engine = PaperTradingEngine(
             universe_name=universe_name,
             top_k=args.top_k,
+            timeframe=args.timeframe,
             dry_run=dry_run,
             signals_only=signals_only,
             universe_count=len(universes),

@@ -1,5 +1,70 @@
 # LSTM Experiment Changelog
 
+## Aktuelle Erweiterung: Stündliche Alpaca-Signale
+
+### Geaenderte Dateien
+
+- `tech_stock_prediction/alpaca_trading/alpaca_config.py`
+- `tech_stock_prediction/alpaca_trading/signal_generator.py`
+- `tech_stock_prediction/alpaca_trading/paper_trading_engine.py`
+- `tech_stock_prediction/alpaca_trading/portfolio_rebalancer.py`
+- `tech_stock_prediction/alpaca_trading/alpaca_client.py`
+- `tech_stock_prediction/alpaca_trading/run_paper_trading.py`
+- `tech_stock_prediction/alpaca_trading/README.md`
+- `tech_stock_prediction/experiments/exp_2_lstm/scripts/17_export_alpaca_model/export_outperformance_alpaca_model.py`
+
+### Neue Dateien
+
+- `tech_stock_prediction/experiments/exp_2_lstm/models/outperformance_lstm_metadata.json`
+
+### Was wurde fachlich geaendert?
+
+Die Alpaca-Pipeline unterstuetzt jetzt einen konfigurierbaren Timeframe:
+
+- `1Hour` fuer stündliche Paper-Trading-Signale
+- `1Day` fuer den bisherigen Tagesmodus
+
+Standard fuer Phase 2 ist `1Hour`. Das Modell bleibt aber das finale
+Outperformance-LSTM mit der Featuregruppe `Technical + Relative Strength`.
+Es wird kein Standard-LSTM und keine Threshold-Regel verwendet.
+
+Wichtig: Das aktuelle Modell wurde auf Tagesdaten trainiert. Bei `1Hour`
+werden die gleichen Feature-Namen auf Stundenbars berechnet. Deshalb gibt die
+Pipeline eine Warnung aus, dass sich die Bedeutung der Features aendert und
+die Daily-Backtest-Ergebnisse nicht direkt auf Stundenbasis uebertragbar sind.
+
+### Neue Log-Spalten
+
+`paper_signals.csv` enthaelt jetzt zusaetzlich:
+
+- `timeframe`
+- `bar_timestamp`
+- `feature_window_end`
+- `top_k`
+
+Alte Logdateien mit altem Schema werden automatisch als Legacy-Datei
+archiviert, bevor eine neue CSV mit sauberem Header geschrieben wird.
+
+### Ausfuehrung
+
+Stündliche Signale:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Hour
+```
+
+Stündlicher Dry-Run:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --dry-run --top-k 5 --timeframe 1Hour
+```
+
+Daily-Signale:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Day
+```
+
 ## Aktuelle Erweiterung: Finaler Alpaca-Export
 
 ### Geaenderte Dateien

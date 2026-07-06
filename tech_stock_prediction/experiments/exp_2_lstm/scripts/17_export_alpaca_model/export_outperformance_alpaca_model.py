@@ -11,6 +11,7 @@ variant once and saves the exact files that the Alpaca signal pipeline expects:
 """
 
 from datetime import timedelta
+import json
 from pathlib import Path
 import pickle
 import random
@@ -38,6 +39,7 @@ PARAMS = yaml.safe_load(open(EXPERIMENT_ROOT / "conf" / "params.yaml", encoding=
 FEATURE_FILE = EXPERIMENT_ROOT / "conf" / "outperformance_alpaca_features.txt"
 MODEL_FILE = EXPERIMENT_ROOT / "models" / "outperformance_lstm_model.pth"
 SCALER_FILE = EXPERIMENT_ROOT / "models" / "outperformance_lstm_scaler.pkl"
+METADATA_FILE = EXPERIMENT_ROOT / "models" / "outperformance_lstm_metadata.json"
 SUMMARY_FILE = EXPERIMENT_ROOT / "data" / "processed" / "lstm_outperformance_alpaca_export_summary.csv"
 
 TARGET_COLUMN = "Outperform_QQQ_Target"
@@ -304,6 +306,16 @@ def main():
     with open(SCALER_FILE, "wb") as file:
         pickle.dump(scaler, file)
 
+    metadata = {
+        "model_type": "outperformance_lstm",
+        "training_timeframe": "1Day",
+        "sequence_length": sequence_length,
+        "feature_list": feature_columns,
+        "benchmark": "QQQ",
+        "target_definition": "1 if next-day stock return is greater than next-day QQQ return, else 0.",
+    }
+    METADATA_FILE.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
     SUMMARY_FILE.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(
         [
@@ -319,6 +331,7 @@ def main():
                 "best_validation_f1": best_validation_f1,
                 "model_file": str(MODEL_FILE.relative_to(EXPERIMENT_ROOT)),
                 "scaler_file": str(SCALER_FILE.relative_to(EXPERIMENT_ROOT)),
+                "metadata_file": str(METADATA_FILE.relative_to(EXPERIMENT_ROOT)),
                 "feature_file": str(FEATURE_FILE.relative_to(EXPERIMENT_ROOT)),
             }
         ]
@@ -327,6 +340,7 @@ def main():
     print("\nSaved final Alpaca inference files:")
     print(f"- {MODEL_FILE}")
     print(f"- {SCALER_FILE}")
+    print(f"- {METADATA_FILE}")
     print(f"- {FEATURE_FILE}")
     print(f"- {SUMMARY_FILE}")
 

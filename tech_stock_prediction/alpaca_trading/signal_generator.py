@@ -1,5 +1,5 @@
 """
-Generate daily Outperformance-LSTM signals for Alpaca Paper Trading.
+Generate Outperformance-LSTM signals for Alpaca Paper Trading.
 
 This module performs inference only. It does not train a model.
 """
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 import pickle
 
@@ -30,6 +31,7 @@ PARAMS_FILE = LSTM_EXPERIMENT_ROOT / "conf" / "params.yaml"
 # the standard Steigt/Faellt model.
 EXPECTED_MODEL_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_model.pth"
 EXPECTED_SCALER_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_scaler.pkl"
+EXPECTED_METADATA_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_metadata.json"
 EXPECTED_FEATURE_FILE = LSTM_EXPERIMENT_ROOT / "conf" / "outperformance_alpaca_features.txt"
 
 FALLBACK_FEATURE_COLUMNS = [
@@ -72,7 +74,8 @@ class LSTMClassifier(nn.Module):
 @dataclass
 class SignalGeneratorConfig:
     universe_name: str
-    top_k: int = 1
+    top_k: int = 5
+    timeframe: str = "1Hour"
     lookback_days: int = 450
 
 
@@ -103,6 +106,32 @@ def check_inference_files() -> None:
         )
 
 
+def load_model_metadata() -> dict:
+    if not EXPECTED_METADATA_FILE.exists():
+        return {
+            "model_type": "outperformance_lstm",
+            "training_timeframe": "unknown",
+            "target_definition": "Unknown; metadata file is missing.",
+        }
+
+    return json.loads(EXPECTED_METADATA_FILE.read_text(encoding="utf-8"))
+
+
+def warn_if_timeframe_mismatch(timeframe: str) -> None:
+    metadata = load_model_metadata()
+    training_timeframe = metadata.get("training_timeframe", "unknown")
+
+    if timeframe == "1Hour" and training_timeframe != "1Hour":
+        print(
+            "WARNING: Model was trained on daily data. Running it on hourly data "
+            "changes the meaning of the features."
+        )
+        print(
+            "Hourly Paper Trading is an experimental live-signal check. "
+            "Daily backtest results are not directly transferable to hourly trading."
+        )
+
+
 def load_feature_columns() -> list[str]:
     if not EXPECTED_FEATURE_FILE.exists():
         return FALLBACK_FEATURE_COLUMNS
@@ -114,15 +143,28 @@ def load_feature_columns() -> list[str]:
     ]
 
 
-def download_price_data(tickers: list[str], benchmark: str, lookback_days: int) -> pd.DataFrame:
-    end_date = datetime.now().date()
-    start_date = end_date - pd.Timedelta(days=lookback_days)
+def get_download_settings(timeframe: str) -> tuple[str, int]:
+    if timeframe == "1Hour":
+        return "1h", 120
+    if timeframe == "1Day":
+        return "1d", 450
+
+    raise SignalGenerationError("Timeframe must be either '1Hour' or '1Day'.")
+
+
+def download_price_data(tickers: list[str], benchmark: str, timeframe: str) -> pd.DataFrame:
+    interval, lookback_days = get_download_settings(timeframe)
+    end_timestamp = pd.Timestamp.now(tz="UTC")
+    start_timestamp = end_timestamp - pd.Timedelta(days=lookback_days)
     all_tickers = sorted(set(tickers + [benchmark]))
+
+    print(f"Downloading {timeframe} data with yfinance interval '{interval}'...")
 
     data = yf.download(
         all_tickers,
-        start=start_date.isoformat(),
-        end=(end_date + pd.Timedelta(days=1)).isoformat(),
+        start=start_timestamp.date().isoformat(),
+        end=(end_timestamp + pd.Timedelta(days=1)).date().isoformat(),
+        interval=interval,
         group_by="ticker",
         auto_adjust=False,
         progress=False,
@@ -142,11 +184,14 @@ def download_price_data(tickers: list[str], benchmark: str, lookback_days: int) 
             ticker_data = data[ticker].copy()
 
         ticker_data = ticker_data.reset_index()
+        first_column = ticker_data.columns[0]
+        if first_column != "Date":
+            ticker_data = ticker_data.rename(columns={first_column: "Date"})
         ticker_data["Ticker"] = ticker
         rows.append(ticker_data)
 
     prices = pd.concat(rows, ignore_index=True)
-    prices["Date"] = pd.to_datetime(prices["Date"])
+    prices["Date"] = pd.to_datetime(prices["Date"], utc=True).dt.tz_convert(None)
 
     required_columns = ["Date", "Ticker", "Close", "High", "Low", "Volume"]
     missing_columns = [column for column in required_columns if column not in prices.columns]
@@ -269,11 +314,12 @@ def build_sequences(
     return np.array(sequences, dtype=np.float32), tickers, max(latest_dates)
 
 
-def generate_signals(universe_name: str, top_k: int = 1) -> pd.DataFrame:
+def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour") -> pd.DataFrame:
     """
     Generate Top-K outperformance probabilities for one stock universe.
     """
     check_inference_files()
+    warn_if_timeframe_mismatch(timeframe)
 
     params = load_params()
     tickers = get_universe(universe_name)
@@ -281,7 +327,8 @@ def generate_signals(universe_name: str, top_k: int = 1) -> pd.DataFrame:
     sequence_length = int(params["MODEL"]["SEQUENCE_LENGTH"])
     final_feature_columns = load_feature_columns()
 
-    prices = download_price_data(tickers, benchmark, lookback_days=450)
+    print(f"Signal timeframe: {timeframe}")
+    prices = download_price_data(tickers, benchmark, timeframe)
     features = add_stock_features(prices)
     feature_data = add_relative_features(features, benchmark)
 
@@ -299,7 +346,7 @@ def generate_signals(universe_name: str, top_k: int = 1) -> pd.DataFrame:
         valid_feature_data[final_feature_columns]
     )
 
-    X, sequence_tickers, signal_date = build_sequences(
+    X, sequence_tickers, signal_timestamp = build_sequences(
         scaled_data,
         final_feature_columns,
         sequence_length,
@@ -313,7 +360,10 @@ def generate_signals(universe_name: str, top_k: int = 1) -> pd.DataFrame:
     generated_at = datetime.now(timezone.utc).isoformat()
     signal_data = pd.DataFrame(
         {
-            "date": signal_date.date().isoformat(),
+            "date": signal_timestamp.date().isoformat(),
+            "timeframe": timeframe,
+            "bar_timestamp": signal_timestamp.isoformat(),
+            "feature_window_end": signal_timestamp.isoformat(),
             "universe": universe_name,
             "benchmark": benchmark,
             "ticker": sequence_tickers,
@@ -323,17 +373,22 @@ def generate_signals(universe_name: str, top_k: int = 1) -> pd.DataFrame:
     signal_data = signal_data.sort_values("probability", ascending=False).reset_index(drop=True)
     signal_data["rank"] = signal_data.index + 1
     signal_data["selected"] = signal_data["rank"] <= top_k
+    signal_data["top_k"] = top_k
     signal_data["generated_at"] = generated_at
 
     return signal_data[
         [
             "date",
             "generated_at",
+            "timeframe",
+            "bar_timestamp",
+            "feature_window_end",
             "universe",
             "benchmark",
             "ticker",
             "probability",
             "rank",
             "selected",
+            "top_k",
         ]
     ]

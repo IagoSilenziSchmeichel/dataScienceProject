@@ -37,12 +37,41 @@ APCA_API_KEY_ID=dein_key
 APCA_API_SECRET_KEY=dein_secret
 APCA_API_BASE_URL=https://paper-api.alpaca.markets
 DRY_RUN=true
-TOP_K=1
+TOP_K=5
+TIMEFRAME=1Hour
 ORDER_TYPE=market
 TIME_IN_FORCE=day
 ```
 
+Alternative Namen fuer die Keys werden auch unterstuetzt:
+
+```text
+ALPACA_API_KEY=dein_key
+ALPACA_SECRET_KEY=dein_secret
+ALPACA_BASE_URL=https://paper-api.alpaca.markets
+```
+
 `.env` ist in `.gitignore` eingetragen und darf nicht committed werden.
+
+## Timeframe
+
+Die Pipeline kann mit zwei Timeframes laufen:
+
+- `1Hour`: stündliche Bars, Standard fuer Phase 2
+- `1Day`: tägliche Bars, passend zum bisherigen Research-Modell
+
+Wichtig: Das finale Outperformance-LSTM wurde auf Tagesdaten trainiert. Wenn es
+mit `1Hour` genutzt wird, aendert sich die Bedeutung der Features:
+
+- `Daily_Return` bedeutet dann Stundenrendite
+- `Lag_1_Return` bedeutet Rendite der vorherigen Stunde
+- `Momentum_20` bedeutet 20-Stunden-Momentum
+- `Relative_Return_QQQ` bedeutet Aktien-Stundenrendite minus Benchmark-Stundenrendite
+
+Deshalb gibt die Pipeline bei `1Hour` bewusst eine Warnung aus. Hourly Paper
+Trading ist ein Experiment zur Live-Signalpruefung. Die Daily-Backtest-Ergebnisse
+sind nicht 1:1 auf Stundenbasis uebertragbar. Fuer belastbare Stunden-Ergebnisse
+muesste spaeter ein Outperformance-LSTM direkt auf Stundenbars trainiert werden.
 
 ## Befehle
 
@@ -55,37 +84,43 @@ python tech_stock_prediction/experiments/exp_2_lstm/scripts/17_export_alpaca_mod
 Nur Signale erzeugen, ohne Alpaca-Verbindung:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --signals-only
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --signals-only --top-k 5 --timeframe 1Hour
 ```
 
 Signale fuer alle Universen:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Hour
 ```
 
 Dry Run fuer ein Universum:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --dry-run
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --dry-run --top-k 5 --timeframe 1Hour
 ```
 
 Dry Run fuer alle Universen:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --dry-run
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --dry-run --top-k 5 --timeframe 1Hour
 ```
 
 Paper Orders fuer ein Universum:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --execute
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --execute --top-k 5 --timeframe 1Hour
 ```
 
 Paper Orders fuer alle Universen:
 
 ```bash
-python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --execute
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --execute --top-k 5 --timeframe 1Hour
+```
+
+Daily ist weiterhin moeglich:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Day
 ```
 
 ## Modi
@@ -100,7 +135,7 @@ python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes
 `--dry-run`
 
 - prueft den kompletten Ablauf
-- benoetigt keine Alpaca Keys
+- benoetigt Alpaca Paper-Trading-Keys
 - sendet keine Orders
 - zeigt nur, welche Orders geplant waeren
 
@@ -128,6 +163,7 @@ Der Signal-Generator erwartet ein gespeichertes finales Outperformance-LSTM:
 ```text
 experiments/exp_2_lstm/models/outperformance_lstm_model.pth
 experiments/exp_2_lstm/models/outperformance_lstm_scaler.pkl
+experiments/exp_2_lstm/models/outperformance_lstm_metadata.json
 experiments/exp_2_lstm/conf/outperformance_alpaca_features.txt
 ```
 
@@ -139,5 +175,5 @@ Die finale Alpaca-Variante ist:
 
 - Modell: Outperformance-LSTM
 - Featuregruppe: Technical + Relative Strength
-- Standard-Strategie: Top-K mit `TOP_K=1`
+- Standard-Strategie: Top-K mit `TOP_K=5`
 - Benchmark: `QQQ` fuer Tech-Universen, `SPY` fuer `defensive_non_tech`

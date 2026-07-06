@@ -157,10 +157,27 @@ Der Export erzeugt diese Inference-Dateien:
 ```text
 models/outperformance_lstm_model.pth
 models/outperformance_lstm_scaler.pkl
+models/outperformance_lstm_metadata.json
 data/processed/lstm_outperformance_alpaca_export_summary.csv
 ```
 
-Diese Modell- und Ergebnisdateien sind generiert und gehoeren nicht in Git.
+Die Modell- und Ergebnisdateien sind generiert und gehoeren nicht in Git.
+Die kleine Metadaten-Datei dokumentiert dagegen, dass das aktuelle Modell auf
+Tagesdaten trainiert wurde.
+
+## Alpaca Timeframe
+
+Die Alpaca-Pipeline kann Signale mit `1Day` oder `1Hour` erzeugen:
+
+```bash
+python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Hour
+```
+
+Wichtig: Das aktuelle Outperformance-LSTM wurde auf Tagesdaten trainiert. Bei
+`1Hour` werden die Features auf Stundenbars berechnet. Das ist fuer Phase 2 ein
+experimenteller Live-Signaltest, aber kein direkter Ersatz fuer den Daily-
+Backtest. Fuer wissenschaftlich belastbare Stunden-Ergebnisse muesste spaeter
+ein eigenes Outperformance-LSTM auf Stundenbars trainiert werden.
 
 ## Feature-Ablation
 
