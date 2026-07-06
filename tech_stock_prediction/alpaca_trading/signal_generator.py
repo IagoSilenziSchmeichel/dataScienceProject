@@ -27,14 +27,28 @@ LSTM_EXPERIMENT_ROOT = PROJECT_ROOT / "experiments" / "exp_2_lstm"
 LSTM_HOURLY_ROOT = LSTM_EXPERIMENT_ROOT / "hourly"
 PARAMS_FILE = LSTM_EXPERIMENT_ROOT / "conf" / "params.yaml"
 
-# Alpaca Paper Trading must use the separately trained hourly model. The daily
-# research model remains untouched and is intentionally not loaded here.
-EXPECTED_MODEL_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_lstm_model.pth"
-EXPECTED_SCALER_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_scaler.pkl"
-EXPECTED_METADATA_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_metadata.json"
-EXPECTED_FEATURE_FILE = LSTM_HOURLY_ROOT / "conf" / "hourly_features.txt"
+DAILY_MODEL_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_model.pth"
+DAILY_SCALER_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_scaler.pkl"
+DAILY_METADATA_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_metadata.json"
+DAILY_FEATURE_FILE = LSTM_EXPERIMENT_ROOT / "conf" / "outperformance_alpaca_features.txt"
 
-FALLBACK_FEATURE_COLUMNS = [
+HOURLY_MODEL_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_lstm_model.pth"
+HOURLY_SCALER_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_scaler.pkl"
+HOURLY_METADATA_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_metadata.json"
+HOURLY_FEATURE_FILE = LSTM_HOURLY_ROOT / "conf" / "hourly_features.txt"
+
+DAILY_FALLBACK_FEATURE_COLUMNS = [
+    "Daily_Return",
+    "Lag_1_Return",
+    "Lag_3_Return",
+    "Lag_7_Return",
+    "RSI_14",
+    "MACD",
+    "Relative_Return_QQQ",
+    "Relative_Momentum_20_QQQ",
+]
+
+HOURLY_FALLBACK_FEATURE_COLUMNS = [
     "Daily_Return",
     "Lag_1_Return",
     "Lag_3_Return",
@@ -101,6 +115,46 @@ class SignalGeneratorConfig:
     lookback_days: int = 450
 
 
+@dataclass(frozen=True)
+class InferenceArtifacts:
+    timeframe: str
+    model_file: Path
+    scaler_file: Path
+    metadata_file: Path
+    feature_file: Path
+    fallback_feature_columns: list[str]
+    preparation_command: str
+
+
+def get_inference_artifacts(timeframe: str) -> InferenceArtifacts:
+    if timeframe == "1Day":
+        return InferenceArtifacts(
+            timeframe=timeframe,
+            model_file=DAILY_MODEL_FILE,
+            scaler_file=DAILY_SCALER_FILE,
+            metadata_file=DAILY_METADATA_FILE,
+            feature_file=DAILY_FEATURE_FILE,
+            fallback_feature_columns=DAILY_FALLBACK_FEATURE_COLUMNS,
+            preparation_command=(
+                "python tech_stock_prediction/experiments/exp_2_lstm/scripts/"
+                "17_export_alpaca_model/export_outperformance_alpaca_model.py"
+            ),
+        )
+
+    if timeframe == "1Hour":
+        return InferenceArtifacts(
+            timeframe=timeframe,
+            model_file=HOURLY_MODEL_FILE,
+            scaler_file=HOURLY_SCALER_FILE,
+            metadata_file=HOURLY_METADATA_FILE,
+            feature_file=HOURLY_FEATURE_FILE,
+            fallback_feature_columns=HOURLY_FALLBACK_FEATURE_COLUMNS,
+            preparation_command="python tech_stock_prediction/run_hourly_lstm_pipeline.py",
+        )
+
+    raise SignalGenerationError("Timeframe must be either '1Hour' or '1Day'.")
+
+
 def load_params() -> dict:
     if not PARAMS_FILE.exists():
         raise SignalGenerationError(f"LSTM params file not found: {PARAMS_FILE}")
@@ -108,39 +162,39 @@ def load_params() -> dict:
     return yaml.safe_load(PARAMS_FILE.read_text(encoding="utf-8"))
 
 
-def check_inference_files() -> None:
+def check_inference_files(artifacts: InferenceArtifacts) -> None:
     missing_files = []
 
-    if not EXPECTED_MODEL_FILE.exists():
-        missing_files.append(str(EXPECTED_MODEL_FILE.relative_to(PROJECT_ROOT)))
-    if not EXPECTED_SCALER_FILE.exists():
-        missing_files.append(str(EXPECTED_SCALER_FILE.relative_to(PROJECT_ROOT)))
-    if not EXPECTED_FEATURE_FILE.exists():
-        missing_files.append(str(EXPECTED_FEATURE_FILE.relative_to(PROJECT_ROOT)))
+    if not artifacts.model_file.exists():
+        missing_files.append(str(artifacts.model_file.relative_to(PROJECT_ROOT)))
+    if not artifacts.scaler_file.exists():
+        missing_files.append(str(artifacts.scaler_file.relative_to(PROJECT_ROOT)))
+    if not artifacts.feature_file.exists():
+        missing_files.append(str(artifacts.feature_file.relative_to(PROJECT_ROOT)))
 
     if missing_files:
         raise SignalGenerationError(
-            "Final Outperformance-LSTM inference files are missing.\n"
+            f"Final {artifacts.timeframe} Outperformance-LSTM inference files are missing.\n"
             "Expected files:\n- "
             + "\n- ".join(missing_files)
-            + "\n\nDo not use the standard LSTM model by accident. "
-            "Save the final Outperformance-LSTM model and scaler to the paths above first."
+            + "\n\nPrepare the requested model artifacts first with:\n"
+            + artifacts.preparation_command
         )
 
 
-def load_model_metadata() -> dict:
-    if not EXPECTED_METADATA_FILE.exists():
+def load_model_metadata(artifacts: InferenceArtifacts) -> dict:
+    if not artifacts.metadata_file.exists():
         return {
-            "model_type": "hourly_outperformance_lstm",
+            "model_type": "outperformance_lstm",
             "training_timeframe": "unknown",
             "target_definition": "Unknown; metadata file is missing.",
         }
 
-    return json.loads(EXPECTED_METADATA_FILE.read_text(encoding="utf-8"))
+    return json.loads(artifacts.metadata_file.read_text(encoding="utf-8"))
 
 
-def warn_if_timeframe_mismatch(timeframe: str) -> None:
-    metadata = load_model_metadata()
+def warn_if_timeframe_mismatch(timeframe: str, artifacts: InferenceArtifacts) -> None:
+    metadata = load_model_metadata(artifacts)
     training_timeframe = metadata.get("training_timeframe", "unknown")
 
     if training_timeframe != "unknown" and timeframe != training_timeframe:
@@ -149,18 +203,18 @@ def warn_if_timeframe_mismatch(timeframe: str) -> None:
             f"were requested for {timeframe}."
         )
         print(
-            "Alpaca now loads the hourly model artifacts. Use --timeframe 1Hour "
-            "for the intended Paper-Trading validation setup."
+            "The requested timeframe decides which Alpaca model artifacts are loaded. "
+            "Use --timeframe 1Day for the daily model and --timeframe 1Hour for the hourly model."
         )
 
 
-def load_feature_columns() -> list[str]:
-    if not EXPECTED_FEATURE_FILE.exists():
-        return FALLBACK_FEATURE_COLUMNS
+def load_feature_columns(artifacts: InferenceArtifacts) -> list[str]:
+    if not artifacts.feature_file.exists():
+        return artifacts.fallback_feature_columns
 
     return [
         line.strip()
-        for line in EXPECTED_FEATURE_FILE.read_text(encoding="utf-8").splitlines()
+        for line in artifacts.feature_file.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
 
@@ -300,12 +354,12 @@ def add_relative_features(data: pd.DataFrame, benchmark: str) -> pd.DataFrame:
     return stock_data.replace([np.inf, -np.inf], np.nan)
 
 
-def load_scaler():
-    with open(EXPECTED_SCALER_FILE, "rb") as file:
+def load_scaler(artifacts: InferenceArtifacts):
+    with open(artifacts.scaler_file, "rb") as file:
         return pickle.load(file)
 
 
-def load_model(params: dict, input_size: int) -> LSTMClassifier:
+def load_model(params: dict, input_size: int, artifacts: InferenceArtifacts) -> LSTMClassifier:
     model_params = params["MODEL"]
     model = LSTMClassifier(
         input_size=input_size,
@@ -314,7 +368,7 @@ def load_model(params: dict, input_size: int) -> LSTMClassifier:
         dropout=model_params["DROPOUT"],
     )
 
-    state = torch.load(EXPECTED_MODEL_FILE, map_location="cpu")
+    state = torch.load(artifacts.model_file, map_location="cpu")
 
     if isinstance(state, dict) and "model_state_dict" in state:
         state = state["model_state_dict"]
@@ -360,14 +414,15 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
     """
     Generate Top-K outperformance probabilities for one stock universe.
     """
-    check_inference_files()
-    warn_if_timeframe_mismatch(timeframe)
+    artifacts = get_inference_artifacts(timeframe)
+    check_inference_files(artifacts)
+    warn_if_timeframe_mismatch(timeframe, artifacts)
 
     params = load_params()
     tickers = get_universe(universe_name)
     benchmark = get_benchmark_for_universe(universe_name)
     sequence_length = int(params["MODEL"]["SEQUENCE_LENGTH"])
-    final_feature_columns = load_feature_columns()
+    final_feature_columns = load_feature_columns(artifacts)
 
     print(f"Signal timeframe: {timeframe}")
     prices = download_price_data(tickers, benchmark, timeframe)
@@ -384,7 +439,7 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
 
     valid_feature_data = feature_data.dropna(subset=final_feature_columns).copy()
 
-    scaler = load_scaler()
+    scaler = load_scaler(artifacts)
     scaled_data = valid_feature_data.copy()
     scaled_data[final_feature_columns] = scaler.transform(
         valid_feature_data[final_feature_columns]
@@ -396,7 +451,7 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
         sequence_length,
     )
 
-    model = load_model(params, input_size=len(final_feature_columns))
+    model = load_model(params, input_size=len(final_feature_columns), artifacts=artifacts)
 
     with torch.no_grad():
         probabilities = torch.sigmoid(model(torch.tensor(X))).numpy()
