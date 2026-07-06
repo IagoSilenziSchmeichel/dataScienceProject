@@ -41,16 +41,16 @@ NEW_TECH = [
 ]
 
 DEFENSIVE_NON_TECH = [
-    "JNJ",
+    "WMT",
+    "COST",
     "PG",
     "KO",
     "PEP",
-    "WMT",
-    "MCD",
-    "COST",
-    "UNH",
+    "JNJ",
     "MRK",
+    "ABBV",
     "XOM",
+    "CVX",
 ]
 
 UNIVERSES = {
