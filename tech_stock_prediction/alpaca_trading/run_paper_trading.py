@@ -26,42 +26,19 @@ def parse_args():
     )
 
     mode_group = parser.add_mutually_exclusive_group(required=True)
-    mode_group.add_argument(
-        "--signals-only",
-        action="store_true",
-        help="Generate signals only. No Alpaca keys or connection required.",
-    )
-    mode_group.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Connect to Alpaca with keys, but do not send orders.",
-    )
-    mode_group.add_argument(
-        "--execute",
-        action="store_true",
-        help="Send Paper Trading orders to Alpaca.",
-    )
+    mode_group.add_argument("--signals-only", action="store_true")
+    mode_group.add_argument("--dry-run", action="store_true")
+    mode_group.add_argument("--execute", action="store_true")
 
-    parser.add_argument("--top-k", type=int, default=5, help="Number of tickers to select.")
-    parser.add_argument(
-        "--timeframe",
-        choices=["1Hour", "1Day"],
-        default="1Hour",
-        help="Trading timeframe for signal generation.",
-    )
+    parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument("--timeframe", choices=["1Hour", "1Day"], default="1Hour")
     parser.add_argument(
         "--allow-existing-positions",
         action="store_true",
-        help=(
-            "Acknowledge existing positions outside the selected universe. "
-            "Only useful for --execute."
-        ),
+        help="Only relevant for single-universe execute mode.",
     )
 
     args = parser.parse_args()
-
-    if args.all_universes and not args.signals_only:
-        parser.error("--all-universes is only allowed with --signals-only. Use --universe for dry-run or execute.")
 
     if args.allow_existing_positions and not args.execute:
         parser.error("--allow-existing-positions is only useful together with --execute.")
@@ -72,7 +49,6 @@ def parse_args():
 def resolve_universes(args) -> list[str]:
     if args.all_universes:
         return list_available_universes()
-
     return [args.universe]
 
 
@@ -84,12 +60,18 @@ def main():
         print("\nTHIS WILL SEND PAPER TRADING ORDERS TO ALPACA.")
         print("Mode: EXECUTE")
         print("Endpoint: https://paper-api.alpaca.markets")
-        print(f"Universe: {args.universe}")
+        if args.all_universes:
+            print("Universes: all configured universes")
+        else:
+            print(f"Universe: {args.universe}")
+
         dry_run = False
         signals_only = False
+
     elif args.signals_only:
         dry_run = True
         signals_only = True
+
     else:
         dry_run = True
         signals_only = False
@@ -104,6 +86,7 @@ def main():
             universe_count=len(universes),
             allow_existing_positions=args.allow_existing_positions,
         )
+
         try:
             engine.run_daily_cycle()
         except (RuntimeError, ValueError, SignalGenerationError) as error:

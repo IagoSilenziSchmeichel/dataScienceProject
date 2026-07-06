@@ -54,7 +54,9 @@ def append_csv(rows: pd.DataFrame, file_path: Path) -> None:
 
         if existing_header != new_header:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-            legacy_path = file_path.with_name(f"{file_path.stem}_legacy_{timestamp}{file_path.suffix}")
+            legacy_path = file_path.with_name(
+                f"{file_path.stem}_legacy_{timestamp}{file_path.suffix}"
+            )
             file_path.rename(legacy_path)
             print(f"Archived old log schema: {legacy_path}")
 
@@ -66,15 +68,15 @@ class PaperTradingEngine:
     """Coordinate signal generation, rebalancing and Alpaca orders."""
 
     def __init__(
-        self,
-        *,
-        universe_name: str,
-        top_k: int = 5,
-        timeframe: str = "1Hour",
-        dry_run: bool = True,
-        signals_only: bool = False,
-        universe_count: int = 1,
-        allow_existing_positions: bool = False,
+            self,
+            *,
+            universe_name: str,
+            top_k: int = 5,
+            timeframe: str = "1Hour",
+            dry_run: bool = True,
+            signals_only: bool = False,
+            universe_count: int = 1,
+            allow_existing_positions: bool = False,
     ):
         self.universe_name = universe_name
         self.top_k = top_k
@@ -133,7 +135,11 @@ class PaperTradingEngine:
         client = AlpacaPaperClient(settings)
         account = client.get_account_summary()
         positions = client.get_positions()
-        self.warn_or_stop_for_existing_positions(positions, settings.dry_run)
+
+        # In multi-universe server mode, positions from other universes are expected.
+        # In single-universe mode, we keep the safety check to avoid mixed tests.
+        if self.universe_count == 1:
+            self.warn_or_stop_for_existing_positions(positions, settings.dry_run)
 
         orders, position_log = build_rebalance_orders(
             signals=signals,
@@ -165,7 +171,10 @@ class PaperTradingEngine:
         latest_positions = client.get_positions()
         append_csv(pd.DataFrame(submitted_orders), ORDERS_LOG)
         append_csv(position_log, POSITIONS_LOG)
-        append_csv(self.build_performance_row(signals, account, submitted_orders), PERFORMANCE_LOG)
+        append_csv(
+            self.build_performance_row(signals, account, submitted_orders),
+            PERFORMANCE_LOG,
+        )
 
         mode = "DRY_RUN" if settings.dry_run else "EXECUTE"
         record_trading_documentation(
@@ -198,7 +207,12 @@ class PaperTradingEngine:
             planned_orders=submitted_orders,
         )
 
-    def build_performance_row(self, signals: pd.DataFrame, account: dict, orders: list[dict]) -> pd.DataFrame:
+    def build_performance_row(
+            self,
+            signals: pd.DataFrame,
+            account: dict,
+            orders: list[dict],
+    ) -> pd.DataFrame:
         selected_tickers = signals[signals["selected"]]["ticker"].tolist()
         generated_at = datetime.now(timezone.utc).isoformat()
         bought_tickers = [order["ticker"] for order in orders if order["action"] == "buy"]
@@ -215,7 +229,7 @@ class PaperTradingEngine:
                 previous = previous[
                     (previous["universe"] == self.universe_name)
                     & (previous["timeframe"] == signals["timeframe"].iloc[0])
-                ]
+                    ]
                 if not previous.empty and "benchmark_value" in previous.columns:
                     last = previous.iloc[-1]
                     previous_portfolio = float(last["portfolio_value"])
@@ -265,7 +279,7 @@ class PaperTradingEngine:
             position
             for position in positions
             if position["ticker"] not in universe_tickers
-            and abs(float(position.get("quantity", 0.0))) > 0
+               and abs(float(position.get("quantity", 0.0))) > 0
         ]
 
         if not outside_positions:
@@ -286,19 +300,19 @@ class PaperTradingEngine:
             raise RuntimeError(
                 message
                 + " For --execute, close these positions first or rerun with "
-                "--allow-existing-positions."
+                  "--allow-existing-positions."
             )
 
         print(message)
 
     def print_summary(
-        self,
-        *,
-        benchmark: str,
-        selected: pd.DataFrame,
-        account: dict | None,
-        orders: list[dict],
-        mode: str,
+            self,
+            *,
+            benchmark: str,
+            selected: pd.DataFrame,
+            account: dict | None,
+            orders: list[dict],
+            mode: str,
     ) -> None:
         print("\nPaper Trading Daily Cycle")
         print("=========================")
