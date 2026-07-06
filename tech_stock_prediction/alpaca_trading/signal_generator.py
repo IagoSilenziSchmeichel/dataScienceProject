@@ -24,25 +24,47 @@ from config.stock_universes import get_benchmark_for_universe, get_universe
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 LSTM_EXPERIMENT_ROOT = PROJECT_ROOT / "experiments" / "exp_2_lstm"
+LSTM_HOURLY_ROOT = LSTM_EXPERIMENT_ROOT / "hourly"
 PARAMS_FILE = LSTM_EXPERIMENT_ROOT / "conf" / "params.yaml"
 
-# These are intentionally separate from the standard LSTM files. The final
-# Paper-Trading model is an Outperformance-LSTM and must not accidentally load
-# the standard Steigt/Faellt model.
-EXPECTED_MODEL_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_model.pth"
-EXPECTED_SCALER_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_scaler.pkl"
-EXPECTED_METADATA_FILE = LSTM_EXPERIMENT_ROOT / "models" / "outperformance_lstm_metadata.json"
-EXPECTED_FEATURE_FILE = LSTM_EXPERIMENT_ROOT / "conf" / "outperformance_alpaca_features.txt"
+# Alpaca Paper Trading must use the separately trained hourly model. The daily
+# research model remains untouched and is intentionally not loaded here.
+EXPECTED_MODEL_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_lstm_model.pth"
+EXPECTED_SCALER_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_scaler.pkl"
+EXPECTED_METADATA_FILE = LSTM_HOURLY_ROOT / "models" / "hourly_outperformance_metadata.json"
+EXPECTED_FEATURE_FILE = LSTM_HOURLY_ROOT / "conf" / "hourly_features.txt"
 
 FALLBACK_FEATURE_COLUMNS = [
     "Daily_Return",
     "Lag_1_Return",
     "Lag_3_Return",
     "Lag_7_Return",
+    "RollingMean_7",
+    "RollingMean_30",
+    "RollingVolatility_7",
+    "RollingVolatility_30",
     "RSI_14",
     "MACD",
+    "MACD_Signal",
+    "Volume_Change",
+    "Volume_Ratio_20",
+    "Distance_to_MA_200",
+    "Momentum_5",
+    "Momentum_10",
+    "Momentum_20",
+    "Price_Position_20",
+    "High_Low_Range",
+    "QQQ_Return",
+    "SPY_Return",
+    "VIX_Change",
+    "QQQ_Momentum_20",
+    "SPY_Momentum_20",
+    "QQQ_Distance_to_MA200",
+    "SPY_Distance_to_MA200",
     "Relative_Return_QQQ",
+    "Relative_Return_SPY",
     "Relative_Momentum_20_QQQ",
+    "Relative_Momentum_20_SPY",
 ]
 
 
@@ -109,7 +131,7 @@ def check_inference_files() -> None:
 def load_model_metadata() -> dict:
     if not EXPECTED_METADATA_FILE.exists():
         return {
-            "model_type": "outperformance_lstm",
+            "model_type": "hourly_outperformance_lstm",
             "training_timeframe": "unknown",
             "target_definition": "Unknown; metadata file is missing.",
         }
@@ -121,14 +143,14 @@ def warn_if_timeframe_mismatch(timeframe: str) -> None:
     metadata = load_model_metadata()
     training_timeframe = metadata.get("training_timeframe", "unknown")
 
-    if timeframe == "1Hour" and training_timeframe != "1Hour":
+    if training_timeframe != "unknown" and timeframe != training_timeframe:
         print(
-            "WARNING: Model was trained on daily data. Running it on hourly data "
-            "changes the meaning of the features."
+            f"WARNING: Model was trained for {training_timeframe}, but signals "
+            f"were requested for {timeframe}."
         )
         print(
-            "Hourly Paper Trading is an experimental live-signal check. "
-            "Daily backtest results are not directly transferable to hourly trading."
+            "Alpaca now loads the hourly model artifacts. Use --timeframe 1Hour "
+            "for the intended Paper-Trading validation setup."
         )
 
 
@@ -156,7 +178,7 @@ def download_price_data(tickers: list[str], benchmark: str, timeframe: str) -> p
     interval, lookback_days = get_download_settings(timeframe)
     end_timestamp = pd.Timestamp.now(tz="UTC")
     start_timestamp = end_timestamp - pd.Timedelta(days=lookback_days)
-    all_tickers = sorted(set(tickers + [benchmark]))
+    all_tickers = sorted(set(tickers + [benchmark, "QQQ", "SPY", "^VIX"]))
 
     print(f"Downloading {timeframe} data with yfinance interval '{interval}'...")
 
@@ -223,41 +245,59 @@ def add_stock_features(data: pd.DataFrame) -> pd.DataFrame:
         ticker_data["Lag_1_Return"] = ticker_data["Daily_Return"].shift(1)
         ticker_data["Lag_3_Return"] = ticker_data["Daily_Return"].shift(3)
         ticker_data["Lag_7_Return"] = ticker_data["Daily_Return"].shift(7)
+        ticker_data["RollingMean_7"] = ticker_data["Close"] / ticker_data["Close"].rolling(7).mean() - 1
+        ticker_data["RollingMean_30"] = ticker_data["Close"] / ticker_data["Close"].rolling(30).mean() - 1
+        ticker_data["RollingVolatility_7"] = ticker_data["Daily_Return"].rolling(7).std()
+        ticker_data["RollingVolatility_30"] = ticker_data["Daily_Return"].rolling(30).std()
         ticker_data["RSI_14"] = calculate_rsi(ticker_data["Close"], 14)
 
         ema_12 = ticker_data["Close"].ewm(span=12, adjust=False).mean()
         ema_26 = ticker_data["Close"].ewm(span=26, adjust=False).mean()
         ticker_data["MACD"] = ema_12 - ema_26
+        ticker_data["MACD_Signal"] = ticker_data["MACD"].ewm(span=9, adjust=False).mean()
+        ticker_data["Volume_Change"] = ticker_data["Volume"].pct_change()
+        ticker_data["Volume_Ratio_20"] = ticker_data["Volume"] / ticker_data["Volume"].rolling(20).mean()
+        ticker_data["Distance_to_MA_200"] = ticker_data["Close"] / ticker_data["Close"].rolling(200).mean() - 1
+        ticker_data["Momentum_5"] = ticker_data["Close"] / ticker_data["Close"].shift(5) - 1
+        ticker_data["Momentum_10"] = ticker_data["Close"] / ticker_data["Close"].shift(10) - 1
         ticker_data["Momentum_20"] = ticker_data["Close"] / ticker_data["Close"].shift(20) - 1
+        ticker_data["Price_Position_20"] = (
+            ticker_data["Close"] - ticker_data["Low"].rolling(20).min()
+        ) / (ticker_data["High"].rolling(20).max() - ticker_data["Low"].rolling(20).min())
+        ticker_data["High_Low_Range"] = ticker_data["High"] / ticker_data["Low"] - 1
 
         rows.append(ticker_data)
 
-    return pd.concat(rows, ignore_index=True)
+    return pd.concat(rows, ignore_index=True).replace([np.inf, -np.inf], np.nan)
 
 
 def add_relative_features(data: pd.DataFrame, benchmark: str) -> pd.DataFrame:
-    benchmark_data = data[data["Ticker"] == benchmark][
-        ["Date", "Daily_Return", "Momentum_20"]
-    ].rename(
+    qqq = data[data["Ticker"] == "QQQ"][["Date", "Daily_Return", "Momentum_20", "Distance_to_MA_200"]].rename(
         columns={
-            "Daily_Return": "Benchmark_Return",
-            "Momentum_20": "Benchmark_Momentum_20",
+            "Daily_Return": "QQQ_Return",
+            "Momentum_20": "QQQ_Momentum_20",
+            "Distance_to_MA_200": "QQQ_Distance_to_MA200",
         }
     )
-
-    stock_data = data[data["Ticker"] != benchmark].copy()
-    stock_data = stock_data.merge(benchmark_data, on="Date", how="left")
-
-    # The trained model expects these feature names. For defensive_non_tech the
-    # benchmark values come from SPY, but the input columns keep the same names.
-    stock_data["Relative_Return_QQQ"] = (
-        stock_data["Daily_Return"] - stock_data["Benchmark_Return"]
+    spy = data[data["Ticker"] == "SPY"][["Date", "Daily_Return", "Momentum_20", "Distance_to_MA_200"]].rename(
+        columns={
+            "Daily_Return": "SPY_Return",
+            "Momentum_20": "SPY_Momentum_20",
+            "Distance_to_MA_200": "SPY_Distance_to_MA200",
+        }
     )
-    stock_data["Relative_Momentum_20_QQQ"] = (
-        stock_data["Momentum_20"] - stock_data["Benchmark_Momentum_20"]
-    )
+    vix = data[data["Ticker"] == "^VIX"][["Date", "Daily_Return"]].rename(columns={"Daily_Return": "VIX_Change"})
 
-    return stock_data
+    stock_data = data[~data["Ticker"].isin(["QQQ", "SPY", "^VIX"])].copy()
+    stock_data = stock_data.merge(qqq, on="Date", how="left").merge(spy, on="Date", how="left").merge(vix, on="Date", how="left")
+    stock_data["VIX_Change"] = stock_data["VIX_Change"].fillna(0.0)
+
+    stock_data["Relative_Return_QQQ"] = stock_data["Daily_Return"] - stock_data["QQQ_Return"]
+    stock_data["Relative_Return_SPY"] = stock_data["Daily_Return"] - stock_data["SPY_Return"]
+    stock_data["Relative_Momentum_20_QQQ"] = stock_data["Momentum_20"] - stock_data["QQQ_Momentum_20"]
+    stock_data["Relative_Momentum_20_SPY"] = stock_data["Momentum_20"] - stock_data["SPY_Momentum_20"]
+
+    return stock_data.replace([np.inf, -np.inf], np.nan)
 
 
 def load_scaler():
@@ -331,6 +371,8 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
 
     print(f"Signal timeframe: {timeframe}")
     prices = download_price_data(tickers, benchmark, timeframe)
+    benchmark_prices = prices[prices["Ticker"] == benchmark].sort_values("Date")
+    latest_benchmark_close = float(benchmark_prices["Close"].dropna().iloc[-1])
     features = add_stock_features(prices)
     feature_data = add_relative_features(features, benchmark)
 
@@ -376,6 +418,7 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
             "feature_window_end": signal_timestamp.isoformat(),
             "universe": universe_name,
             "benchmark": benchmark,
+            "benchmark_close": latest_benchmark_close,
             "ticker": sequence_tickers,
             "probability": probabilities,
         }
@@ -399,6 +442,7 @@ def generate_signals(universe_name: str, top_k: int = 5, timeframe: str = "1Hour
             "feature_window_end",
             "universe",
             "benchmark",
+            "benchmark_close",
             "ticker",
             "probability",
             "rank",

@@ -23,6 +23,10 @@ tech_stock_prediction/experiments/*/data/processed/*.npz
 tech_stock_prediction/experiments/*/models/*.pkl
 tech_stock_prediction/experiments/*/models/*.pth
 tech_stock_prediction/experiments/*/plots/*.png
+tech_stock_prediction/experiments/*/hourly/data/*.csv
+tech_stock_prediction/experiments/*/hourly/models/*.pkl
+tech_stock_prediction/experiments/*/hourly/models/*.pth
+tech_stock_prediction/experiments/*/hourly/plots/*.png
 tech_stock_prediction/alpaca_trading/logs/*.csv
 tech_stock_prediction/data/raw/*.csv
 tech_stock_prediction/data/processed/*.csv

@@ -152,7 +152,7 @@ class PaperTradingEngine:
 
         append_csv(pd.DataFrame(submitted_orders), ORDERS_LOG)
         append_csv(position_log, POSITIONS_LOG)
-        append_csv(self.build_performance_row(signals, account), PERFORMANCE_LOG)
+        append_csv(self.build_performance_row(signals, account, submitted_orders), PERFORMANCE_LOG)
 
         mode = "DRY_RUN" if settings.dry_run else "EXECUTE"
         self.print_summary(
@@ -175,9 +175,34 @@ class PaperTradingEngine:
             planned_orders=submitted_orders,
         )
 
-    def build_performance_row(self, signals: pd.DataFrame, account: dict) -> pd.DataFrame:
+    def build_performance_row(self, signals: pd.DataFrame, account: dict, orders: list[dict]) -> pd.DataFrame:
         selected_tickers = signals[signals["selected"]]["ticker"].tolist()
         generated_at = datetime.now(timezone.utc).isoformat()
+        bought_tickers = [order["ticker"] for order in orders if order["action"] == "buy"]
+        sold_tickers = [order["ticker"] for order in orders if order["action"] == "sell"]
+        held_tickers = [order["ticker"] for order in orders if order["action"] == "hold"]
+        benchmark_value = signals["benchmark_close"].iloc[0] if "benchmark_close" in signals.columns else ""
+
+        portfolio_return = ""
+        benchmark_return = ""
+        outperformance = ""
+        if PERFORMANCE_LOG.exists():
+            try:
+                previous = pd.read_csv(PERFORMANCE_LOG)
+                previous = previous[
+                    (previous["universe"] == self.universe_name)
+                    & (previous["timeframe"] == signals["timeframe"].iloc[0])
+                ]
+                if not previous.empty and "benchmark_value" in previous.columns:
+                    last = previous.iloc[-1]
+                    previous_portfolio = float(last["portfolio_value"])
+                    previous_benchmark = float(last["benchmark_value"])
+                    if previous_portfolio > 0 and previous_benchmark > 0:
+                        portfolio_return = account["portfolio_value"] / previous_portfolio - 1
+                        benchmark_return = float(benchmark_value) / previous_benchmark - 1
+                        outperformance = portfolio_return - benchmark_return
+            except (ValueError, KeyError):
+                pass
 
         return pd.DataFrame(
             [
@@ -194,8 +219,14 @@ class PaperTradingEngine:
                     "benchmark": signals["benchmark"].iloc[0],
                     "portfolio_value": account["portfolio_value"],
                     "cash": account["cash"],
+                    "benchmark_value": benchmark_value,
                     "selected_tickers": ",".join(selected_tickers),
-                    "benchmark_close": "",
+                    "bought_tickers": ",".join(bought_tickers),
+                    "sold_tickers": ",".join(sold_tickers),
+                    "held_tickers": ",".join(held_tickers),
+                    "portfolio_return_since_last": portfolio_return,
+                    "benchmark_return_since_last": benchmark_return,
+                    "outperformance_since_last": outperformance,
                     "notes": "Paper Trading daily cycle",
                 }
             ]

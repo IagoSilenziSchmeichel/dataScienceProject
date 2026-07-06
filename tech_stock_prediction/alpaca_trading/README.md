@@ -57,30 +57,22 @@ ALPACA_BASE_URL=https://paper-api.alpaca.markets
 
 ## Timeframe
 
-Die Pipeline kann mit zwei Timeframes laufen:
+Die Alpaca-Pipeline ist jetzt auf das separat trainierte Hourly-Outperformance-
+LSTM ausgerichtet.
 
-- `1Hour`: stündliche Bars, Standard fuer Phase 2
-- `1Day`: tägliche Bars, passend zum bisherigen Research-Modell
+- `1Hour`: stündliche Bars, Standard fuer Alpaca Paper Trading
+- `1Day`: technisch weiterhin waehlbar, aber nicht der empfohlene Alpaca-Modus
 
-Wichtig: Das finale Outperformance-LSTM wurde auf Tagesdaten trainiert. Wenn es
-mit `1Hour` genutzt wird, aendert sich die Bedeutung der Features:
-
-- `Daily_Return` bedeutet dann Stundenrendite
-- `Lag_1_Return` bedeutet Rendite der vorherigen Stunde
-- `Momentum_20` bedeutet 20-Stunden-Momentum
-- `Relative_Return_QQQ` bedeutet Aktien-Stundenrendite minus Benchmark-Stundenrendite
-
-Deshalb gibt die Pipeline bei `1Hour` bewusst eine Warnung aus. Hourly Paper
-Trading ist ein Experiment zur Live-Signalpruefung. Die Daily-Backtest-Ergebnisse
-sind nicht 1:1 auf Stundenbasis uebertragbar. Fuer belastbare Stunden-Ergebnisse
-muesste spaeter ein Outperformance-LSTM direkt auf Stundenbars trainiert werden.
+Wichtig: Das Daily-Research-Modell wird von Alpaca nicht mehr geladen. Fuer
+Paper Trading werden die Hourly-Artefakte aus `experiments/exp_2_lstm/hourly/`
+erwartet.
 
 ## Befehle
 
-Finales Outperformance-LSTM fuer Alpaca exportieren:
+Hourly-Outperformance-LSTM fuer Alpaca trainieren:
 
 ```bash
-python tech_stock_prediction/experiments/exp_2_lstm/scripts/17_export_alpaca_model/export_outperformance_alpaca_model.py
+python tech_stock_prediction/run_hourly_lstm_pipeline.py
 ```
 
 Nur Signale erzeugen, ohne Alpaca-Verbindung:
@@ -119,7 +111,8 @@ Positionen schliessen oder das Risiko bewusst bestaetigen:
 python tech_stock_prediction/alpaca_trading/run_paper_trading.py --universe original_tech --execute --top-k 5 --timeframe 1Hour --allow-existing-positions
 ```
 
-Daily ist weiterhin moeglich:
+Daily ist fuer die wissenschaftliche Hauptpipeline weiterhin ueber
+`run_lstm_pipeline.py` moeglich. Alpaca verwendet trotzdem die Hourly-Artefakte:
 
 ```bash
 python tech_stock_prediction/alpaca_trading/run_paper_trading.py --all-universes --signals-only --top-k 5 --timeframe 1Day
@@ -173,13 +166,13 @@ Alle Logs enthalten eindeutige Testinformationen:
 
 ## Modell-Dateien
 
-Der Signal-Generator erwartet ein gespeichertes finales Outperformance-LSTM:
+Der Signal-Generator erwartet das gespeicherte Hourly-Outperformance-LSTM:
 
 ```text
-experiments/exp_2_lstm/models/outperformance_lstm_model.pth
-experiments/exp_2_lstm/models/outperformance_lstm_scaler.pkl
-experiments/exp_2_lstm/models/outperformance_lstm_metadata.json
-experiments/exp_2_lstm/conf/outperformance_alpaca_features.txt
+experiments/exp_2_lstm/hourly/models/hourly_outperformance_lstm_model.pth
+experiments/exp_2_lstm/hourly/models/hourly_outperformance_scaler.pkl
+experiments/exp_2_lstm/hourly/models/hourly_outperformance_metadata.json
+experiments/exp_2_lstm/hourly/conf/hourly_features.txt
 ```
 
 Falls diese Dateien fehlen, bricht der Signal-Generator bewusst mit einer
@@ -188,7 +181,7 @@ Standard-LSTM fuer Paper Trading genutzt wird.
 
 Die finale Alpaca-Variante ist:
 
-- Modell: Outperformance-LSTM
-- Featuregruppe: Technical + Relative Strength
+- Modell: Hourly-Outperformance-LSTM
+- Featuregruppe: Technical + Market + Relative Strength
 - Standard-Strategie: Top-K mit `TOP_K=5`
 - Benchmark: `QQQ` fuer Tech-Universen, `SPY` fuer `defensive_non_tech`
