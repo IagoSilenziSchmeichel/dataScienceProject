@@ -487,6 +487,29 @@ def load_csv(file_path: Path) -> pd.DataFrame:
     return pd.read_csv(file_path)
 
 
+def latest_portfolio_value() -> float | None:
+    snapshots = load_csv(TRADING_SNAPSHOTS_FILE)
+    if snapshots.empty or "portfolio_value" not in snapshots.columns:
+        return None
+
+    values = pd.to_numeric(snapshots["portfolio_value"], errors="coerce").dropna()
+    if values.empty:
+        return None
+    return float(values.iloc[-1])
+
+
+def add_normalized_series(group: pd.DataFrame, value_column: str, normalized_column: str) -> pd.DataFrame:
+    group = group.copy()
+    values = pd.to_numeric(group[value_column], errors="coerce")
+    first_valid = values.dropna()
+    if first_valid.empty or first_valid.iloc[0] == 0:
+        group[normalized_column] = pd.NA
+        return group
+
+    group[normalized_column] = values / first_valid.iloc[0] * 100
+    return group
+
+
 def save_line_plot(data: pd.DataFrame, x: str, y_columns: list[str], title: str, file_name: str) -> None:
     plot_file = REPORT_DIR / file_name
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -511,20 +534,100 @@ def save_line_plot(data: pd.DataFrame, x: str, y_columns: list[str], title: str,
     plt.close(fig)
 
 
+def save_portfolio_vs_benchmark_plot() -> None:
+    data = load_csv(PERFORMANCE_HISTORY_FILE)
+    plot_file = REPORT_DIR / "portfolio_vs_benchmark.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    if not data.empty:
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data = data.sort_values("timestamp")
+        grouped = []
+        for _, group in data.groupby(["universe", "timeframe"], dropna=False):
+            group = add_normalized_series(group, "portfolio_value", "portfolio_index")
+            group = add_normalized_series(group, "benchmark_value", "benchmark_index")
+            grouped.append(group)
+
+        normalized = pd.concat(grouped, ignore_index=True) if grouped else pd.DataFrame()
+        if not normalized.empty:
+            portfolio = normalized.groupby("timestamp", as_index=False)["portfolio_index"].mean()
+            benchmark = normalized.groupby("timestamp", as_index=False)["benchmark_index"].mean()
+
+            if portfolio["portfolio_index"].notna().any():
+                ax.plot(
+                    portfolio["timestamp"],
+                    portfolio["portfolio_index"],
+                    marker="o",
+                    linewidth=2,
+                    label="Portfolio index",
+                )
+            if benchmark["benchmark_index"].notna().any():
+                ax.plot(
+                    benchmark["timestamp"],
+                    benchmark["benchmark_index"],
+                    marker="o",
+                    linestyle="--",
+                    linewidth=2,
+                    label="Benchmark index",
+                )
+
+        if ax.has_data():
+            ax.axhline(100, color="black", linewidth=1, alpha=0.35)
+            ax.set_title("Portfolio vs Benchmark (Start = 100)", fontweight="bold")
+            ax.set_ylabel("Index value")
+            ax.grid(alpha=0.25)
+            ax.legend()
+            fig.autofmt_xdate()
+        else:
+            ax.text(0.5, 0.5, "Not enough performance data yet", ha="center", va="center")
+    else:
+        ax.text(0.5, 0.5, "No performance data yet", ha="center", va="center")
+
+    fig.savefig(plot_file, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
 def save_position_allocation() -> None:
     data = load_csv(POSITIONS_HISTORY_FILE)
     plot_file = REPORT_DIR / "position_allocation.png"
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    fig, ax = plt.subplots(figsize=(9, 6))
+    fig, ax = plt.subplots(figsize=(11, 6))
 
     if not data.empty:
         latest_timestamp = data["timestamp"].max()
         latest = data[data["timestamp"] == latest_timestamp].copy()
         latest["market_value"] = pd.to_numeric(latest["market_value"], errors="coerce").fillna(0)
-        latest = latest[latest["market_value"] > 0]
+        latest = latest[latest["market_value"] > 0].copy()
         if not latest.empty:
-            ax.pie(latest["market_value"], labels=latest["symbol"], autopct="%1.1f%%", startangle=90)
-            ax.set_title("Current Position Allocation", fontweight="bold")
+            portfolio_value = latest_portfolio_value()
+            invested_value = float(latest["market_value"].sum())
+            denominator = portfolio_value if portfolio_value and portfolio_value > 0 else invested_value
+
+            allocation = latest.groupby("symbol", as_index=False)["market_value"].sum()
+            allocation["portfolio_weight"] = allocation["market_value"] / denominator * 100
+
+            cash_value = max(denominator - invested_value, 0.0)
+            if cash_value > 1:
+                allocation = pd.concat(
+                    [
+                        allocation,
+                        pd.DataFrame(
+                            [{"symbol": "Cash", "market_value": cash_value, "portfolio_weight": cash_value / denominator * 100}]
+                        ),
+                    ],
+                    ignore_index=True,
+                )
+
+            allocation = allocation.sort_values("portfolio_weight", ascending=True)
+            colors = ["#8A8F98" if symbol == "Cash" else "#4F8F6F" for symbol in allocation["symbol"]]
+            ax.barh(allocation["symbol"], allocation["portfolio_weight"], color=colors)
+            ax.set_title("Current Position Allocation (% of Portfolio)", fontweight="bold")
+            ax.set_xlabel("Portfolio weight (%)")
+            ax.grid(axis="x", alpha=0.25)
+
+            for index, value in enumerate(allocation["portfolio_weight"]):
+                ax.text(value + 0.15, index, f"{value:.1f}%", va="center", fontsize=8)
         else:
             ax.text(0.5, 0.5, "No open positions", ha="center", va="center")
     else:
@@ -615,18 +718,24 @@ def save_multi_universe_portfolio_vs_benchmark() -> None:
 
     if not data.empty:
         data["timestamp"] = pd.to_datetime(data["timestamp"])
-        data["portfolio_value"] = pd.to_numeric(data["portfolio_value"], errors="coerce")
-        data["benchmark_value"] = pd.to_numeric(data["benchmark_value"], errors="coerce")
+        data = data.sort_values("timestamp")
         for universe, group in data.groupby("universe"):
             group = group.sort_values("timestamp")
-            if group["portfolio_value"].notna().any():
-                ax.plot(group["timestamp"], group["portfolio_value"], marker="o", linewidth=2, label=f"{universe} portfolio")
-            if group["benchmark_value"].notna().any():
-                ax.plot(group["timestamp"], group["benchmark_value"], linestyle="--", alpha=0.65, label=f"{universe} benchmark")
-        ax.set_title("Multi-Universe Portfolio vs Benchmark", fontweight="bold")
-        ax.grid(alpha=0.25)
-        ax.legend(fontsize=8)
-        fig.autofmt_xdate()
+            group = add_normalized_series(group, "portfolio_value", "portfolio_index")
+            group = add_normalized_series(group, "benchmark_value", "benchmark_index")
+            if group["portfolio_index"].notna().any():
+                ax.plot(group["timestamp"], group["portfolio_index"], marker="o", linewidth=2, label=f"{universe} portfolio")
+            if group["benchmark_index"].notna().any():
+                ax.plot(group["timestamp"], group["benchmark_index"], linestyle="--", alpha=0.65, label=f"{universe} benchmark")
+        if ax.has_data():
+            ax.axhline(100, color="black", linewidth=1, alpha=0.35)
+            ax.set_title("Multi-Universe Portfolio vs Benchmark (Start = 100)", fontweight="bold")
+            ax.set_ylabel("Index value")
+            ax.grid(alpha=0.25)
+            ax.legend(fontsize=8)
+            fig.autofmt_xdate()
+        else:
+            ax.text(0.5, 0.5, "Not enough performance data yet", ha="center", va="center")
     else:
         ax.text(0.5, 0.5, "No performance data yet", ha="center", va="center")
 
@@ -716,13 +825,7 @@ def update_multi_universe_plots() -> None:
 def update_plots() -> None:
     performance = load_csv(PERFORMANCE_HISTORY_FILE)
     if not performance.empty:
-        save_line_plot(
-            performance,
-            "timestamp",
-            ["portfolio_value", "benchmark_value"],
-            "Portfolio vs Benchmark",
-            "portfolio_vs_benchmark.png",
-        )
+        save_portfolio_vs_benchmark_plot()
         save_line_plot(
             performance,
             "timestamp",
