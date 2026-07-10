@@ -1,0 +1,494 @@
+run_id,timestamp,universe,benchmark,timeframe,top_k,symbol,action,quantity,notional,reason,alpaca_order_id,status
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:10.861747+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:10.861747+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:10.861747+00:00,original_tech,QQQ,1Hour,5,NVDA,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:10.861747+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:10.861747+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:13.725983+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:13.725983+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:13.725983+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:13.725983+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215107Z_88859d26,2026-07-06T21:51:13.725983+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:41.405391+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:41.405391+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:41.405391+00:00,original_tech,QQQ,1Hour,5,NVDA,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:41.405391+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:41.405391+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:44.432405+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:44.432405+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:44.432405+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:44.432405+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:44.432405+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:47.506011+00:00,new_tech,QQQ,1Hour,5,MU,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:47.506011+00:00,new_tech,QQQ,1Hour,5,ORCL,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:47.506011+00:00,new_tech,QQQ,1Hour,5,CRWD,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:47.506011+00:00,new_tech,QQQ,1Hour,5,NOW,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:47.506011+00:00,new_tech,QQQ,1Hour,5,NET,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:50.615152+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:50.615152+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:50.615152+00:00,defensive_non_tech,SPY,1Hour,5,CVX,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:50.615152+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260706T215238Z_6ea007ff,2026-07-06T21:52:50.615152+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,50000.0,Ticker is selected in Top-K.,,dry_run
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:19.999060+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,50000.0,Ticker is selected in Top-K.,f8407596-e2f8-44c8-85e1-be57ad64779e,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:19.999060+00:00,original_tech,QQQ,1Hour,5,NVDA,buy,,50000.0,Ticker is selected in Top-K.,de4ca3f0-414f-40e8-934e-4e0c25f22816,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:19.999060+00:00,original_tech,QQQ,1Hour,5,INTC,buy,,50000.0,Ticker is selected in Top-K.,bc57432c-50db-49f7-9d60-3b332c05684e,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:19.999060+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,50000.0,Ticker is selected in Top-K.,d7d3c89e-0eba-4b19-99a9-e6e3eae1a22a,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:19.999060+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,50000.0,Ticker is selected in Top-K.,c574a7cb-a4d0-49a5-9b7c-01bf10c75bb2,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:24.650399+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,buy,,50000.0,Ticker is selected in Top-K.,879ef8b4-0990-4818-9434-3a4ea0032c60,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:24.650399+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,buy,,50000.0,Ticker is selected in Top-K.,844c09e7-531b-4980-8746-7650d75a0979,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:24.650399+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,buy,,50000.0,Ticker is selected in Top-K.,4da08b6a-3b3c-4eaf-8b78-eda82e98af53,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:24.650399+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,buy,,50000.0,Ticker is selected in Top-K.,7a5daa39-d457-4557-86a9-6d7e839590b9,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:24.650399+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,buy,,50000.0,Ticker is selected in Top-K.,2ede99c6-b566-4ae8-8e67-98f0085ed3a6,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:28.851789+00:00,new_tech,QQQ,1Hour,5,MU,buy,,50000.0,Ticker is selected in Top-K.,ce2c6541-4204-483a-bcc7-70b47a1c9580,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:28.851789+00:00,new_tech,QQQ,1Hour,5,NET,buy,,50000.0,Ticker is selected in Top-K.,20edde62-79b9-43c5-b89f-574f48a9d041,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:28.851789+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,50000.0,Ticker is selected in Top-K.,94b9c9d6-6367-4f4b-8041-d36581598751,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:28.851789+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,50000.0,Ticker is selected in Top-K.,cf3944c3-32d0-4380-93cd-2454f9352030,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:28.851789+00:00,new_tech,QQQ,1Hour,5,DELL,buy,,50000.0,Ticker is selected in Top-K.,46a62fcf-db2c-491d-ad7a-58740c3f366f,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:33.260283+00:00,defensive_non_tech,SPY,1Hour,5,MRK,buy,,50000.0,Ticker is selected in Top-K.,55e9afa7-52c5-4c3e-bd8d-d40ac0e1652b,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:33.260283+00:00,defensive_non_tech,SPY,1Hour,5,XOM,buy,,50000.0,Ticker is selected in Top-K.,6411a0df-2e91-4e72-af79-ccd5575f4738,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:33.260283+00:00,defensive_non_tech,SPY,1Hour,5,CVX,buy,,50000.0,Ticker is selected in Top-K.,e82f4574-7050-4026-ac14-14c31584c760,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:33.260283+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,50000.0,Ticker is selected in Top-K.,2eaec730-cebf-4d53-9da6-0c37a49e4f1a,OrderStatus.PENDING_NEW
+paper_20260707T133016Z_59ac6cfe,2026-07-07T13:30:33.260283+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,50000.0,Ticker is selected in Top-K.,48f37510-00bc-4596-b817-61573a421e7f,OrderStatus.PENDING_NEW
+paper_20260707T140039Z_c081b756,2026-07-07T14:00:42.945227+00:00,original_tech,QQQ,1Hour,5,AMD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140039Z_c081b756,2026-07-07T14:00:42.945227+00:00,original_tech,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140039Z_c081b756,2026-07-07T14:00:42.945227+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,352.52,Ticker is selected in Top-K.,d3348998-0b42-454a-b0c3-cd0ba54b8fc0,OrderStatus.PENDING_NEW
+paper_20260707T140039Z_c081b756,2026-07-07T14:00:42.945227+00:00,original_tech,QQQ,1Hour,5,NVDA,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140039Z_c081b756,2026-07-07T14:00:42.945227+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140039Z_c081b756,2026-07-07T14:00:42.945227+00:00,original_tech,QQQ,1Hour,5,GOOGL,sell,271.911211408,,Ticker is no longer selected in Top-K.,5e91bf6b-3a8a-4d66-8572-fee9ea64643e,OrderStatus.PENDING_NEW
+paper_20260707T140149Z_2cafa45b,2026-07-07T14:01:52.809989+00:00,original_tech,QQQ,1Hour,5,AMD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140149Z_2cafa45b,2026-07-07T14:01:52.809989+00:00,original_tech,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140149Z_2cafa45b,2026-07-07T14:01:52.809989+00:00,original_tech,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140149Z_2cafa45b,2026-07-07T14:01:52.809989+00:00,original_tech,QQQ,1Hour,5,NVDA,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140149Z_2cafa45b,2026-07-07T14:01:52.809989+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140149Z_2cafa45b,2026-07-07T14:01:52.809989+00:00,original_tech,QQQ,1Hour,5,TSLA,sell,120.9453606,,Ticker is no longer selected in Top-K.,e539eec3-3183-4080-8ce3-042982c9a504,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:02.075444+00:00,original_tech,QQQ,1Hour,5,AMD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:02.075444+00:00,original_tech,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:02.075444+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,64.63,Ticker is selected in Top-K.,476349a6-f882-4d7b-8ad9-94ec025dc794,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:02.075444+00:00,original_tech,QQQ,1Hour,5,NVDA,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:02.075444+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:05.581205+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:05.581205+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:05.581205+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:05.581205+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:05.581205+00:00,tech_no_nvda,QQQ,1Hour,5,TSLA,buy,,50069.5,Ticker is selected in Top-K.,a23e9587-a45b-4b0c-8346-fe4fbbb96401,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:09.651316+00:00,new_tech,QQQ,1Hour,5,MU,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:09.651316+00:00,new_tech,QQQ,1Hour,5,CRWD,buy,,50072.3,Ticker is selected in Top-K.,87652f60-0849-4c3e-91a9-9bc05fff6877,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:09.651316+00:00,new_tech,QQQ,1Hour,5,SMCI,buy,,50072.3,Ticker is selected in Top-K.,cb27e9f0-0c2d-46ea-a0f0-7ecc2f994cdb,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:09.651316+00:00,new_tech,QQQ,1Hour,5,NET,buy,,460.15,Ticker is selected in Top-K.,c249c420-bb2a-4ccd-b4df-d2c56098a9c8,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:09.651316+00:00,new_tech,QQQ,1Hour,5,CSCO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:09.651316+00:00,new_tech,QQQ,1Hour,5,DELL,sell,123.204272725,,Ticker is no longer selected in Top-K.,c16fd479-53e1-4442-8224-d8d3b2a7240d,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:09.651316+00:00,new_tech,QQQ,1Hour,5,SNOW,sell,186.985751682,,Ticker is no longer selected in Top-K.,a18938fd-63d9-4ae5-a1b5-2a4ce9300fc5,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:13.500093+00:00,defensive_non_tech,SPY,1Hour,5,MRK,buy,,280.59,Ticker is selected in Top-K.,f5942ea2-6afc-4a12-8e20-325528842562,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:13.500093+00:00,defensive_non_tech,SPY,1Hour,5,XOM,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:13.500093+00:00,defensive_non_tech,SPY,1Hour,5,CVX,buy,,73.88,Ticker is selected in Top-K.,fa15f5b1-5efa-4902-b328-32cc59cf780d,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:13.500093+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,50058.82,Ticker is selected in Top-K.,2b72618c-01d1-4b02-ab03-d329266adf28,OrderStatus.PENDING_NEW
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:13.500093+00:00,defensive_non_tech,SPY,1Hour,5,KO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T140259Z_a49b9be1,2026-07-07T14:03:13.500093+00:00,defensive_non_tech,SPY,1Hour,5,COST,sell,51.763820187,,Ticker is no longer selected in Top-K.,575476d8-bcfd-4921-8b67-552b7981c974,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,NVDA,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,49799.34,Ticker is selected in Top-K.,96cf98d3-0e01-4817-9c1f-a108dec73313,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,META,buy,,49799.34,Ticker is selected in Top-K.,5e2ead51-5c95-40e7-8ed5-2d990c0ae4a8,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,506.23,Ticker is selected in Top-K.,ca2f6478-297c-49bb-91e3-ced7a99e7fd4,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,AMD,sell,194.423665534,,Ticker is no longer selected in Top-K.,2261d8b6-6946-4b18-b7c4-2bcad0cec715,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,INTC,sell,890.657875765,,Ticker is no longer selected in Top-K.,a80efde4-983d-4e51-91ac-0a7361ebf218,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:31.871339+00:00,original_tech,QQQ,1Hour,5,MSFT,sell,127.8054265,,Ticker is no longer selected in Top-K.,6f6340a5-5bd5-48be-931c-4b6217b406f3,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:35.874128+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,buy,,7510.68,Ticker is selected in Top-K.,3667215f-a28d-4c8a-8e53-b589bb0795de,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:35.874128+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:35.874128+00:00,tech_no_nvda,QQQ,1Hour,5,META,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:35.874128+00:00,tech_no_nvda,QQQ,1Hour,5,TSLA,buy,,5.0,Ticker is selected in Top-K.,cdaa84cf-2dae-44fa-83b0-ec2fb721bcef,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:35.874128+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,buy,,49785.83,Ticker is selected in Top-K.,b8610e1c-a3d5-4298-a4d6-d617aaf31714,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:39.737119+00:00,new_tech,QQQ,1Hour,5,CRWD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:39.737119+00:00,new_tech,QQQ,1Hour,5,MU,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:39.737119+00:00,new_tech,QQQ,1Hour,5,NET,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:39.737119+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,58.77,Ticker is selected in Top-K.,a0905aaf-1882-4636-919d-15fb3d35babb,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:39.737119+00:00,new_tech,QQQ,1Hour,5,DELL,buy,,49793.21,Ticker is selected in Top-K.,1e947388-f37f-4c96-94ee-0b148b925673,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:39.737119+00:00,new_tech,QQQ,1Hour,5,SMCI,sell,1903.885638297,,Ticker is no longer selected in Top-K.,d917ceaa-fa52-40b0-97d5-cb93d024f23a,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:43.742322+00:00,defensive_non_tech,SPY,1Hour,5,XOM,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:43.742322+00:00,defensive_non_tech,SPY,1Hour,5,MRK,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:43.742322+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,49786.83,Ticker is selected in Top-K.,6294c1b1-026e-4cab-8f79-b62c9b6efca2,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:43.742322+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,buy,,49786.83,Ticker is selected in Top-K.,ce20e647-6a3e-46d5-9b3a-6de0929ac546,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:43.742322+00:00,defensive_non_tech,SPY,1Hour,5,KO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:43.742322+00:00,defensive_non_tech,SPY,1Hour,5,CVX,sell,291.701014507,,Ticker is no longer selected in Top-K.,9469eab5-f8dc-40b8-906f-d7f13986ba49,OrderStatus.PENDING_NEW
+paper_20260707T150023Z_748ae2bb,2026-07-07T15:00:43.742322+00:00,defensive_non_tech,SPY,1Hour,5,WMT,sell,441.6304367,,Ticker is no longer selected in Top-K.,a92f44f4-100e-49f9-aa17-bc6163ae48f8,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:53.824143+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:53.824143+00:00,original_tech,QQQ,1Hour,5,META,buy,,68.57,Ticker is selected in Top-K.,4fc59a39-a8f3-45f6-a3aa-3a98a1e64158,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:53.824143+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,134.88,Ticker is selected in Top-K.,215cb350-3709-46fe-9943-caaea139bd7d,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:53.824143+00:00,original_tech,QQQ,1Hour,5,NVDA,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:53.824143+00:00,original_tech,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:53.824143+00:00,original_tech,QQQ,1Hour,5,INTC,sell,452.431036048,,Ticker is no longer selected in Top-K.,2f0eaaf5-4582-4c63-ba28-de1508437a28,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:57.577186+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:57.577186+00:00,tech_no_nvda,QQQ,1Hour,5,META,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:57.577186+00:00,tech_no_nvda,QQQ,1Hour,5,TSLA,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:57.577186+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:00:57.577186+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,buy,,49861.26,Ticker is selected in Top-K.,6f0a2698-55db-4679-88b0-f3c466884054,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:01.202888+00:00,new_tech,QQQ,1Hour,5,CSCO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:01.202888+00:00,new_tech,QQQ,1Hour,5,CRWD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:01.202888+00:00,new_tech,QQQ,1Hour,5,DELL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:01.202888+00:00,new_tech,QQQ,1Hour,5,MU,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:01.202888+00:00,new_tech,QQQ,1Hour,5,NET,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,584.57,Ticker is selected in Top-K.,e502035e-3c24-4173-b27b-7396a1b2fb6f,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,49860.8,Ticker is selected in Top-K.,c100bdb6-7085-4ac5-af5d-479b3ab1db83,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,PEP,buy,,49860.8,Ticker is selected in Top-K.,389022b8-13f8-4580-9785-1041c0e0e2ee,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,KO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,49860.8,Ticker is selected in Top-K.,aa01d848-4156-4693-8b7f-31bde302e4d7,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,sell,193.118265389,,Ticker is no longer selected in Top-K.,7c0e6b9d-32c8-4df6-baf9-4c61f934085e,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,MRK,sell,389.123198225,,Ticker is no longer selected in Top-K.,cd6ae8f8-3f2c-467f-9ad9-c93571ffe5d5,OrderStatus.PENDING_NEW
+paper_20260707T160050Z_1b2906eb,2026-07-07T16:01:05.489279+00:00,defensive_non_tech,SPY,1Hour,5,XOM,sell,357.879911258,,Ticker is no longer selected in Top-K.,fda6eceb-13be-43c9-8865-a75828438e5d,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:15.667597+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,173.93,Ticker is selected in Top-K.,8d1f6f9b-b549-48f0-a94f-c5f64c7c8750,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:15.667597+00:00,original_tech,QQQ,1Hour,5,META,buy,,43.15,Ticker is selected in Top-K.,fd273de7-a12f-4355-b0aa-147beb358bbc,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:15.667597+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:15.667597+00:00,original_tech,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:15.667597+00:00,original_tech,QQQ,1Hour,5,ADBE,buy,,50056.07,Ticker is selected in Top-K.,632e2f77-5865-40bc-9e04-63e4a5dde5cc,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:15.667597+00:00,original_tech,QQQ,1Hour,5,NVDA,sell,259.918401246,,Ticker is no longer selected in Top-K.,43098e2a-6361-420d-9993-61805f66de5d,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:15.667597+00:00,original_tech,QQQ,1Hour,5,TSLA,sell,122.348990081,,Ticker is no longer selected in Top-K.,fcadb3d7-218a-48e6-8e80-551287a4b0d1,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:19.445307+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,buy,,4.1,Ticker is selected in Top-K.,182a249c-626b-4bfa-81dc-8d1a3850020e,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:19.445307+00:00,tech_no_nvda,QQQ,1Hour,5,META,buy,,9.76,Ticker is selected in Top-K.,302664bd-7165-4e1e-abe0-a4839f88a0d1,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:19.445307+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:19.445307+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:19.445307+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,buy,,18.79,Ticker is selected in Top-K.,13c01bb7-6b85-4727-b406-172893b9e7ba,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:23.565241+00:00,new_tech,QQQ,1Hour,5,MU,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:23.565241+00:00,new_tech,QQQ,1Hour,5,NET,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:23.565241+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,38.27,Ticker is selected in Top-K.,275fb5b9-5d33-4929-bf66-a81c8b1f5ba1,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:23.565241+00:00,new_tech,QQQ,1Hour,5,CRWD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:23.565241+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,50053.01,Ticker is selected in Top-K.,d162fa2b-e7f4-45ab-971e-3a6a4542591a,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:23.565241+00:00,new_tech,QQQ,1Hour,5,DELL,sell,122.105005027,,Ticker is no longer selected in Top-K.,ec263904-cbcd-4bf6-bbc4-caddc28bc5ca,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:27.880318+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,buy,,50050.62,Ticker is selected in Top-K.,417aa540-4da3-4c51-bc49-28eaee2bf9be,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:27.880318+00:00,defensive_non_tech,SPY,1Hour,5,PEP,buy,,315.87,Ticker is selected in Top-K.,1f811d22-9dd6-4f36-a122-5303a2940ab3,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:27.880318+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,281.78,Ticker is selected in Top-K.,bc2a4ece-d8be-45ce-8cf4-4eafd39e7688,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:27.880318+00:00,defensive_non_tech,SPY,1Hour,5,XOM,buy,,50050.62,Ticker is selected in Top-K.,e8a07c43-4457-4788-8aef-bd63cb1ea813,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:27.880318+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,242.37,Ticker is selected in Top-K.,2d63c207-49cd-4df9-a218-9a6cc9a51b49,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:27.880318+00:00,defensive_non_tech,SPY,1Hour,5,COST,sell,52.505309485,,Ticker is no longer selected in Top-K.,261442f9-f0ee-40a8-9f4e-ca1774027df9,OrderStatus.PENDING_NEW
+paper_20260707T170012Z_dd6055c6,2026-07-07T17:00:27.880318+00:00,defensive_non_tech,SPY,1Hour,5,WMT,sell,445.862380398,,Ticker is no longer selected in Top-K.,8e1f2f45-9826-4810-b40a-46c6ece4936d,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,INTC,buy,,50080.06,Ticker is selected in Top-K.,a4bc3f87-c32b-48c9-881c-37c15cc84921,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,50080.06,Ticker is selected in Top-K.,2853c321-8e73-42ee-9f43-db0024916d9b,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,155.21,Ticker is selected in Top-K.,24111ba2-95fe-4228-9060-f6f05084db4b,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,ADBE,buy,,65.62,Ticker is selected in Top-K.,b0a5322a-fa7e-41a5-8667-119c758b0f8f,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,50080.06,Ticker is selected in Top-K.,e990f48f-4d74-4470-8800-4f6426077081,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,AMZN,sell,404.574005187,,Ticker is no longer selected in Top-K.,c426671b-29a1-41fb-9f58-98ad457bc7fa,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,GOOGL,sell,155.876917636,,Ticker is no longer selected in Top-K.,2212fb6a-f495-4005-84d6-0f141a69e633,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:38.876198+00:00,original_tech,QQQ,1Hour,5,META,sell,82.492960645,,Ticker is no longer selected in Top-K.,1dd4acc1-3c51-4cf4-856f-5e9eab3f0f26,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:43.282654+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:43.282654+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,buy,,29.8,Ticker is selected in Top-K.,2289ff76-c10f-4fef-8d84-550346107c3b,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:43.282654+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:43.282654+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:43.282654+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:47.401136+00:00,new_tech,QQQ,1Hour,5,ORCL,buy,,50076.71,Ticker is selected in Top-K.,ac7e3e41-36f3-4ccd-b247-73eb978a5dff,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:47.401136+00:00,new_tech,QQQ,1Hour,5,SMCI,buy,,50076.71,Ticker is selected in Top-K.,2636dc16-b14f-4695-91b3-5a592b174463,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:47.401136+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,63.63,Ticker is selected in Top-K.,144fd62a-286f-4674-aaa0-9a8d4c6f8103,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:47.401136+00:00,new_tech,QQQ,1Hour,5,MU,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:47.401136+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,181.27,Ticker is selected in Top-K.,a97dd1ec-4416-41b3-84c5-a4dd275fcd2a,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:47.401136+00:00,new_tech,QQQ,1Hour,5,CRWD,sell,258.932102595,,Ticker is no longer selected in Top-K.,2dcb2d5d-b7e8-4a26-a752-8000e6bbb664,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:47.401136+00:00,new_tech,QQQ,1Hour,5,NET,sell,196.174227315,,Ticker is no longer selected in Top-K.,227c0219-4dc4-4702-abeb-203294ed5784,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,305.19,Ticker is selected in Top-K.,c0c0af50-3cf2-4b75-b244-cfff15e1b98e,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,MRK,buy,,50065.17,Ticker is selected in Top-K.,29974455-72cc-4aec-a46a-23fdbdec992d,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,50065.17,Ticker is selected in Top-K.,b8ed559d-343d-4121-bc4a-46739e36db87,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,buy,,50065.17,Ticker is selected in Top-K.,c3821a0d-e93f-45a4-9516-3473c0facc7e,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,308.52,Ticker is selected in Top-K.,2e49609b-cdfb-4ae6-9298-fd00090fda02,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,sell,195.632465603,,Ticker is no longer selected in Top-K.,afd5a3dc-48bb-4f7f-836f-80e2af40d8ad,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,PEP,sell,342.835819362,,Ticker is no longer selected in Top-K.,a95d5faa-651a-4770-8d75-672a651e6d29,OrderStatus.PENDING_NEW
+paper_20260707T180034Z_7dba8264,2026-07-07T18:00:51.851933+00:00,defensive_non_tech,SPY,1Hour,5,XOM,sell,357.836634017,,Ticker is no longer selected in Top-K.,c713ffee-f53e-41db-8dd5-f11684bc360b,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:04.457103+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,366.36,Ticker is selected in Top-K.,43cbe349-98ea-4719-9485-4153a03de214,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:04.457103+00:00,original_tech,QQQ,1Hour,5,INTC,buy,,656.03,Ticker is selected in Top-K.,da58deb1-882e-4363-b8df-3941ddd08e79,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:04.457103+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,49872.64,Ticker is selected in Top-K.,bd69380b-68c8-4087-a5ef-fea787290a8c,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:04.457103+00:00,original_tech,QQQ,1Hour,5,NVDA,buy,,49872.64,Ticker is selected in Top-K.,d9c5d45f-d7a5-498b-ad46-97681e1b1b1e,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:04.457103+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,88.27,Ticker is selected in Top-K.,e936bfe0-1cf1-4e7d-9531-1156bc84bd9d,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:04.457103+00:00,original_tech,QQQ,1Hour,5,AAPL,sell,160.461550785,,Ticker is no longer selected in Top-K.,27a85f7f-4f0a-482f-9022-42247b97413a,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:04.457103+00:00,original_tech,QQQ,1Hour,5,ADBE,sell,219.933802754,,Ticker is no longer selected in Top-K.,da737a5e-0061-4024-bfe8-d406d9df3ba3,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:08.249149+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:08.249149+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,buy,,22.72,Ticker is selected in Top-K.,156e0091-cc49-44fa-8a44-d564275ebb5e,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:08.249149+00:00,tech_no_nvda,QQQ,1Hour,5,TSLA,buy,,8.63,Ticker is selected in Top-K.,28d1a097-7c65-42ef-93d5-665c70d79fdb,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:08.249149+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:08.249149+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,buy,,49861.02,Ticker is selected in Top-K.,7704d0b4-b849-4817-921d-460ce2ef220d,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:12.932016+00:00,new_tech,QQQ,1Hour,5,SMCI,buy,,601.95,Ticker is selected in Top-K.,9682d7d8-e690-4018-926f-bc397cfa43b1,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:12.932016+00:00,new_tech,QQQ,1Hour,5,CRWD,buy,,49855.7,Ticker is selected in Top-K.,8484db6a-154d-4383-b92d-c18a6655d1fd,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:12.932016+00:00,new_tech,QQQ,1Hour,5,ORCL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:12.932016+00:00,new_tech,QQQ,1Hour,5,NOW,buy,,49855.7,Ticker is selected in Top-K.,4905ed1f-7fbe-47c4-b665-9145534155ea,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:12.932016+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,316.67,Ticker is selected in Top-K.,a0f423d6-1e95-4108-8bdc-dfe43e0286d5,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:12.932016+00:00,new_tech,QQQ,1Hour,5,CSCO,sell,444.020995677,,Ticker is no longer selected in Top-K.,c5f89a85-b9b8-49e8-b762-c31f05c8660d,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:12.932016+00:00,new_tech,QQQ,1Hour,5,MU,sell,54.532157619,,Ticker is no longer selected in Top-K.,87c92533-ab71-44f2-9ef5-abbf264f37bb,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,buy,,49851.55,Ticker is selected in Top-K.,8d5e0d92-bb1d-4b48-907a-5695e866facc,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,PEP,buy,,49851.55,Ticker is selected in Top-K.,e6d501e1-5ddf-478e-bfab-f06ec379d2d6,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,MRK,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,49851.55,Ticker is selected in Top-K.,f22ff070-239c-4dda-9ac7-b5c1befc4b5f,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,COST,sell,52.921883258,,Ticker is no longer selected in Top-K.,2562f5f3-15e9-4ba2-ba0f-6a704abae9da,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,KO,sell,597.471686187,,Ticker is no longer selected in Top-K.,28b28226-577f-42f6-b22c-e177eddf0602,OrderStatus.PENDING_NEW
+paper_20260707T190058Z_642babcf,2026-07-07T19:01:17.927891+00:00,defensive_non_tech,SPY,1Hour,5,PG,sell,332.283114071,,Ticker is no longer selected in Top-K.,667c5646-6647-47e2-9972-6964b442b1c5,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,604.02,Ticker is selected in Top-K.,88f70119-3b45-43a6-b934-b4a95c67a58e,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,META,buy,,49451.42,Ticker is selected in Top-K.,194c159f-4d02-4630-af98-842a975c4fc1,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,49451.42,Ticker is selected in Top-K.,1ff75482-dd49-4f6c-8277-d90b5649827f,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,280.48,Ticker is selected in Top-K.,761b375c-1acb-4cb0-81f1-7019078b43f0,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,49451.42,Ticker is selected in Top-K.,f1bf7445-74f6-4064-9333-bc3be78aa96c,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,ADBE,sell,222.416053183,,Ticker is no longer selected in Top-K.,3482ebe7-c4ab-4a22-8ad4-a4ebb56dabfa,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,AMD,sell,96.579067308,,Ticker is no longer selected in Top-K.,3ba94055-f7d4-4bfd-a908-bdf91c711f76,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,INTC,sell,457.084031818,,Ticker is no longer selected in Top-K.,9254c579-7c12-4396-bc50-1308d94dd419,OrderStatus.PENDING_NEW
+paper_20260708T133046Z_ca260785,2026-07-08T13:30:53.796941+00:00,original_tech,QQQ,1Hour,5,NVDA,sell,254.001528273,,Ticker is no longer selected in Top-K.,4c417ec1-b0da-4b33-9233-2cd0de304345,OrderStatus.PENDING_NEW
+paper_20260708T133517Z_58901979,2026-07-08T13:35:21.271279+00:00,original_tech,QQQ,1Hour,5,ADBE,buy,,49475.99,Ticker is selected in Top-K.,d94d5493-6b8a-4740-a642-5066a867bf8d,OrderStatus.PENDING_NEW
+paper_20260708T133517Z_58901979,2026-07-08T13:35:21.271279+00:00,original_tech,QQQ,1Hour,5,META,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133517Z_58901979,2026-07-08T13:35:21.271279+00:00,original_tech,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133517Z_58901979,2026-07-08T13:35:21.271279+00:00,original_tech,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133517Z_58901979,2026-07-08T13:35:21.271279+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133517Z_58901979,2026-07-08T13:35:21.271279+00:00,original_tech,QQQ,1Hour,5,TSLA,sell,124.374826067,,Ticker is no longer selected in Top-K.,3aa4a0fb-d5ba-4d26-ad4d-f2dc12aa4f85,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:30.552329+00:00,original_tech,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:30.552329+00:00,original_tech,QQQ,1Hour,5,META,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:30.552329+00:00,original_tech,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:30.552329+00:00,original_tech,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:30.552329+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:34.056014+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:34.056014+00:00,tech_no_nvda,QQQ,1Hour,5,META,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:34.056014+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:34.056014+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:34.056014+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:38.280494+00:00,new_tech,QQQ,1Hour,5,PLTR,buy,,49431.99,Ticker is selected in Top-K.,ca66f356-d3bc-4682-9b45-ad532f20921f,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:38.280494+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,877.61,Ticker is selected in Top-K.,34416ca5-90a6-4a2b-a506-d6cb722d7c5d,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:38.280494+00:00,new_tech,QQQ,1Hour,5,SMCI,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:38.280494+00:00,new_tech,QQQ,1Hour,5,NOW,buy,,1763.67,Ticker is selected in Top-K.,27a98226-de71-4a53-8b48-71d55cb22c3e,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:38.280494+00:00,new_tech,QQQ,1Hour,5,MU,buy,,49431.99,Ticker is selected in Top-K.,42f876ae-23fd-4d92-965b-4c92cc1763a2,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:38.280494+00:00,new_tech,QQQ,1Hour,5,CRWD,sell,253.421898032,,Ticker is no longer selected in Top-K.,f166fc84-9624-4d05-8033-a37a9d578a97,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:38.280494+00:00,new_tech,QQQ,1Hour,5,ORCL,sell,355.683642304,,Ticker is no longer selected in Top-K.,99e80d4e-8297-4061-ac6e-dd71daa8b24f,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:42.341790+00:00,defensive_non_tech,SPY,1Hour,5,MRK,buy,,143.66,Ticker is selected in Top-K.,f7785153-c1dd-47a7-91f7-c4fa4202075d,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:42.341790+00:00,defensive_non_tech,SPY,1Hour,5,PEP,buy,,255.8,Ticker is selected in Top-K.,8d226bb8-93aa-41ce-9983-f616ec08d5bd,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:42.341790+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,buy,,327.35,Ticker is selected in Top-K.,e87918a6-4a7d-4554-b992-f52fbce1f562,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:42.341790+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,49450.67,Ticker is selected in Top-K.,729e7fc8-05d7-4704-8ae5-3c30f0a7c83b,OrderStatus.PENDING_NEW
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:42.341790+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T133627Z_3b4a5484,2026-07-08T13:36:42.341790+00:00,defensive_non_tech,SPY,1Hour,5,WMT,sell,445.939171661,,Ticker is no longer selected in Top-K.,97574cd0-e4e2-43f5-a19d-d7caaacf8880,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:51.861798+00:00,original_tech,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:51.861798+00:00,original_tech,QQQ,1Hour,5,META,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:51.861798+00:00,original_tech,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:51.861798+00:00,original_tech,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:51.861798+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,49393.66,Ticker is selected in Top-K.,e7ed0a02-eff7-40e3-b28c-562b47a8f1d2,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:51.861798+00:00,original_tech,QQQ,1Hour,5,AMZN,sell,553.410303181,,Ticker is no longer selected in Top-K.,34bc774e-0203-4e14-a890-d9761d24c6ba,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:55.464774+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:55.464774+00:00,tech_no_nvda,QQQ,1Hour,5,META,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:55.464774+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:55.464774+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:55.464774+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:59.504489+00:00,new_tech,QQQ,1Hour,5,CRWD,buy,,49412.75,Ticker is selected in Top-K.,1628b596-6a02-47a6-b3d3-7e8e15300dcd,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:59.504489+00:00,new_tech,QQQ,1Hour,5,PLTR,buy,,15.58,Ticker is selected in Top-K.,7630aebb-11fe-47dc-8468-3034a4641ded,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:59.504489+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,65.63,Ticker is selected in Top-K.,57e3f1cc-921f-454a-b724-10180a50a8a0,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:59.504489+00:00,new_tech,QQQ,1Hour,5,NOW,buy,,214.14,Ticker is selected in Top-K.,93f42b04-b184-4988-97d0-9dbc97e8645b,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:59.504489+00:00,new_tech,QQQ,1Hour,5,SMCI,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:00:59.504489+00:00,new_tech,QQQ,1Hour,5,MU,sell,52.502873044,,Ticker is no longer selected in Top-K.,3bcd1684-f369-4038-89ac-511b5163525b,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:01:03.238649+00:00,defensive_non_tech,SPY,1Hour,5,MRK,buy,,20.05,Ticker is selected in Top-K.,ec9cd2cc-a7d4-4a91-96ec-2d387f8e72c0,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:01:03.238649+00:00,defensive_non_tech,SPY,1Hour,5,PEP,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:01:03.238649+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:01:03.238649+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,76.01,Ticker is selected in Top-K.,679f7dfa-2f60-4c14-81cd-1a12e04c9634,OrderStatus.PENDING_NEW
+paper_20260708T140048Z_2c5188b2,2026-07-08T14:01:03.238649+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,49318.47,Ticker is selected in Top-K.,13057bd3-77d2-4b28-8f6b-f43ea549fe86,OrderStatus.PENDING_NEW
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,INTC,buy,,49318.47,Ticker is selected in Top-K.,46cdf0d2-4004-4ffa-a032-8d837ab8a347,OrderStatus.PENDING_NEW
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,865.22,Ticker is selected in Top-K.,c9d1e14d-2b96-4cd0-ada9-30a318571a0a,OrderStatus.PENDING_NEW
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,49318.47,Ticker is selected in Top-K.,6e2e2c9b-09a1-4e4c-bff3-55b9482eee70,OrderStatus.PENDING_NEW
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,GOOGL,sell,240.314276667,,Ticker is no longer selected in Top-K.,b8209d7f-c789-4658-b73b-ba27baf3990d,OrderStatus.PENDING_NEW
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,META,sell,162.489785296,,Ticker is no longer selected in Top-K.,981078bd-6d11-4a51-8551-ad8639034f6a,OrderStatus.PENDING_NEW
+paper_20260708T150013Z_cd3524d9,2026-07-08T15:00:22.438904+00:00,original_tech,QQQ,1Hour,5,MSFT,sell,129.283472103,,Ticker is no longer selected in Top-K.,326e4657-3595-4d4c-8030-af9500234614,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:31.962675+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,83.23,Ticker is selected in Top-K.,924cc233-a997-48ca-8427-4a6c2440e879,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:31.962675+00:00,original_tech,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:31.962675+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:31.962675+00:00,original_tech,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:31.962675+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,52.82,Ticker is selected in Top-K.,c35ea198-bac3-4da5-a4f0-a84451929821,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:35.599267+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,buy,,31.14,Ticker is selected in Top-K.,62f1d7b1-41d3-43a3-9892-ce364cfe1b4b,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:35.599267+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:35.599267+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,buy,,8.97,Ticker is selected in Top-K.,45234a5f-9996-4a4e-9078-6060284d3d96,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:35.599267+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:35.599267+00:00,tech_no_nvda,QQQ,1Hour,5,TSLA,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:39.344613+00:00,new_tech,QQQ,1Hour,5,CRWD,buy,,1000.16,Ticker is selected in Top-K.,dfdb72db-9c30-4ca4-b3b7-77504cf528a9,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:39.344613+00:00,new_tech,QQQ,1Hour,5,MU,buy,,49308.32,Ticker is selected in Top-K.,389e9a85-e11f-4334-bb23-1772ac1aede4,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:39.344613+00:00,new_tech,QQQ,1Hour,5,PLTR,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:39.344613+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,24.41,Ticker is selected in Top-K.,b496d2fa-3bb8-4e88-b9ca-b96bac3fcb55,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:39.344613+00:00,new_tech,QQQ,1Hour,5,NOW,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:39.344613+00:00,new_tech,QQQ,1Hour,5,SMCI,sell,1914.944460499,,Ticker is no longer selected in Top-K.,38df55f6-61e6-4215-ab66-ab9adbffa3d1,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:43.208860+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:43.208860+00:00,defensive_non_tech,SPY,1Hour,5,PG,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:43.208860+00:00,defensive_non_tech,SPY,1Hour,5,MRK,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:43.208860+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,49305.27,Ticker is selected in Top-K.,e04c95f2-6af0-47f6-a5d3-9bc083498b78,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:43.208860+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,49305.27,Ticker is selected in Top-K.,593c73a0-c8b2-4108-8280-55e662f6ad2c,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:43.208860+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,sell,188.292752642,,Ticker is no longer selected in Top-K.,20a7a55b-1aae-4813-b4f2-e5b44f435c7d,OrderStatus.PENDING_NEW
+paper_20260708T150128Z_dc567a48,2026-07-08T15:01:43.208860+00:00,defensive_non_tech,SPY,1Hour,5,PEP,sell,345.590591059,,Ticker is no longer selected in Top-K.,facde7ee-8107-4848-9a09-29f003007900,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,48.24,Ticker is selected in Top-K.,3f4d35c1-c811-4001-b8b3-b232c6a50954,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,49362.61,Ticker is selected in Top-K.,a394ceb8-0fa3-4e0b-840b-8417963f93e6,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,INTC,buy,,519.35,Ticker is selected in Top-K.,dd15d6c6-24d2-42eb-9d15-4fbd5c98d59e,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,49362.61,Ticker is selected in Top-K.,6c03901a-2958-43ba-b8f1-1b08b406ddce,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,NVDA,buy,,49362.61,Ticker is selected in Top-K.,a93ac219-eb66-441a-b7fd-dc5e8ccd156c,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,ADBE,sell,675.935270023,,Ticker is no longer selected in Top-K.,b05a83ec-3ff9-4c70-902e-5f9f2ae4d79c,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,AMD,sell,96.864396613,,Ticker is no longer selected in Top-K.,b30683a2-cab9-4239-8271-4d57a31e2e48,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:53.656312+00:00,original_tech,QQQ,1Hour,5,TSLA,sell,125.7323516,,Ticker is no longer selected in Top-K.,be39ac38-5263-4274-bcc4-18573ad1389b,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:57.406010+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:57.406010+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:57.406010+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,buy,,18.62,Ticker is selected in Top-K.,1861f271-abb2-4df7-8532-9bca46da8b8c,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:57.406010+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,buy,,2.12,Ticker is selected in Top-K.,5e9323d8-d719-4614-b949-e33c267898fc,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:00:57.406010+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,buy,,49357.87,Ticker is selected in Top-K.,d374303c-a344-4f48-9896-e54439a25eb8,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,ORCL,buy,,49352.38,Ticker is selected in Top-K.,8eb9abaa-1d42-4bbd-ba72-006eb1256579,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,NOW,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,PLTR,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,49352.38,Ticker is selected in Top-K.,d88e6799-bbf2-4652-ad46-e6d4c5eb2a32,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,NET,buy,,49352.38,Ticker is selected in Top-K.,e8b46806-5714-4c1c-adbf-5d4f87aa83fc,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,CRWD,sell,264.170620936,,Ticker is no longer selected in Top-K.,3f622662-adbc-40bd-af06-64ce9bf64e12,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,MU,sell,52.681734129,,Ticker is no longer selected in Top-K.,52fb6e14-2db6-4e28-bae6-d1da21b1a994,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:01.880675+00:00,new_tech,QQQ,1Hour,5,SNOW,sell,190.954610095,,Ticker is no longer selected in Top-K.,29d1c172-7c10-4548-bc20-14c8bee8ae4a,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:05.854091+00:00,defensive_non_tech,SPY,1Hour,5,PG,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:05.854091+00:00,defensive_non_tech,SPY,1Hour,5,COST,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:05.854091+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,buy,,49340.17,Ticker is selected in Top-K.,51705f18-22c5-43d0-83bf-83fc36f404c0,OrderStatus.PENDING_NEW
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:05.854091+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:05.854091+00:00,defensive_non_tech,SPY,1Hour,5,KO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T160049Z_d25fbd12,2026-07-08T16:01:05.854091+00:00,defensive_non_tech,SPY,1Hour,5,MRK,sell,392.095023441,,Ticker is no longer selected in Top-K.,2afc0e96-e754-4bb0-90bf-608c5a2819ab,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,ADBE,buy,,49440.99,Ticker is selected in Top-K.,a1addb91-fde9-4aef-8142-40f7a1ba3b91,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,7.82,Ticker is selected in Top-K.,2b22d3f7-8c3c-41b1-a2b3-338813d8787c,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,META,buy,,49440.99,Ticker is selected in Top-K.,a870224b-e11f-4341-9629-28f74ee6d45d,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,MSFT,buy,,212.05,Ticker is selected in Top-K.,d8c44822-dc28-4c5e-95b9-c696d0151342,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,AAPL,sell,159.088817273,,Ticker is no longer selected in Top-K.,3b8adad8-616b-4ecb-a62e-8934d9f77950,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,INTC,sell,469.181626261,,Ticker is no longer selected in Top-K.,91ca1288-f91b-4fe4-98d9-c96e60656a0d,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:18.005098+00:00,original_tech,QQQ,1Hour,5,NVDA,sell,249.788035226,,Ticker is no longer selected in Top-K.,b0fa5b79-b2e7-42bb-b562-7af5ce48a77b,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:21.639081+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,buy,,16.98,Ticker is selected in Top-K.,14db5756-fe7a-4f8b-b4b1-d9111dcf02f2,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:21.639081+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:21.639081+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:21.639081+00:00,tech_no_nvda,QQQ,1Hour,5,META,buy,,5.24,Ticker is selected in Top-K.,5e036399-59a6-4660-a38f-d3d5b3d81b72,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:21.639081+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,PLTR,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,SMCI,buy,,49429.62,Ticker is selected in Top-K.,65dde640-c9d5-4768-b8c5-72cb2c12077e,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,NOW,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,MU,buy,,49429.62,Ticker is selected in Top-K.,1ff915f1-0a7a-465b-b96e-5c8baaa7d55f,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,49429.62,Ticker is selected in Top-K.,f1f8a245-70a3-462f-ad02-25bc88d9353b,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,CSCO,sell,437.676214969,,Ticker is no longer selected in Top-K.,707039f6-88b1-4488-93ff-7dd8bbdfd4e8,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,NET,sell,186.594464819,,Ticker is no longer selected in Top-K.,fbcda097-2ddb-4974-b8d4-a1dcd58b744e,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:25.969283+00:00,new_tech,QQQ,1Hour,5,ORCL,sell,357.52223993,,Ticker is no longer selected in Top-K.,17dc54ab-3714-4562-8108-57579a66e262,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,XOM,buy,,49423.96,Ticker is selected in Top-K.,225f7f16-682e-4b42-9b0c-14d17e3edd8d,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,373.79,Ticker is selected in Top-K.,6cc2d664-5a2a-4c0d-9537-45c4944b1368,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,CVX,buy,,49423.96,Ticker is selected in Top-K.,38128f97-b5fd-4657-9e84-9df8db52fec7,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,73.55,Ticker is selected in Top-K.,3eb208c0-5959-4db9-bd0d-06c98b3638d8,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,49423.96,Ticker is selected in Top-K.,e777d0b7-80bc-4fc5-b4d8-965e7517f785,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,sell,197.059945548,,Ticker is no longer selected in Top-K.,1a66b145-12a7-4d7e-b41f-7cb13a69eac8,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,sell,184.808450071,,Ticker is no longer selected in Top-K.,a3aba578-3c4b-4e90-992d-de164a671080,OrderStatus.PENDING_NEW
+paper_20260708T170012Z_90a4fba0,2026-07-08T17:00:32.695499+00:00,defensive_non_tech,SPY,1Hour,5,PG,sell,331.182601765,,Ticker is no longer selected in Top-K.,45ec29e3-5cf3-4cb2-b995-f5c05b97f01e,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:43.470162+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,288.09,Ticker is selected in Top-K.,8408004f-df8c-46a0-8fe9-d8b4fa6171a1,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:43.470162+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,49467.49,Ticker is selected in Top-K.,f95d99ba-c181-44f5-856e-5a5c6a4e18df,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:43.470162+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:43.470162+00:00,original_tech,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:43.470162+00:00,original_tech,QQQ,1Hour,5,INTC,buy,,49467.49,Ticker is selected in Top-K.,67c3c9f9-746e-4f0d-bb31-5453e5f65937,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:43.470162+00:00,original_tech,QQQ,1Hour,5,ADBE,sell,224.890652579,,Ticker is no longer selected in Top-K.,e097e0f6-fe4e-4718-b72d-ccd7f797d2ab,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:43.470162+00:00,original_tech,QQQ,1Hour,5,META,sell,81.871862891,,Ticker is no longer selected in Top-K.,496b3892-2a84-4984-a8e7-77d448a81d8e,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:47.087656+00:00,tech_no_nvda,QQQ,1Hour,5,TSLA,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:47.087656+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,buy,,7.45,Ticker is selected in Top-K.,be07fd2f-f279-448b-936f-1755814bfa12,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:47.087656+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:47.087656+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:47.087656+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,MU,buy,,236.07,Ticker is selected in Top-K.,71e7bb29-c992-42d8-a88c-c732c560c41e,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,DELL,buy,,49473.55,Ticker is selected in Top-K.,34a54dd9-7ac5-40ab-bc9d-ff58d37c5a97,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,CRWD,buy,,49473.55,Ticker is selected in Top-K.,ae8eb161-9072-484f-a791-7c7cff5a66a5,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,49473.55,Ticker is selected in Top-K.,dcb6b568-8efd-47bf-8369-cff3097bbe2c,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,SNOW,buy,,84.93,Ticker is selected in Top-K.,57ad4316-f43a-45da-8aa0-47d249dfee51,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,NOW,sell,465.32268433,,Ticker is no longer selected in Top-K.,6bbe7294-f6f2-4796-a736-3e8b7616aa35,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,PLTR,sell,386.853055515,,Ticker is no longer selected in Top-K.,ce27a930-7a7f-4199-b414-925db8958cf5,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:51.644726+00:00,new_tech,QQQ,1Hour,5,SMCI,sell,1821.953925543,,Ticker is no longer selected in Top-K.,31be22f2-6b7d-4db1-9e1a-ae45d1dae603,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,49472.04,Ticker is selected in Top-K.,9862dd5f-daa1-4cdb-9adc-3881b91d9fdc,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,53.15,Ticker is selected in Top-K.,88737c56-ae4c-4a0e-9c4a-ec6fc76e081b,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,buy,,49472.04,Ticker is selected in Top-K.,5c814f52-08bc-475f-b92e-e91c1844ccea,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,183.08,Ticker is selected in Top-K.,283ef387-5589-4806-bdc4-82c018c3be6b,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,buy,,49472.04,Ticker is selected in Top-K.,72b60fe2-a167-4ce1-bcaf-15be2dce64e8,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,COST,sell,51.708594387,,Ticker is no longer selected in Top-K.,6f5373ca-7d3a-470a-9bc9-fd669fab1c41,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,CVX,sell,280.691792104,,Ticker is no longer selected in Top-K.,f506965d-c8ff-4df1-aed7-6129f054966e,OrderStatus.PENDING_NEW
+paper_20260708T180039Z_e5465336,2026-07-08T18:00:57.267503+00:00,defensive_non_tech,SPY,1Hour,5,XOM,sell,351.821967539,,Ticker is no longer selected in Top-K.,ceac9125-8bab-4e97-9f21-c819b97af0cc,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:07.642483+00:00,original_tech,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:07.642483+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,49492.93,Ticker is selected in Top-K.,e6857911-a2f2-455f-89e7-9db886176eb8,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:07.642483+00:00,original_tech,QQQ,1Hour,5,TSLA,buy,,232.22,Ticker is selected in Top-K.,102092d8-0049-42f8-ad48-e7c04c6728bb,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:07.642483+00:00,original_tech,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:07.642483+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,18.68,Ticker is selected in Top-K.,36889240-c81e-4788-b89f-abdf64928df3,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:07.642483+00:00,original_tech,QQQ,1Hour,5,MSFT,sell,129.474048289,,Ticker is no longer selected in Top-K.,ab803fc0-2186-42ba-a627-7cde8bf51ab5,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:11.564831+00:00,tech_no_nvda,QQQ,1Hour,5,INTC,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:11.564831+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:11.564831+00:00,tech_no_nvda,QQQ,1Hour,5,TSLA,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:11.564831+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:11.564831+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:15.524685+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,140.2,Ticker is selected in Top-K.,6ba07fff-a895-4e52-a509-037c626e65b3,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:15.524685+00:00,new_tech,QQQ,1Hour,5,ORCL,buy,,49502.71,Ticker is selected in Top-K.,8c48997a-2571-4af6-b6c3-d541500fb1ee,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:15.524685+00:00,new_tech,QQQ,1Hour,5,DELL,buy,,398.48,Ticker is selected in Top-K.,d3953893-8d72-40bd-990c-fe8487789f83,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:15.524685+00:00,new_tech,QQQ,1Hour,5,MU,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:15.524685+00:00,new_tech,QQQ,1Hour,5,SNOW,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:15.524685+00:00,new_tech,QQQ,1Hour,5,CRWD,sell,260.974578059,,Ticker is no longer selected in Top-K.,cb5b8750-7666-4cf2-89a1-848cb7b0d7ff,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:19.859623+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,103.03,Ticker is selected in Top-K.,fb4a0cd6-2eac-4919-9225-dcc472d6cd12,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:19.859623+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,37.45,Ticker is selected in Top-K.,db8a6db1-65b2-4cf4-b82b-c0275b7ba46d,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:19.859623+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,49507.29,Ticker is selected in Top-K.,6d005a8a-d2f3-4010-8513-c907ea86b5f3,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:19.859623+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:19.859623+00:00,defensive_non_tech,SPY,1Hour,5,CVX,buy,,49507.29,Ticker is selected in Top-K.,8695d341-9d28-4f0d-b2e0-1648a8ddb9c4,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:19.859623+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,sell,194.917576139,,Ticker is no longer selected in Top-K.,1ac52e9a-c33d-4e48-9481-e3f15017cf85,OrderStatus.PENDING_NEW
+paper_20260708T190003Z_d5c4ccb1,2026-07-08T19:00:19.859623+00:00,defensive_non_tech,SPY,1Hour,5,PG,sell,332.250033579,,Ticker is no longer selected in Top-K.,43a8d1e0-8c4d-4924-b21d-74f080f0a03e,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,AMD,buy,,49925.44,Ticker is selected in Top-K.,91555380-53d1-4ab7-a4a2-70265552becf,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,253.28,Ticker is selected in Top-K.,7867f276-b406-483a-8dfa-588c0a2f88aa,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,NVDA,buy,,49925.44,Ticker is selected in Top-K.,f02fa1d4-6c7e-447a-a754-7f64ea024122,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,350.87,Ticker is selected in Top-K.,ac42ca7a-8633-4534-9964-d759b9cad489,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,ADBE,buy,,49925.44,Ticker is selected in Top-K.,9d71d8b8-95ac-4c8a-abc0-26d99bb131af,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,GOOGL,sell,137.830637988,,Ticker is no longer selected in Top-K.,1fc35fc7-ba80-480f-b4db-850a6e589a59,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,INTC,sell,461.188554385,,Ticker is no longer selected in Top-K.,ac54dfb0-4664-4a4e-ae7a-296749477259,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:23.024948+00:00,original_tech,QQQ,1Hour,5,TSLA,sell,126.486498896,,Ticker is no longer selected in Top-K.,984f31fc-54d0-425d-b6f5-70b6225825a5,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:27.112266+00:00,tech_no_nvda,QQQ,1Hour,5,AMD,buy,,13.04,Ticker is selected in Top-K.,ea588195-d8ec-42f9-91bc-22a8284cbfba,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:27.112266+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:27.112266+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,hold,,0.0,Ticker remains selected and current value is close to target.,,held
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:27.112266+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,buy,,12.31,Ticker is selected in Top-K.,d0d4cfdf-b94a-4cb7-8f41-ed30c7e4075a,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:27.112266+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,buy,,49925.32,Ticker is selected in Top-K.,54e6955d-2d87-4e59-a58b-60d4c676743c,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:30.885599+00:00,new_tech,QQQ,1Hour,5,DELL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:30.885599+00:00,new_tech,QQQ,1Hour,5,CSCO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:30.885599+00:00,new_tech,QQQ,1Hour,5,ORCL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:30.885599+00:00,new_tech,QQQ,1Hour,5,SMCI,buy,,49923.65,Ticker is selected in Top-K.,134ba85f-8a2f-4919-bd6f-3be427bcf3c3,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:30.885599+00:00,new_tech,QQQ,1Hour,5,SNOW,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:30.885599+00:00,new_tech,QQQ,1Hour,5,MU,sell,52.830298296,,Ticker is no longer selected in Top-K.,f6a74669-ac97-4d40-96eb-a4b4bf679168,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:35.679522+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,959.64,Ticker is selected in Top-K.,37ccdc46-695c-498c-ae3a-afa7d8402f01,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:35.679522+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,buy,,49923.48,Ticker is selected in Top-K.,22e7700b-9a70-483a-bc97-c9f344d962c6,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:35.679522+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,49923.48,Ticker is selected in Top-K.,b7defae6-87bc-4d27-bf08-4734f55c5340,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:35.679522+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,buy,,1455.42,Ticker is selected in Top-K.,762f9cc9-66cf-4f5b-b5d5-2f4135657267,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:35.679522+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,1139.35,Ticker is selected in Top-K.,ada4a553-8512-4409-9d9a-334d28f8af1e,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:35.679522+00:00,defensive_non_tech,SPY,1Hour,5,COST,sell,51.796693869,,Ticker is no longer selected in Top-K.,59852a1b-2d07-49a7-a804-3b1d02d4eb5c,OrderStatus.PENDING_NEW
+paper_20260709T163511Z_9eaaa82b,2026-07-09T16:35:35.679522+00:00,defensive_non_tech,SPY,1Hour,5,CVX,sell,281.419281491,,Ticker is no longer selected in Top-K.,e3432c4a-4fe2-4f68-b5b4-54cc27198ef1,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,GOOGL,buy,,49964.14,Ticker is selected in Top-K.,4c29163a-ea0f-45ea-9daa-7f557ced341d,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,META,buy,,49964.14,Ticker is selected in Top-K.,2cfe6c9c-bff2-4e46-b94b-d508f54fbf30,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,113.98,Ticker is selected in Top-K.,adc5c04d-b361-49d2-b09d-5cc2ee5a0700,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,ADBE,buy,,39.96,Ticker is selected in Top-K.,23c23839-32c1-43db-9037-4753c605f311,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,AMD,sell,90.698258939,,Ticker is no longer selected in Top-K.,bbe9a52e-ae14-493a-b61d-5c49f42939c8,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,AMZN,sell,206.256424006,,Ticker is no longer selected in Top-K.,ac3524cf-176a-42b6-aaa9-ce0a82d18426,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:12.891718+00:00,original_tech,QQQ,1Hour,5,NVDA,sell,246.996635828,,Ticker is no longer selected in Top-K.,4e3211b4-b3cf-4ed2-be59-7b0420c3e867,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:17.235648+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T173505Z_46333787,2026-07-09T17:35:17.235648+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,buy,,6.34,Ticker is selected in Top-K.,ab403329-0d00-4376-a9c3-ad5560648076,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:17.235648+00:00,tech_no_nvda,QQQ,1Hour,5,META,buy,,5.97,Ticker is selected in Top-K.,4368a04b-01ac-4960-a282-c8fb558d2c7e,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:17.235648+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T173505Z_46333787,2026-07-09T17:35:17.235648+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,PLTR,buy,,49964.11,Ticker is selected in Top-K.,5c2288d3-38e0-45d0-abf7-66019c2316be,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,NOW,buy,,49964.11,Ticker is selected in Top-K.,e45b3ad6-7ff6-4cf4-bc56-806471ab9ce8,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,SNOW,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,NET,buy,,49964.11,Ticker is selected in Top-K.,49cb01ab-d749-4033-95e3-4c6dedcfb9fb,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,DELL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,CSCO,sell,436.666380791,,Ticker is no longer selected in Top-K.,3cabd37b-4d0f-45fc-a475-479bfd136d9f,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,ORCL,sell,355.444101385,,Ticker is no longer selected in Top-K.,f4426df0-a8be-4266-9f99-7d35d67e6cec,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:22.218361+00:00,new_tech,QQQ,1Hour,5,SMCI,sell,1740.105960264,,Ticker is no longer selected in Top-K.,3e343153-e9e0-4af6-ba69-fd51220d4900,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:26.973207+00:00,defensive_non_tech,SPY,1Hour,5,PEP,buy,,49957.38,Ticker is selected in Top-K.,94b54e27-a9ee-4896-ab7b-2c8b597b84ce,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:26.973207+00:00,defensive_non_tech,SPY,1Hour,5,COST,buy,,49957.38,Ticker is selected in Top-K.,871b3ecf-5292-4fb2-8446-8791eb7d75eb,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:26.973207+00:00,defensive_non_tech,SPY,1Hour,5,WMT,buy,,58.61,Ticker is selected in Top-K.,63af2c8e-d364-41d0-9514-7f83a16b1333,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:26.973207+00:00,defensive_non_tech,SPY,1Hour,5,KO,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T173505Z_46333787,2026-07-09T17:35:26.973207+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,152.34,Ticker is selected in Top-K.,ecce253a-5f09-4015-805b-201b4cdabf19,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:26.973207+00:00,defensive_non_tech,SPY,1Hour,5,ABBV,sell,198.811158456,,Ticker is no longer selected in Top-K.,4182df78-1070-4c54-9ffb-762cb28e47e9,OrderStatus.PENDING_NEW
+paper_20260709T173505Z_46333787,2026-07-09T17:35:26.973207+00:00,defensive_non_tech,SPY,1Hour,5,JNJ,sell,191.855593411,,Ticker is no longer selected in Top-K.,3ba04d4d-a913-47bb-b6c4-c6fec145fbd8,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:08.335550+00:00,original_tech,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:08.335550+00:00,original_tech,QQQ,1Hour,5,AAPL,buy,,10.71,Ticker is selected in Top-K.,96139982-1505-434b-8579-3be820007d4b,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:08.335550+00:00,original_tech,QQQ,1Hour,5,AMZN,buy,,49972.45,Ticker is selected in Top-K.,8317b94c-b625-46c2-a59a-6ae939518a65,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:08.335550+00:00,original_tech,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:08.335550+00:00,original_tech,QQQ,1Hour,5,ADBE,buy,,80.61,Ticker is selected in Top-K.,16543772-bb71-4fea-bf1f-c072a7cc8000,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:08.335550+00:00,original_tech,QQQ,1Hour,5,META,sell,81.674496307,,Ticker is no longer selected in Top-K.,ee5fc867-fd05-46a8-9012-b9e7962798a0,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:12.529549+00:00,tech_no_nvda,QQQ,1Hour,5,GOOGL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:12.529549+00:00,tech_no_nvda,QQQ,1Hour,5,AAPL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:12.529549+00:00,tech_no_nvda,QQQ,1Hour,5,AMZN,buy,,4.47,Ticker is selected in Top-K.,b6b319f7-bb8b-4023-b800-02a9e7f22022,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:12.529549+00:00,tech_no_nvda,QQQ,1Hour,5,MSFT,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:12.529549+00:00,tech_no_nvda,QQQ,1Hour,5,ADBE,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:17.000417+00:00,new_tech,QQQ,1Hour,5,SNOW,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:17.000417+00:00,new_tech,QQQ,1Hour,5,DELL,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:17.000417+00:00,new_tech,QQQ,1Hour,5,SMCI,buy,,49970.55,Ticker is selected in Top-K.,550b2b05-6532-4926-8af0-f11c7ace4462,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:17.000417+00:00,new_tech,QQQ,1Hour,5,PLTR,hold,,,Ticker remains selected; no unnecessary sell order.,,held
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:17.000417+00:00,new_tech,QQQ,1Hour,5,CSCO,buy,,49970.55,Ticker is selected in Top-K.,65b61041-b477-4e74-9081-71399f2c7dc4,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:17.000417+00:00,new_tech,QQQ,1Hour,5,NET,sell,182.764284146,,Ticker is no longer selected in Top-K.,45ac0eef-de67-4d52-9063-61b99049f0c1,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:17.000417+00:00,new_tech,QQQ,1Hour,5,NOW,sell,462.80196369,,Ticker is no longer selected in Top-K.,9e656fd4-57f7-4311-9d1c-882124fbef31,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:21.524630+00:00,defensive_non_tech,SPY,1Hour,5,PEP,buy,,365.27,Ticker is selected in Top-K.,a2e14182-2f6d-41a1-af07-838675f2521a,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:21.524630+00:00,defensive_non_tech,SPY,1Hour,5,KO,buy,,203.75,Ticker is selected in Top-K.,a379d985-68d0-4ec7-8639-65e95d2aefda,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:21.524630+00:00,defensive_non_tech,SPY,1Hour,5,MRK,buy,,49966.72,Ticker is selected in Top-K.,76ea0b6b-e876-4258-83ae-947f749b88bd,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:21.524630+00:00,defensive_non_tech,SPY,1Hour,5,PG,buy,,243.3,Ticker is selected in Top-K.,df1f30e4-b5b5-4afb-861c-17ca500adc89,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:21.524630+00:00,defensive_non_tech,SPY,1Hour,5,XOM,buy,,49966.72,Ticker is selected in Top-K.,fcaa17cf-f412-4062-93b6-e20edfbaf211,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:21.524630+00:00,defensive_non_tech,SPY,1Hour,5,COST,sell,54.767008704,,Ticker is no longer selected in Top-K.,85d5c294-e593-4f0a-8165-46d89813edc9,OrderStatus.PENDING_NEW
+paper_20260709T183504Z_f4c3161f,2026-07-09T18:35:21.524630+00:00,defensive_non_tech,SPY,1Hour,5,WMT,sell,447.366044714,,Ticker is no longer selected in Top-K.,d4ba3f5f-f6c2-4e22-b22c-35e65bc454bb,OrderStatus.PENDING_NEW
