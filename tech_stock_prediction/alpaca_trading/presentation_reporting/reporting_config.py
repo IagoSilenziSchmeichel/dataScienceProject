@@ -100,6 +100,17 @@ def ensure_output_dirs():
         universe_output_dir(universe_name).mkdir(parents=True, exist_ok=True)
 
 
+# One fixed color per universe, reused in every cross-universe comparison
+# chart (generate_cross_universe_analysis.py) so a given universe always has
+# the same identity color across all figures. Drawn from the same palette
+# used everywhere else (no new colors introduced).
+UNIVERSE_COLORS = {
+    "original_tech": COLOR_STRATEGY,
+    "tech_no_nvda": COLOR_BENCHMARK,
+    "new_tech": COLOR_ALWAYS_BUY,
+    "defensive_non_tech": COLOR_POSITIVE,
+}
+
 UNIVERSE_TITLE_DE = {
     "original_tech": "Original Tech",
     "tech_no_nvda": "Tech ohne Nvidia",
