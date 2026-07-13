@@ -293,9 +293,22 @@ def build_universe_report(universe_name):
         strategy_index = metrics.build_cumulative_index(daily["Strategy_Return"])
         benchmark_index = metrics.build_cumulative_index(daily["Benchmark_Return"])
 
+        # Equal-weight Buy-and-Hold of all universe stocks (not just the
+        # Top-K picks), reusing the exact same daily mean-of-Future_Return
+        # methodology as calculate_top_k_result() in
+        # experiments/exp_2_lstm/scripts/10_top_k_backtest/top_k_backtest.py,
+        # so its total return reconciles exactly with the already-published
+        # "Buy-and-Hold Universum" figure on the Top-K analysis plot.
+        daily_buy_hold_returns = (
+            backtest_ds.data.groupby("Date")["Future_Return"].mean().reindex(daily.index).fillna(0.0)
+        )
+        buy_hold_index = metrics.build_cumulative_index(daily_buy_hold_returns)
+        buy_hold_return = metrics.total_return_from_returns(daily_buy_hold_returns)
+
         metric_lines = [
             f"Strategie-Rendite: {summary['strategy_return_net']:+.1%}",
             f"Benchmark-Rendite ({benchmark_ticker}): {summary['benchmark_return']:+.1%}",
+            f"Buy-and-Hold Universum: {buy_hold_return:+.1%}",
             f"Outperformance: {summary['difference']:+.1%}",
             f"Sharpe: {summary['sharpe_ratio']:.2f}",
             f"MaxDD: {summary['max_drawdown']:.1%}",
@@ -316,6 +329,7 @@ def build_universe_report(universe_name):
             output_path=plot1_path,
             metric_lines=metric_lines,
             preliminary=(backtest_ds.status == cfg.STATUS_PRELIMINARY),
+            extra_series=[("Buy & Hold Universum", buy_hold_index, cfg.COLOR_ALWAYS_BUY)],
         )
     result["plots_present"]["01_backtest_vs_benchmark.png"] = plot1_path.exists()
 
