@@ -1,0 +1,16 @@
+date,universe,symbol,action,price,quantity,notional,reason
+2026-07-06,defensive_non_tech,COST,buy,950.25,87.69622029290537,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-06,defensive_non_tech,ABBV,buy,254.75999450683594,327.1052564381228,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-06,defensive_non_tech,JNJ,buy,259.3299865722656,321.340907909666,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-07,defensive_non_tech,COST,hold,947.5,0.0,0.0,No new signal; carried position forward.
+2026-07-07,defensive_non_tech,ABBV,hold,254.64999389648438,0.0,0.0,No new signal; carried position forward.
+2026-07-07,defensive_non_tech,JNJ,hold,267.239990234375,0.0,0.0,No new signal; carried position forward.
+2026-07-08,defensive_non_tech,COST,hold,953.1300048828125,0.0,0.0,No new signal; carried position forward.
+2026-07-08,defensive_non_tech,ABBV,hold,252.74000549316406,0.0,0.0,No new signal; carried position forward.
+2026-07-08,defensive_non_tech,JNJ,hold,263.3999938964844,0.0,0.0,No new signal; carried position forward.
+2026-07-09,defensive_non_tech,ABBV,sell,249.91000366210938,0.2271548342803782,56.768265466875164,Equal-weight Daily Top-3 rebalance.
+2026-07-09,defensive_non_tech,COST,buy,912.969970703125,1.7811011856596752,1626.091897291015,Equal-weight Daily Top-3 rebalance.
+2026-07-09,defensive_non_tech,JNJ,sell,259.1000061035156,6.056825916079313,1569.3236318240815,Equal-weight Daily Top-3 rebalance.
+2026-07-10,defensive_non_tech,COST,sell,916.25,0.6743300447589876,617.8549035104224,Equal-weight Daily Top-3 rebalance.
+2026-07-10,defensive_non_tech,ABBV,buy,248.0800018310547,1.1037602982539532,273.8208568118862,Equal-weight Daily Top-3 rebalance.
+2026-07-10,defensive_non_tech,JNJ,buy,256.9800109863281,1.3387580044769514,344.0340466985217,Equal-weight Daily Top-3 rebalance.
