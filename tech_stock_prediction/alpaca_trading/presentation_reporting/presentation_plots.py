@@ -22,6 +22,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from reporting_config import (
     ANNOTATION_FONT_SIZE,
@@ -142,6 +143,111 @@ def plot_cumulative_lines(
     if subtitle:
         ax.set_title(subtitle, fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
 
+    _footer_text(fig, metric_lines)
+    _save(fig, output_path)
+
+
+def plot_hourly_hybrid_series(
+    title,
+    subtitle,
+    data,
+    benchmark_label,
+    output_path,
+    metric_lines,
+):
+    """
+    Plot a clearly labeled hybrid hourly scenario.
+
+    Real and simulated sections are visually separated. Simulated points are
+    never drawn as if they were real Paper-Trading observations.
+    """
+    fig = _new_figure()
+    ax = fig.add_axes([0.08, 0.24, 0.88, 0.58])
+
+    real = data[data["source_type"] == "real"].copy()
+    simulated = data[data["source_type"] == "simulated"].copy()
+
+    if not real.empty:
+        ax.plot(
+            real["timestamp"],
+            real["model_index"],
+            color=COLOR_STRATEGY,
+            linewidth=2.4,
+            label="Modell - real",
+        )
+        ax.plot(
+            real["timestamp"],
+            real["benchmark_index"],
+            color=COLOR_BENCHMARK,
+            linewidth=2.1,
+            label=f"{benchmark_label} - real",
+        )
+
+    if not simulated.empty:
+        # Include the last real point as visual anchor for the dashed continuation.
+        model_sim = simulated[["timestamp", "model_index"]].copy()
+        bench_sim = simulated[["timestamp", "benchmark_index"]].copy()
+        if not real.empty:
+            anchor = real.iloc[[-1]]
+            model_sim = pd.concat(
+                [anchor[["timestamp", "model_index"]], model_sim],
+                ignore_index=True,
+            )
+            bench_sim = pd.concat(
+                [anchor[["timestamp", "benchmark_index"]], bench_sim],
+                ignore_index=True,
+            )
+            transition = real["timestamp"].max()
+            ax.axvline(transition, color="#333333", linestyle=":", linewidth=1.2)
+            ax.text(
+                transition,
+                0.96,
+                "Simulation beginnt",
+                transform=ax.get_xaxis_transform(),
+                rotation=90,
+                va="top",
+                ha="right",
+                fontsize=ANNOTATION_FONT_SIZE,
+                color="#333333",
+            )
+
+        ax.plot(
+            model_sim["timestamp"],
+            model_sim["model_index"],
+            color=COLOR_STRATEGY,
+            linewidth=2.2,
+            linestyle="--",
+            label="Modell - simuliert",
+        )
+        ax.plot(
+            bench_sim["timestamp"],
+            bench_sim["benchmark_index"],
+            color=COLOR_BENCHMARK,
+            linewidth=2.0,
+            linestyle="--",
+            label=f"{benchmark_label} - simuliert",
+        )
+
+    ax.axhline(100, color="#999999", linewidth=0.8)
+    ax.set_ylabel("Index (Start = 100)", fontsize=AXIS_LABEL_FONT_SIZE)
+    _style_axis(ax)
+    ax.legend(loc="upper left", fontsize=LEGEND_FONT_SIZE, frameon=True)
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    ax.set_title(subtitle, fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
+    ax.text(
+        0.99,
+        0.04,
+        "HYBRID: REAL + SIMULATION",
+        transform=ax.transAxes,
+        ha="right",
+        va="bottom",
+        fontsize=12,
+        fontweight="bold",
+        color="white",
+        bbox={"boxstyle": "round,pad=0.45", "facecolor": COLOR_NEUTRAL, "edgecolor": "none"},
+    )
+    fig.autofmt_xdate()
     _footer_text(fig, metric_lines)
     _save(fig, output_path)
 

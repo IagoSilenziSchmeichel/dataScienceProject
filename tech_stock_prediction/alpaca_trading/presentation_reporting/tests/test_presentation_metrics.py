@@ -24,6 +24,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 import presentation_data_loader as loader  # noqa: E402
+import hourly_hybrid_reporting as hourly_hybrid  # noqa: E402
 import presentation_metrics as metrics  # noqa: E402
 import reporting_config as cfg  # noqa: E402
 
@@ -398,6 +399,137 @@ def test_summarize_signal_aggregate_most_frequent_top1_and_top3():
     check("most frequent top-1 is AAA", aggregate["most_frequent_top1"] == "AAA", str(aggregate))
     check("most frequent top-3 starts with AAA", aggregate["most_frequent_top3"][0] == "AAA", str(aggregate))
     check("average turnover is 0 (AAA selected both days, no changes)", aggregate["average_turnover"] == 0.0, str(aggregate))
+
+
+# ---------------------------------------------------------------------------
+# 9. Hourly hybrid reporting
+# ---------------------------------------------------------------------------
+
+def test_hourly_hybrid_keeps_1hour_and_drops_1day_rows():
+    with tempfile.TemporaryDirectory() as tmp:
+        original_logs_dir = cfg.ALPACA_LOGS_DIR
+        try:
+            cfg.ALPACA_LOGS_DIR = Path(tmp)  # type: ignore[attr-defined]
+            pd.DataFrame(
+                {
+                    "timestamp": ["2026-07-06T14:00:00", "2026-07-06T15:00:00"],
+                    "universe": ["original_tech", "original_tech"],
+                    "benchmark": ["QQQ", "QQQ"],
+                    "timeframe": ["1Hour", "1Day"],
+                    "portfolio_value": [100000.0, 100500.0],
+                    "benchmark_value": [100.0, 101.0],
+                }
+            ).to_csv(Path(tmp) / "performance_history.csv", index=False)
+
+            real, source_files = hourly_hybrid.normalize_real_hourly_observations("original_tech")
+            check("hybrid loader keeps only 1Hour rows", len(real) == 1, str(real))
+            check("hybrid loader records source file", source_files == ["performance_history.csv"], str(source_files))
+        finally:
+            cfg.ALPACA_LOGS_DIR = original_logs_dir  # type: ignore[attr-defined]
+
+
+def test_hourly_hybrid_normalizes_legacy_benchmark_close_schema():
+    with tempfile.TemporaryDirectory() as tmp:
+        original_logs_dir = cfg.ALPACA_LOGS_DIR
+        try:
+            cfg.ALPACA_LOGS_DIR = Path(tmp)  # type: ignore[attr-defined]
+            pd.DataFrame(
+                {
+                    "bar_timestamp": ["2026-07-06T14:00:00", "2026-07-06T15:00:00"],
+                    "universe": ["defensive_non_tech", "defensive_non_tech"],
+                    "benchmark": ["SPY", "SPY"],
+                    "timeframe": ["1Hour", "1Hour"],
+                    "portfolio_value": [100000.0, 101000.0],
+                    "benchmark_close": [500.0, 505.0],
+                }
+            ).to_csv(Path(tmp) / "paper_performance_legacy.csv", index=False)
+
+            real, _ = hourly_hybrid.normalize_real_hourly_observations("defensive_non_tech")
+            check("legacy benchmark_close becomes benchmark_value", "benchmark_value" in real.columns)
+            check("hybrid model index starts at 100", abs(real["model_index"].iloc[0] - 100.0) < 1e-9, str(real))
+            check("hybrid benchmark index starts at 100", abs(real["benchmark_index"].iloc[0] - 100.0) < 1e-9, str(real))
+        finally:
+            cfg.ALPACA_LOGS_DIR = original_logs_dir  # type: ignore[attr-defined]
+
+
+def test_hourly_hybrid_removes_duplicate_timestamps():
+    with tempfile.TemporaryDirectory() as tmp:
+        original_logs_dir = cfg.ALPACA_LOGS_DIR
+        try:
+            cfg.ALPACA_LOGS_DIR = Path(tmp)  # type: ignore[attr-defined]
+            pd.DataFrame(
+                {
+                    "timestamp": ["2026-07-06T14:00:00", "2026-07-06T14:00:00"],
+                    "universe": ["original_tech", "original_tech"],
+                    "benchmark": ["QQQ", "QQQ"],
+                    "timeframe": ["1Hour", "1Hour"],
+                    "portfolio_value": [100000.0, 101000.0],
+                    "benchmark_value": [100.0, 101.0],
+                }
+            ).to_csv(Path(tmp) / "performance_history.csv", index=False)
+
+            real, _ = hourly_hybrid.normalize_real_hourly_observations("original_tech")
+            check("hybrid loader removes duplicate timestamps", real["timestamp"].nunique() == len(real) == 1, str(real))
+        finally:
+            cfg.ALPACA_LOGS_DIR = original_logs_dir  # type: ignore[attr-defined]
+
+
+def test_hourly_hybrid_simulation_is_reproducible_and_marked():
+    real = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2026-07-06T14:00:00"]),
+            "universe": ["original_tech"],
+            "benchmark": ["QQQ"],
+            "timeframe": ["1Hour"],
+            "portfolio_value": [100000.0],
+            "benchmark_value": [100.0],
+            "model_index": [100.0],
+            "benchmark_index": [100.0],
+            "source_type": ["real"],
+            "source_file": ["unit_test.csv"],
+            "simulation_method": [""],
+            "seed": [""],
+        }
+    )
+    distribution = pd.DataFrame(
+        {
+            "model_return": [0.01, -0.02, 0.005],
+            "benchmark_return": [0.002, -0.001, 0.003],
+        }
+    )
+    original_loader = hourly_hybrid.load_hourly_backtest_return_distribution
+    try:
+        hourly_hybrid.load_hourly_backtest_return_distribution = lambda universe_name, top_k=5: (distribution, "unit_test_distribution")  # type: ignore[assignment]
+        simulated_1, method_1, _ = hourly_hybrid.simulate_missing_hourly_points(real, "original_tech")
+        simulated_2, method_2, _ = hourly_hybrid.simulate_missing_hourly_points(real, "original_tech")
+        check("hybrid simulation uses fixed seed", simulated_1["model_index"].equals(simulated_2["model_index"]))
+        check("hybrid simulation is marked simulated", set(simulated_1["source_type"]) == {"simulated"}, str(simulated_1["source_type"].unique()))
+        check("hybrid simulation records method", method_1 == method_2 == "unit_test_distribution", method_1)
+        check("hybrid simulation model and benchmark share time axis", simulated_1["timestamp"].equals(simulated_2["timestamp"]))
+    finally:
+        hourly_hybrid.load_hourly_backtest_return_distribution = original_loader  # type: ignore[assignment]
+
+
+def test_hourly_hybrid_does_not_simulate_when_enough_real_data():
+    timestamps = pd.date_range("2026-07-06T14:00:00", periods=cfg.MIN_OBSERVATIONS_FOR_ROBUST, freq="h")
+    real = pd.DataFrame(
+        {
+            "timestamp": timestamps,
+            "universe": "original_tech",
+            "benchmark": "QQQ",
+            "timeframe": "1Hour",
+            "portfolio_value": np.linspace(100000, 101000, len(timestamps)),
+            "benchmark_value": np.linspace(100, 101, len(timestamps)),
+            "model_index": np.linspace(100, 101, len(timestamps)),
+            "benchmark_index": np.linspace(100, 101, len(timestamps)),
+            "source_type": "real",
+            "source_file": "unit_test.csv",
+            "simulation_method": "",
+            "seed": "",
+        }
+    )
+    simulated, method, _ = hourly_hybrid.simulate_missing_hourly_points(real, "original_tech")
+    check("hybrid does not simulate when enough real data exists", simulated.empty and method == "not_needed", method)
 
 
 def main():

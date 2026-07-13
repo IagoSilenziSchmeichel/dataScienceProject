@@ -36,6 +36,7 @@ sys.path.insert(0, str(REPORTING_ROOT))
 
 import pandas as pd  # noqa: E402
 
+import hourly_hybrid_reporting as hourly_hybrid  # noqa: E402
 import presentation_data_loader as loader  # noqa: E402
 import presentation_metrics as metrics  # noqa: E402
 import presentation_plots as plots  # noqa: E402
@@ -66,6 +67,7 @@ def build_universe_report(universe_name):
         "backtest_summary": None,
         "top_k_summary": None,
         "hourly_alpaca_summary": None,
+        "hourly_hybrid_metadata": None,
         "daily_alpaca_summary": None,
         "daily_alpaca_orders_summary": None,
         "signal_summary": None,
@@ -178,55 +180,50 @@ def build_universe_report(universe_name):
 
     # ---- Plot 3: 03_hourly_alpaca_vs_benchmark.png --------------------------
     hourly_ds = loader.load_hourly_alpaca_performance(universe_name)
-    result["sources"]["hourly_alpaca"] = hourly_ds.to_dict()
     plot3_path = output_dir / "03_hourly_alpaca_vs_benchmark.png"
+    hourly_series, hourly_metadata = hourly_hybrid.build_hourly_hybrid_series(universe_name, top_k=5)
+    result["hourly_hybrid_metadata"] = hourly_metadata
+    result["sources"]["hourly_alpaca"] = {
+        **hourly_ds.to_dict(),
+        "hybrid_real_observations": hourly_metadata["real_observations"],
+        "hybrid_simulated_observations": hourly_metadata["simulated_observations"],
+        "hybrid_simulation_method": hourly_metadata["simulation_method"],
+    }
 
-    if not hourly_ds.is_usable:
+    if hourly_series.empty:
         plots.plot_status_message(
             title=f"Hourly Paper Trading - {universe_title} vs. {benchmark_ticker}",
             status=hourly_ds.status,
-            message_lines=[cfg.INSUFFICIENT_HOURLY_MESSAGE, hourly_ds.note],
+            message_lines=[
+                cfg.INSUFFICIENT_HOURLY_MESSAGE,
+                hourly_ds.note,
+                hourly_metadata["note"],
+            ],
             output_path=plot3_path,
         )
     else:
-        # Defensive branch: not currently reachable with real data (no clean
-        # per-universe hourly index series exists yet), kept so a future
-        # hourly dataset in the expected portfolio_index/benchmark_index
-        # shape renders automatically instead of silently staying MISSING.
-        data = hourly_ds.data
-        has_index_columns = {"portfolio_index", "benchmark_index", "timestamp"}.issubset(data.columns)
-        if not has_index_columns:
-            plots.plot_status_message(
-                title=f"Hourly Paper Trading - {universe_title} vs. {benchmark_ticker}",
-                status=hourly_ds.status,
-                message_lines=[
-                    "Hourly-Zeilen gefunden, aber nicht im erwarteten Index-Format - keine belastbare Kurve moeglich.",
-                    hourly_ds.note,
-                ],
-                output_path=plot3_path,
-            )
-        else:
-            summary = metrics.summarize_alpaca_performance(data, date_column="timestamp")
-            result["hourly_alpaca_summary"] = summary
-            metric_lines = [
-                f"n={summary['observations']} Zeitstempel",
-                f"Portfolio-Rendite: {summary['portfolio_return']:+.1%}",
-                f"Benchmark-Rendite ({benchmark_ticker}): {summary['benchmark_return']:+.1%}",
-                f"Outperformance: {summary['difference']:+.1%}",
-                f"MaxDD: {summary['max_drawdown']:.1%}",
-            ]
-            plots.plot_cumulative_lines(
-                title=f"Hourly Paper Trading - {universe_title} vs. {benchmark_ticker}",
-                subtitle=f"{summary['observations']} Beobachtungen",
-                dates=data["timestamp"],
-                strategy_index=data["portfolio_index"],
-                benchmark_index=data["benchmark_index"],
-                strategy_label="Portfolio",
-                benchmark_label=f"{benchmark_ticker} (Index)",
-                output_path=plot3_path,
-                metric_lines=metric_lines,
-                preliminary=(hourly_ds.status == cfg.STATUS_PRELIMINARY),
-            )
+        summary = hourly_hybrid.summarize_hybrid_series(hourly_series, hourly_metadata)
+        result["hourly_alpaca_summary"] = summary
+        metric_lines = [
+            f"Real: {summary['real_observations']} | Simuliert: {summary['simulated_observations']}",
+            f"Realer Zeitraum: {summary['real_period']}",
+            f"Simulierter Zeitraum: {summary['simulated_period']}",
+            f"Modell-Szenario: {summary['model_return']:+.1%}",
+            f"Benchmark-Szenario ({benchmark_ticker}): {summary['benchmark_return']:+.1%}",
+            f"Differenz: {summary['difference']:+.1%}",
+            f"Basis: {summary['simulation_method']}",
+        ]
+        plots.plot_hourly_hybrid_series(
+            title=f"Hybrid-Szenario fuer den stuendlichen Serverbetrieb - {universe_title}",
+            subtitle=(
+                "Reale Hourly-Paper-Trading-Daten wurden bei fehlenden Zeitpunkten "
+                "durch eine reproduzierbare modellbasierte Simulation ergaenzt."
+            ),
+            data=hourly_series,
+            benchmark_label=benchmark_ticker,
+            output_path=plot3_path,
+            metric_lines=metric_lines,
+        )
     result["plots_present"]["03_hourly_alpaca_vs_benchmark.png"] = plot3_path.exists()
 
     # ---- Plot 4: 04_daily_alpaca_vs_benchmark.png ---------------------------
@@ -404,11 +401,11 @@ def build_comparison_outputs(universe_results):
             hourly_statuses.append(cfg.STATUS_MISSING)
         else:
             hourly_values.append(r["hourly_alpaca_summary"]["difference"])
-            hourly_statuses.append(r["sources"]["hourly_alpaca"]["status"])
+            hourly_statuses.append(cfg.STATUS_PRELIMINARY)
 
     plots.plot_comparison_bars(
-        title="Hourly-Alpaca-Outperformance je Universum",
-        subtitle="Keine belastbare universenspezifische Attribution ueber die Zeit verfuegbar",
+        title="Hourly-Hybrid-Szenario je Universum",
+        subtitle="Differenz Modell-Szenario minus Benchmark; reale und simulierte Teile sind in Plot 03 gekennzeichnet",
         universes=universe_titles,
         values=hourly_values,
         statuses=hourly_statuses,
@@ -481,8 +478,10 @@ def build_comparison_outputs(universe_results):
             data_quality_flags.append("backtest_missing")
         if r["sources"]["top_k"]["status"] == cfg.STATUS_MISSING:
             data_quality_flags.append("top_k_missing")
-        if r["sources"]["hourly_alpaca"]["status"] == cfg.STATUS_MISSING:
-            data_quality_flags.append("hourly_alpaca_missing")
+        if r["hourly_alpaca_summary"] is None:
+            data_quality_flags.append("hourly_hybrid_missing")
+        elif r["hourly_alpaca_summary"].get("simulated_observations", 0):
+            data_quality_flags.append("hourly_hybrid_contains_simulation")
         if r["sources"]["daily_alpaca"]["status"] in (cfg.STATUS_PRELIMINARY, cfg.STATUS_MISSING):
             data_quality_flags.append("daily_alpaca_preliminary")
 
@@ -499,10 +498,13 @@ def build_comparison_outputs(universe_results):
                 "backtest_sharpe": backtest_summary.get("sharpe_ratio"),
                 "backtest_max_drawdown": backtest_summary.get("max_drawdown"),
                 "backtest_trades": backtest_summary.get("number_of_trades"),
-                "hourly_observations": r["sources"]["hourly_alpaca"]["observations"],
-                "hourly_strategy_return": hourly_summary.get("portfolio_return"),
+                "hourly_observations": hourly_summary.get("observations"),
+                "hourly_real_observations": hourly_summary.get("real_observations"),
+                "hourly_simulated_observations": hourly_summary.get("simulated_observations"),
+                "hourly_strategy_return": hourly_summary.get("model_return"),
                 "hourly_benchmark_return": hourly_summary.get("benchmark_return"),
                 "hourly_difference": hourly_summary.get("difference"),
+                "hourly_simulation_method": hourly_summary.get("simulation_method"),
                 "daily_start": daily_summary.get("period_start"),
                 "daily_end": daily_summary.get("period_end"),
                 "daily_observations": daily_summary.get("observations"),
@@ -611,10 +613,9 @@ def write_validation_report(universe_results, read_errors):
         "bereits vollstaendig durchgelaufen ist (siehe Vollstaendigkeitspruefung oben)."
     )
     lines.append(
-        "- Hourly Alpaca Paper Trading hat fuer alle Universen nur 1-2 Zeitstempel (der einmalige Dry-Run "
-        "vom 2026-07-06). Die urspruenglich stuendlichen Logs wurden danach vom Daily-Scheduler mit "
-        "1Day-Zeilen ueberschrieben/archiviert (Schema-Wechsel -> Legacy-Dateien). Es existiert keine "
-        "fortlaufende Hourly-Zeitreihe, daher zeigt Plot 03 aktuell fuer jedes Universum den Hinweistext."
+        "- Hourly Alpaca Paper Trading hat nur wenige echte 1Hour-Zeitstempel aus fruehen Dry-Runs. "
+        "Plot 03 zeigt deshalb ein transparent markiertes Hybrid-Szenario: reale Hourly-Punkte plus "
+        "reproduzierbare Simulation, sofern eine belastbare Hourly-Renditebasis vorhanden ist."
     )
     lines.append(
         "- Die geteilten Konto-Logs unter alpaca_trading/logs/ (performance_history.csv, paper_performance.csv, "
@@ -679,8 +680,11 @@ def _interpret_hourly_alpaca(r):
         return f"Keine belastbaren Hourly-Alpaca-Daten ({r['sources']['hourly_alpaca']['note']})"
     direction = "vor" if summary["difference"] > 0 else "hinter"
     return (
-        f"Ueber {summary['observations']} Zeitstempel liegt das Portfolio mit "
-        f"{summary['portfolio_return']:+.1%} {direction} {r['benchmark']} ({summary['benchmark_return']:+.1%})."
+        f"Das Hybrid-Szenario nutzt {summary['real_observations']} reale und "
+        f"{summary['simulated_observations']} simulierte Hourly-Zeitstempel. "
+        f"Die Modellreihe liegt mit {summary['model_return']:+.1%} {direction} "
+        f"{r['benchmark']} ({summary['benchmark_return']:+.1%}); Differenz "
+        f"{summary['difference']:+.1%}. Simulationsbasis: {summary['simulation_method']}."
     )
 
 
@@ -895,13 +899,15 @@ python alpaca_trading/presentation_reporting/generate_presentation_reports.py --
 
 - `01_backtest_vs_benchmark.png` - historischer Backtest, Top-K-Strategie vs. Benchmark
 - `02_top_k_results.png` - Top-1 bis Top-5 vs. Buy-and-Hold der Universums-Aktien
-- `03_hourly_alpaca_vs_benchmark.png` - Hourly Paper Trading (aktuell: Hinweistext, keine belastbare Zeitreihe)
+- `03_hourly_alpaca_vs_benchmark.png` - Hybrid-Szenario fuer den stuendlichen Serverbetrieb (real + klar markierte Simulation)
 - `04_daily_alpaca_vs_benchmark.png` - Daily Paper Trading (isolierte Simulation je Universum)
 - `05_signal_selection_analysis.png` - Auswahlhaeufigkeit, Probability, Rang, Kauf/Verkauf, Haltedauer je Aktie
 - `06_signal_probability_distribution.png` (optional) - Verteilung der Modell-Wahrscheinlichkeiten
 
 Fehlt echte Datenbasis fuer einen Plot, erscheint eine klar beschriftete
-Status-Grafik (MISSING/PRELIMINARY) statt eines geschaetzten Werts.
+Status-Grafik (MISSING/PRELIMINARY). Plot 03 nutzt nur dann eine Simulation,
+wenn reale Hourly-Punkte als Anker und eine belastbare Hourly-Renditebasis
+vorhanden sind; simulierte Abschnitte sind sichtbar markiert.
 
 ## Vergleichsplots (`output/comparison/`)
 
@@ -928,6 +934,13 @@ def main():
     universe_names = [args.universe] if args.universe else cfg.UNIVERSE_NAMES
 
     universe_results = [build_universe_report(name) for name in universe_names]
+    hybrid_series_by_universe = {}
+    hybrid_metadata_by_universe = {}
+    for name in universe_names:
+        hybrid_series, hybrid_metadata = hourly_hybrid.build_hourly_hybrid_series(name, top_k=5)
+        hybrid_series_by_universe[name] = hybrid_series
+        hybrid_metadata_by_universe[name] = hybrid_metadata
+    hourly_hybrid.write_hybrid_outputs(hybrid_series_by_universe, hybrid_metadata_by_universe)
 
     if not args.universe:
         build_comparison_outputs(universe_results)

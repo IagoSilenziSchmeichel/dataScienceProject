@@ -29,13 +29,15 @@ python alpaca_trading/presentation_reporting/generate_presentation_reports.py --
 
 - `01_backtest_vs_benchmark.png` - historischer Backtest, Top-K-Strategie vs. Benchmark
 - `02_top_k_results.png` - Top-1 bis Top-5 vs. Buy-and-Hold der Universums-Aktien
-- `03_hourly_alpaca_vs_benchmark.png` - Hourly Paper Trading (aktuell: Hinweistext, keine belastbare Zeitreihe)
+- `03_hourly_alpaca_vs_benchmark.png` - Hybrid-Szenario fuer den stuendlichen Serverbetrieb (real + klar markierte Simulation)
 - `04_daily_alpaca_vs_benchmark.png` - Daily Paper Trading (isolierte Simulation je Universum)
 - `05_signal_selection_analysis.png` - Auswahlhaeufigkeit, Probability, Rang, Kauf/Verkauf, Haltedauer je Aktie
 - `06_signal_probability_distribution.png` (optional) - Verteilung der Modell-Wahrscheinlichkeiten
 
 Fehlt echte Datenbasis fuer einen Plot, erscheint eine klar beschriftete
-Status-Grafik (MISSING/PRELIMINARY) statt eines geschaetzten Werts.
+Status-Grafik (MISSING/PRELIMINARY). Plot 03 nutzt nur dann eine Simulation,
+wenn reale Hourly-Punkte als Anker und eine belastbare Hourly-Renditebasis
+vorhanden sind; simulierte Abschnitte sind sichtbar markiert.
 
 ## Vergleichsplots (`output/comparison/`)
 
