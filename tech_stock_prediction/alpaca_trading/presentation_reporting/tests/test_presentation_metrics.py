@@ -314,6 +314,92 @@ def test_signal_selection_deduplicates_repeated_runs_same_date():
     )
 
 
+# ---------------------------------------------------------------------------
+# 8. Top-K table loading, order counts, holding duration, aggregates
+# ---------------------------------------------------------------------------
+
+def test_load_top_k_table_reads_sibling_file():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        predictions_path = tmp_path / "lstm_outperformance_predictions.csv"
+        predictions_path.write_text("Date,Ticker\n2026-01-01,AAA\n")
+        pd.DataFrame(
+            {
+                "top_k": [2, 1, 3],
+                "strategy_return": [0.05, 0.10, 0.02],
+                "buy_and_hold_return": [0.08, 0.08, 0.08],
+                "difference": [-0.03, 0.02, -0.06],
+                "average_number_of_positions": [2.0, 1.0, 3.0],
+            }
+        ).to_csv(tmp_path / "lstm_outperformance_top_k_results.csv", index=False)
+
+        table = metrics.load_top_k_table(str(predictions_path))
+        check("load_top_k_table returns a table", table is not None)
+        check("load_top_k_table sorts by top_k ascending", list(table["top_k"]) == [1, 2, 3], str(list(table["top_k"])))
+
+
+def test_load_top_k_table_missing_file_returns_none():
+    check("load_top_k_table returns None for missing sibling", metrics.load_top_k_table(None) is None)
+
+
+def test_per_ticker_order_counts():
+    orders = pd.DataFrame(
+        {
+            "symbol": ["AAA", "AAA", "BBB"],
+            "action": ["buy", "sell", "buy"],
+        }
+    )
+    counts = metrics.per_ticker_order_counts(orders)
+    check("per_ticker_order_counts counts AAA buys", counts["AAA"]["buys"] == 1, str(counts))
+    check("per_ticker_order_counts counts AAA sells", counts["AAA"]["sells"] == 1, str(counts))
+    check("per_ticker_order_counts counts BBB buys", counts["BBB"]["buys"] == 1, str(counts))
+    check("per_ticker_order_counts empty for no orders", metrics.per_ticker_order_counts(None) == {})
+
+
+def test_average_holding_duration():
+    # Selected on days 1-2 (streak of 2), then day 4 alone (streak of 1) -> avg 1.5
+    sequence = [True, True, False, True]
+    duration = metrics._average_holding_duration(sequence)  # noqa: SLF001
+    check("average holding duration over two streaks is 1.5", abs(duration - 1.5) < 1e-9, str(duration))
+    check("average holding duration is NaN when never selected", np.isnan(metrics._average_holding_duration([False, False])))  # noqa: SLF001
+
+
+def test_summarize_signal_selection_includes_holding_duration_and_orders():
+    signal_data = pd.DataFrame(
+        {
+            "date": ["2026-01-01", "2026-01-02", "2026-01-03"],
+            "generated_at": ["2026-01-01T10:00", "2026-01-02T10:00", "2026-01-03T10:00"],
+            "ticker": ["AAA", "AAA", "AAA"],
+            "selected": [True, True, False],
+            "probability": [0.7, 0.6, 0.3],
+            "rank": [1, 1, 2],
+        }
+    )
+    order_counts = {"AAA": {"buys": 1, "sells": 1}}
+    selection_df, _ = metrics.summarize_signal_selection(signal_data, ["AAA"], order_counts=order_counts)
+    aaa_row = selection_df[selection_df["ticker"] == "AAA"].iloc[0]
+    check("AAA average holding duration is 2.0 (one streak of 2)", abs(aaa_row["average_holding_duration"] - 2.0) < 1e-9, str(aaa_row["average_holding_duration"]))
+    check("AAA buy/sell counts passed through", aaa_row["buys"] == 1 and aaa_row["sells"] == 1)
+
+
+def test_summarize_signal_aggregate_most_frequent_top1_and_top3():
+    signal_data = pd.DataFrame(
+        {
+            "date": ["2026-01-01", "2026-01-01", "2026-01-02", "2026-01-02"],
+            "generated_at": ["2026-01-01T10:00"] * 2 + ["2026-01-02T10:00"] * 2,
+            "ticker": ["AAA", "BBB", "AAA", "BBB"],
+            "selected": [True, False, True, False],
+            "probability": [0.8, 0.4, 0.7, 0.3],
+            "rank": [1, 2, 1, 2],
+        }
+    )
+    selection_df, distinct_dates = metrics.summarize_signal_selection(signal_data, ["AAA", "BBB"])
+    aggregate = metrics.summarize_signal_aggregate(signal_data, selection_df, distinct_dates)
+    check("most frequent top-1 is AAA", aggregate["most_frequent_top1"] == "AAA", str(aggregate))
+    check("most frequent top-3 starts with AAA", aggregate["most_frequent_top3"][0] == "AAA", str(aggregate))
+    check("average turnover is 0 (AAA selected both days, no changes)", aggregate["average_turnover"] == 0.0, str(aggregate))
+
+
 def main():
     test_functions = [value for name, value in list(globals().items()) if name.startswith("test_") and callable(value)]
     for test_function in test_functions:

@@ -65,11 +65,6 @@ STATUS_READY = "READY"
 STATUS_PRELIMINARY = "PRELIMINARY"
 STATUS_MISSING = "MISSING"
 STATUS_INVALID = "INVALID"
-# Used only for the supplementary simulated paper-trading extension (Plot 5).
-# Never applied to real Alpaca data - marks a series as "computed from real
-# prices/predictions via the backtest methodology, not an actual broker
-# result" so it can never be confused with READY/PRELIMINARY real data.
-STATUS_SIMULATION = "SIMULATION"
 
 # Below this many observations, a time series is only ever shown as
 # "preliminary", never presented as a settled/robust result.
@@ -80,6 +75,18 @@ MIN_OBSERVATIONS_FOR_ROBUST = 30
 MIN_OBSERVATIONS_FOR_ANY_PLOT = 2
 
 TRADING_DAYS_PER_YEAR = 252
+
+# Exact wording required by the unified presentation spec for a main plot
+# that cannot be drawn because too little real data exists yet - used
+# instead of any fabricated/estimated value.
+INSUFFICIENT_DAILY_MESSAGE = (
+    "Fuer dieses Universum liegen aktuell noch nicht genuegend "
+    "Daily-Paper-Trading-Daten fuer eine belastbare Auswertung vor."
+)
+INSUFFICIENT_HOURLY_MESSAGE = (
+    "Fuer dieses Universum liegen aktuell noch nicht genuegend "
+    "Hourly-Paper-Trading-Daten fuer eine belastbare Auswertung vor."
+)
 
 
 def universe_output_dir(universe_name):

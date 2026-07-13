@@ -263,79 +263,105 @@ def plot_trade_activity_comparison(universes, buys, sells, statuses, output_path
     _save(fig, output_path)
 
 
-def plot_simulated_paper_trading_extension(
-    universe_title,
-    benchmark_ticker,
-    sim_dates,
-    sim_strategy_index,
-    sim_benchmark_index,
-    sim_top_k,
-    real_dates,
-    real_strategy_index,
-    real_benchmark_index,
-    real_observations,
+def plot_top_k_results(
+    title,
+    subtitle,
+    top_k_values,
+    strategy_returns,
+    buy_and_hold_returns,
+    differences,
+    average_positions,
     output_path,
-    sim_metric_lines,
-    real_metric_lines=None,
+    metric_lines,
+    preliminary=False,
 ):
     """
-    Supplementary plot (not one of the 4 standard plots): a two-panel chart
-    that always keeps SIMULATION and real Alpaca data visually and
-    numerically separate, per the project rule "Backtest und Alpaca Paper
-    Trading nicht vermischen".
-
-    Left panel: the same day-by-day Top-K backtest reconstruction used for
-    Plot 1 (real historical prices, real model predictions) shown as a
-    stand-in for "what a longer paper-trading run would look like". This is
-    a recomputation of Plot 1's own methodology, not a new/fabricated
-    number - but it is explicitly labeled SIMULATION and is never an actual
-    Alpaca broker result.
-
-    Right panel: only the real Alpaca daily observations for this universe
-    (if any). Never merged into the left panel's series.
+    Plot 2: grouped bar chart, Top-1..Top-5 strategy return vs. buy-and-hold
+    return, straight from the pipeline's own lstm_outperformance_top_k_results.csv
+    (nothing recomputed/estimated). Difference and average number of
+    positions are annotated per group.
     """
-    has_real = real_dates is not None and len(real_dates) > 0
+    fig = _new_figure()
+    ax = fig.add_axes([0.08, 0.22, 0.88, 0.60])
 
-    fig = plt.figure(figsize=(13.5, 6))
-    fig.suptitle(
-        f"Simulierte Paper-Trading-Fortschreibung - {universe_title} vs. {benchmark_ticker}",
-        fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.985,
+    index_positions = list(range(len(top_k_values)))
+    width = 0.36
+    # Average position count is folded into the tick label itself (not a
+    # floating annotation) so it can never overlap the axis or bar labels.
+    labels = [f"Top-{k}\n(Ø Pos. {positions:.1f})" for k, positions in zip(top_k_values, average_positions)]
+
+    strategy_pct = [v * 100 for v in strategy_returns]
+    buy_hold_pct = [v * 100 for v in buy_and_hold_returns]
+
+    bars_strategy = ax.bar(
+        [i - width / 2 for i in index_positions], strategy_pct,
+        width, color=COLOR_STRATEGY, label="Strategie-Rendite",
     )
-    fig.text(
-        0.5, 0.905,
-        "LINKS: SIMULATION - echte Kurse & Modellvorhersagen, KEIN echtes Alpaca-Broker-Ergebnis"
-        + ("   |   RECHTS: echte Alpaca-Daten" if has_real else "   |   RECHTS: keine echten Alpaca-Daten vorhanden"),
-        ha="center", va="center", fontsize=10.5, fontweight="bold", color="#8B4500",
+    bars_buy_hold = ax.bar(
+        [i + width / 2 for i in index_positions], buy_hold_pct,
+        width, color=COLOR_BENCHMARK, label="Buy-and-Hold-Rendite",
     )
 
-    left_width = 0.54 if has_real else 0.86
-    left = fig.add_axes([0.06, 0.16, left_width, 0.62])
-    left.plot(sim_dates, sim_strategy_index, color=COLOR_STRATEGY, linewidth=2.0, label=f"Top-{sim_top_k} Simulation")
-    left.plot(sim_dates, sim_benchmark_index, color=COLOR_BENCHMARK, linewidth=1.8, linestyle="--", label=f"{benchmark_ticker} (Index)")
-    left.axhline(100, color="#999999", linewidth=0.8)
-    _style_axis(left)
-    left.set_ylabel("Index (Start = 100)", fontsize=AXIS_LABEL_FONT_SIZE)
-    left.set_title(f"Simulation ({len(sim_dates)} Tage, Backtest-Methodik)", fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
-    left.legend(loc="upper left", fontsize=LEGEND_FONT_SIZE, frameon=True)
+    ax.set_xticks(index_positions)
+    ax.set_xticklabels(labels)
+    ax.axhline(0, color="#111111", linewidth=1)
+    ax.set_ylabel("Rendite (%)", fontsize=AXIS_LABEL_FONT_SIZE)
+    _style_axis(ax)
 
-    if has_real:
-        right = fig.add_axes([0.68, 0.16, 0.28, 0.62])
-        right.plot(real_dates, real_strategy_index, color=COLOR_STRATEGY, linewidth=2.2, marker="o", label="Portfolio (echt)")
-        right.plot(real_dates, real_benchmark_index, color=COLOR_BENCHMARK, linewidth=2.0, linestyle="--", marker="o", label=f"{benchmark_ticker} (echt)")
-        right.axhline(100, color="#999999", linewidth=0.8)
-        _style_axis(right)
-        right.set_title(f"Echt (n={real_observations} Tage)", fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
-        right.legend(loc="upper left", fontsize=9, frameon=True)
-        right.tick_params(axis="x", labelrotation=30)
-    else:
-        right = fig.add_axes([0.68, 0.16, 0.28, 0.62])
-        right.axis("off")
-        right.text(0.5, 0.5, "Keine echten\nAlpaca-Daten\nverfuegbar", ha="center", va="center", fontsize=11, color="#777777")
+    # Headroom above the tallest bar so the difference labels and the legend
+    # never overlap a bar or each other, regardless of how tall the tallest
+    # bar in a given universe turns out to be.
+    tallest_bar = max(strategy_pct + buy_hold_pct + [0])
+    ax.set_ylim(top=tallest_bar * 1.3 if tallest_bar > 0 else 1)
 
-    footer_lines = list(sim_metric_lines)
-    if real_metric_lines:
-        footer_lines = footer_lines + real_metric_lines
-    _footer_text(fig, footer_lines)
+    diff_labels = [f"{diff:+.1%}" for diff in differences]
+    ax.bar_label(bars_strategy, labels=diff_labels, padding=3, fontsize=ANNOTATION_FONT_SIZE)
+
+    ax.legend(loc="upper right", fontsize=LEGEND_FONT_SIZE)
+
+    title_text = title
+    if preliminary:
+        title_text += "  (vorlaeufig)"
+    fig.suptitle(title_text, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.set_title(subtitle, fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
+
+    _footer_text(fig, metric_lines)
+    _save(fig, output_path)
+
+
+def plot_signal_probability_distribution(
+    title,
+    subtitle,
+    probabilities,
+    output_path,
+    metric_lines,
+    preliminary=False,
+):
+    """
+    Optional Plot 6 (model interpretation only): histogram of every
+    predicted probability the model produced for this universe's signal
+    history - shows whether the model mostly outputs confident (far from
+    0.50) or uncertain (near 0.50) predictions.
+    """
+    fig = _new_figure()
+    ax = fig.add_axes([0.09, 0.22, 0.86, 0.60])
+
+    ax.hist(probabilities, bins=20, range=(0, 1), color=COLOR_STRATEGY, edgecolor="white")
+    ax.axvline(0.5, color=COLOR_NEGATIVE, linewidth=1.5, linestyle="--", label="p = 0.50 (Zufall)")
+    ax.set_xlabel("Vorhergesagte Wahrscheinlichkeit", fontsize=AXIS_LABEL_FONT_SIZE)
+    ax.set_ylabel("Anzahl Beobachtungen", fontsize=AXIS_LABEL_FONT_SIZE)
+    _style_axis(ax)
+    ax.legend(loc="upper right", fontsize=LEGEND_FONT_SIZE)
+
+    title_text = title
+    if preliminary:
+        title_text += "  (vorlaeufig)"
+    fig.suptitle(title_text, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.set_title(subtitle, fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
+
+    _footer_text(fig, metric_lines)
     _save(fig, output_path)
 
 
