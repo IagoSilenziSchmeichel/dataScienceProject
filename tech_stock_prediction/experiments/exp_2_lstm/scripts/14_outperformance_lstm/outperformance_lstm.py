@@ -172,6 +172,16 @@ def add_outperformance_features(data, market):
         lambda values: values / values.shift(20) - 1
     )
 
+    # The Random Forest feature file (exp_1_randomforest) already computes its
+    # own QQQ_Return/SPY_Return market features. Drop any such overlapping
+    # columns before merging so pandas does not silently rename our freshly
+    # downloaded market columns to *_x/*_y (which previously caused a
+    # KeyError further down). We always want the market data downloaded here,
+    # since it covers extra history before the train period.
+    overlapping_columns = [column for column in market.columns if column in data.columns and column != "Date"]
+    if overlapping_columns:
+        data = data.drop(columns=overlapping_columns)
+
     merged = data.merge(market, on="Date", how="left")
 
     merged["Relative_Return_QQQ"] = merged["Stock_Daily_Return_Raw"] - merged["QQQ_Return"]
