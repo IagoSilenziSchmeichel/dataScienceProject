@@ -5,11 +5,11 @@
 # Set via set_universe.py, not by hand. Informational only for this
 # experiment (Random Forest is no longer the final model), but the data
 # acquisition/feature/split steps here are still reused by exp_2_lstm.
-UNIVERSE: "defensive_non_tech"
+UNIVERSE: "original_tech"
 DATA_ACQUISITION:
   START_DATE: '2019-01-01'
   RAW_DATA_FILE: 'data/raw/tech_stocks_raw.csv'
-  TICKERS: ['WMT', 'COST', 'PG', 'KO', 'PEP', 'JNJ', 'MRK', 'ABBV', 'XOM', 'CVX']
+  TICKERS: ['AAPL', 'MSFT', 'NVDA', 'AMD', 'GOOGL', 'META', 'AMZN', 'TSLA', 'INTC', 'ADBE']
   MARKET_TICKERS: ['QQQ', 'SPY']
 
 DATA_PREP:
