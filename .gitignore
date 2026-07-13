@@ -33,3 +33,10 @@ tech_stock_prediction/alpaca_trading/reports/*.md
 tech_stock_prediction/data/raw/*.csv
 tech_stock_prediction/data/processed/*.csv
 tech_stock_prediction/models/*.pkl
+
+# Generated per-universe pipeline results and presentation reports
+# (fully reproducible via run_universe_lstm_outperformance.py and
+# generate_presentation_reports.py - not committed, same convention as
+# the other generated data/plots above)
+tech_stock_prediction/universe_results/
+tech_stock_prediction/alpaca_trading/presentation_reporting/output/

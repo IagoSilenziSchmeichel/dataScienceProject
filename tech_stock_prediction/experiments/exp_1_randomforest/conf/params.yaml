@@ -1,6 +1,11 @@
 %YAML 1.2
 ---
 
+# Which universe (see config/stock_universes.py) TICKERS below belongs to.
+# Set via set_universe.py, not by hand. Informational only for this
+# experiment (Random Forest is no longer the final model), but the data
+# acquisition/feature/split steps here are still reused by exp_2_lstm.
+UNIVERSE: "original_tech"
 DATA_ACQUISITION:
   START_DATE: '2019-01-01'
   RAW_DATA_FILE: 'data/raw/tech_stocks_raw.csv'

@@ -143,7 +143,7 @@ def plot_stock_prices(raw_data):
     for ticker, group in raw_data.sort_values("Date").groupby("Ticker"):
         ax.plot(group["Date"], group["Close"], linewidth=1.6, label=ticker)
 
-    ax.set_title("Historical Closing Prices of 10 Tech Stocks", fontsize=16, fontweight="bold")
+    ax.set_title("Historical Closing Prices - Defensive Non-Tech Universe", fontsize=16, fontweight="bold")
     ax.set_xlabel("Date")
     ax.set_ylabel("Closing Price (USD)")
     ax.legend(title="Ticker", ncol=2, frameon=True)

@@ -2,7 +2,8 @@
 Train and evaluate an LSTM for market outperformance.
 
 The standard LSTM predicts whether a stock goes up tomorrow.
-This variant predicts whether a stock beats QQQ tomorrow.
+This variant predicts whether a stock beats its universe benchmark tomorrow
+(QQQ for the tech universes, SPY for the defensive_non_tech control group).
 """
 
 from datetime import timedelta
@@ -31,11 +32,18 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precisio
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
+from config.stock_universes import get_benchmark_for_universe
+
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
 PARAMS = yaml.safe_load(open(EXPERIMENT_ROOT / "conf" / "params.yaml"))
 
-TARGET_COLUMN = "Outperform_QQQ_Target"
+# Which universe this run belongs to. Defaults to original_tech for backward
+# compatibility if a params.yaml without UNIVERSE is still around.
+UNIVERSE = PARAMS.get("UNIVERSE", "original_tech")
+BENCHMARK = get_benchmark_for_universe(UNIVERSE)
+TARGET_COLUMN = f"Outperform_{BENCHMARK}_Target"
+NEXT_DAY_BENCHMARK_RETURN_COLUMN = f"Next_Day_{BENCHMARK}_Return"
 TOP_K_VALUES = PARAMS["MODEL"].get("TOP_K_VALUES", [1, 2, 3, 4, 5])
 
 MARKET_FEATURES = [
@@ -365,6 +373,8 @@ def calculate_top_k_results(predictions):
         rows.append(
             {
                 "model_name": "outperformance_lstm",
+                "universe": UNIVERSE,
+                "benchmark": BENCHMARK,
                 "top_k": top_k,
                 "test_start": daily_results.index.min().date().isoformat(),
                 "test_end": daily_results.index.max().date().isoformat(),
@@ -448,7 +458,7 @@ def plot_metrics(results):
 
     fig, ax = plt.subplots(figsize=(9, 6))
     bars = ax.bar(metric_names, metric_values, color=["#365C7D", "#4F8F6F", "#D08B2C", "#8A5A83"])
-    ax.set_title("Outperformance LSTM Metrics", fontsize=15, fontweight="bold")
+    ax.set_title(f"Outperformance LSTM Metrics - {UNIVERSE} (vs {BENCHMARK})", fontsize=15, fontweight="bold")
     ax.set_ylim(0, 1)
     ax.set_ylabel("Score")
     ax.grid(axis="y", alpha=0.25)
@@ -471,7 +481,7 @@ def plot_top_k(top_k_results):
     )
     buy_and_hold = top_k_results["buy_and_hold_return"].iloc[0]
     ax.axhline(buy_and_hold, color="#D08B2C", linestyle="--", linewidth=2, label="Buy-and-Hold")
-    ax.set_title("Outperformance LSTM Top-K Backtest", fontsize=15, fontweight="bold")
+    ax.set_title(f"Outperformance LSTM Top-K Backtest - {UNIVERSE} (vs {BENCHMARK})", fontsize=15, fontweight="bold")
     ax.set_xlabel("Top K Aktien pro Tag")
     ax.set_ylabel("Gesamtrendite")
     ax.yaxis.set_major_formatter(lambda value, position: f"{value:.0%}")
@@ -523,7 +533,7 @@ def plot_cumulative_comparison(outperformance_predictions, outperformance_top_k_
         linestyle="--",
         linewidth=2,
     )
-    ax.set_title("Cumulative Return Comparison", fontsize=15, fontweight="bold")
+    ax.set_title(f"Cumulative Return Comparison - {UNIVERSE} (vs {BENCHMARK})", fontsize=15, fontweight="bold")
     ax.set_xlabel("Date")
     ax.set_ylabel("Capital factor")
     ax.grid(True, alpha=0.25)
@@ -555,6 +565,9 @@ def print_final_comparison(top_k_results, standard_top_k_results):
 def main():
     print("Outperformance LSTM")
     print("===================")
+    print(f"Universe:  {UNIVERSE}")
+    print(f"Benchmark: {BENCHMARK}")
+    print(f"Target:    {TARGET_COLUMN}")
     set_random_seed(PARAMS["MODEL"]["RANDOM_STATE"])
 
     train_data = load_split(EXPERIMENT_ROOT / PARAMS["DATA"]["TRAIN_FILE"], "train")
@@ -569,7 +582,12 @@ def main():
 
     base_features = load_feature_columns(EXPERIMENT_ROOT / PARAMS["DATA"]["FEATURE_PATH"])
     feature_columns = base_features + MARKET_FEATURES + RELATIVE_FEATURES
-    required_columns = feature_columns + [TARGET_COLUMN, "Future_Return", "Next_Day_QQQ_Return"]
+    required_columns = feature_columns + [
+        TARGET_COLUMN,
+        "Future_Return",
+        "Next_Day_QQQ_Return",
+        "Next_Day_SPY_Return",
+    ]
     data = data.dropna(subset=required_columns).copy()
 
     train_data = data[data["Split"] == "train"].copy()
@@ -603,6 +621,8 @@ def main():
 
     result_row = {
         "model_name": "outperformance_lstm",
+        "universe": UNIVERSE,
+        "benchmark": BENCHMARK,
         "target": TARGET_COLUMN,
         "sequence_length": sequence_length,
         "hidden_size": PARAMS["MODEL"]["HIDDEN_SIZE"],
