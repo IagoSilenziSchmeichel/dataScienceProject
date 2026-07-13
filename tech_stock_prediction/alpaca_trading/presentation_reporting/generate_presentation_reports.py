@@ -52,6 +52,11 @@ def build_universe_report(universe_name):
     result["sources"]["backtest"] = backtest_ds.to_dict()
     plot1_path = output_dir / "01_backtest_vs_benchmark.png"
 
+    best_top_k = None
+    daily = None
+    strategy_index = None
+    benchmark_index = None
+
     if not backtest_ds.is_usable:
         plots.plot_status_message(
             title=f"Historischer Backtest - {universe_title} vs. {benchmark_ticker}",
@@ -163,6 +168,83 @@ def build_universe_report(universe_name):
             output_path=plot3_path,
             metric_lines=metric_lines,
             preliminary=(daily_alpaca_ds.status == cfg.STATUS_PRELIMINARY),
+        )
+
+    # ---- Plot 5 (supplementary, not one of the 4 standard plots): ----------
+    # simulated paper-trading extension. The real Alpaca daily window is
+    # only a handful of days for every universe; this reuses the exact same
+    # Top-K backtest reconstruction as Plot 1 (real historical prices, real
+    # model predictions) to show what a longer paper-trading run would look
+    # like. Always explicitly labeled SIMULATION and rendered in a separate
+    # panel from the real Alpaca data - never merged into one series/number
+    # (see "Backtest und Alpaca Paper Trading nicht vermischen").
+    plot5_path = output_dir / "05_simulated_paper_trading_extension.png"
+    result["sources"]["simulated_paper_trading"] = {
+        "status": cfg.STATUS_SIMULATION if daily is not None else cfg.STATUS_MISSING,
+        "source_path": backtest_ds.source_path,
+        "note": (
+            "Rekonstruktion aus denselben Backtest-Predictions wie Plot 1 - keine echten Broker-Daten."
+            if daily is not None
+            else f"Keine Simulation moeglich, da Plot 1 selbst fehlt: {backtest_ds.note}"
+        ),
+        "observations": int(len(daily)) if daily is not None else 0,
+    }
+    result["simulated_paper_trading_summary"] = None
+
+    if daily is None:
+        plots.plot_status_message(
+            title=f"Simulierte Paper-Trading-Fortschreibung - {universe_title} vs. {benchmark_ticker}",
+            status=backtest_ds.status,
+            message_lines=[
+                "Keine Simulation moeglich: dafuer wird dieselbe Backtest-Rekonstruktion wie in Plot 1 benoetigt.",
+                backtest_ds.note,
+            ],
+            output_path=plot5_path,
+        )
+    else:
+        backtest_summary = result["backtest_summary"]
+        sim_metric_lines = [
+            f"Simulation: {backtest_summary['strategy_return_net']:+.1%} vs. {backtest_summary['benchmark_return']:+.1%}",
+            f"Basis: identische Top-{best_top_k}-Rekonstruktion wie Plot 1 ({len(daily)} Tage)",
+            "Kein echtes Broker-Ergebnis - nur zur Einordnung.",
+        ]
+        real_metric_lines = None
+        real_dates = real_strategy_series = real_benchmark_series = None
+        real_observations = 0
+
+        if daily_alpaca_ds.is_usable:
+            real_data = daily_alpaca_ds.data
+            real_summary = result["daily_alpaca_summary"]
+            real_dates = real_data["date"]
+            real_strategy_series = real_data["portfolio_index"]
+            real_benchmark_series = real_data["benchmark_index"]
+            real_observations = real_summary["observations"]
+            real_metric_lines = [
+                f"Echt: {real_summary['portfolio_return']:+.1%} vs. {real_summary['benchmark_return']:+.1%} (n={real_observations} Tage)",
+            ]
+
+        result["simulated_paper_trading_summary"] = {
+            "simulated_return": backtest_summary["strategy_return_net"],
+            "simulated_benchmark_return": backtest_summary["benchmark_return"],
+            "simulated_days": len(daily),
+            "top_k": best_top_k,
+            "real_observations": real_observations,
+        }
+
+        plots.plot_simulated_paper_trading_extension(
+            universe_title=universe_title,
+            benchmark_ticker=benchmark_ticker,
+            sim_dates=daily.index,
+            sim_strategy_index=strategy_index,
+            sim_benchmark_index=benchmark_index,
+            sim_top_k=best_top_k,
+            real_dates=real_dates,
+            real_strategy_index=real_strategy_series,
+            real_benchmark_index=real_benchmark_series,
+            real_observations=real_observations,
+            output_path=plot5_path,
+            sim_metric_lines=sim_metric_lines,
+            real_metric_lines=real_metric_lines,
         )
 
     # ---- Plot 4: signal / selection behaviour -------------------------------
@@ -395,6 +477,12 @@ def write_validation_report(universe_results, read_errors):
             f"| 04 Signal-Auswahl | {signal_source['source_path'] or 'n/a'} | "
             f"{signal_source['observations']} Tage | {signal_source['status']} | {signal_source['note']} |"
         )
+
+        sim_source = r["sources"]["simulated_paper_trading"]
+        lines.append(
+            f"| 05 Simulierte Fortschreibung (zusaetzlich) | {sim_source['source_path'] or 'n/a'} | "
+            f"{sim_source['observations']} Tage | {sim_source['status']} | {sim_source['note']} |"
+        )
         lines.append("")
 
     lines.append("## Uebergreifende Einschraenkungen")
@@ -429,6 +517,13 @@ def write_validation_report(universe_results, read_errors):
         "- Im Daily-Outperformance-LSTM-Backtest sind keine Transaktionskosten modelliert (Kostenannahme 0%); "
         "Brutto- und Nettorendite sind daher identisch. Die isolierte Alpaca-Tagessimulation modelliert "
         "ebenfalls keine expliziten Gebuehren/Spreads."
+    )
+    lines.append(
+        "- Plot 05 (Simulierte Fortschreibung) ist KEIN eigener Datenpunkt, sondern eine Zusatzdarstellung: "
+        "sie rekonstruiert dieselben Top-K-Backtest-Predictions wie Plot 1 (echte historische Kurse, echte "
+        "Modell-Vorhersagen) und stellt sie klar als 'SIMULATION' neben die echten (kurzen) Alpaca-Tageswerte, "
+        "ohne beide Reihen zu einer Zahl zu vermischen. Grund: die echte Alpaca-Paper-Trading-Historie ist fuer "
+        "jedes Universum nur 5 Tage lang."
     )
     unique_read_errors = list(dict.fromkeys(read_errors))
     if unique_read_errors:
@@ -470,6 +565,22 @@ def _interpret_daily_alpaca(r):
     )
 
 
+def _interpret_simulated_paper_trading(r):
+    summary = r["simulated_paper_trading_summary"]
+    if summary is None:
+        return "Keine Simulation moeglich (Backtest fehlt noch fuer dieses Universum)."
+    real_note = (
+        f"Zum Vergleich liegen zusaetzlich {summary['real_observations']} echte Alpaca-Tage vor (separat ausgewiesen, nicht in diese Zahl eingerechnet)."
+        if summary["real_observations"]
+        else "Fuer diesen Zeitraum liegen keine echten Alpaca-Tage vor."
+    )
+    return (
+        f"SIMULATION (kein echtes Broker-Ergebnis): Top-{summary['top_k']}-Strategie auf echten historischen "
+        f"Kursen fortgeschrieben ergibt {summary['simulated_return']:+.1%} gegenueber {summary['simulated_benchmark_return']:+.1%} "
+        f"Benchmark ueber {summary['simulated_days']} Tage. {real_note}"
+    )
+
+
 def _interpret_signal(r):
     if r["signal_summary"] is None:
         return f"Keine belastbaren Signaldaten ({r['sources']['signal_history']['note']})"
@@ -504,6 +615,9 @@ def write_presentation_results_summary(universe_results):
         lines.append("")
         lines.append("Daily Alpaca:")
         lines.append(_interpret_daily_alpaca(r))
+        lines.append("")
+        lines.append("Simulierte Fortschreibung (Plot 05, zusaetzlich):")
+        lines.append(_interpret_simulated_paper_trading(r))
         lines.append("")
         lines.append("Signalverhalten:")
         lines.append(_interpret_signal(r))
@@ -602,9 +716,10 @@ def write_slide_plan():
         "- Kernaussage: siehe presentation_results_summary.md, Abschnitt Neue Tech-Aktien",
         "",
         "## Folie 6: Defensive Non-Tech - vier Ergebnisdimensionen",
-        "- Plots: defensive_non_tech/01-04",
+        "- Plots: defensive_non_tech/01-04 (optional zusaetzlich: 05_simulated_paper_trading_extension.png)",
         "- Kennzahlen: Backtest-Differenz (falls vorhanden), Daily-Alpaca-Differenz",
         "- Kernaussage: siehe presentation_results_summary.md, Abschnitt Defensive Non-Tech",
+        "- Hinweis: Plot 05 ist eine klar gekennzeichnete SIMULATION (Backtest-Methodik auf echten Kursen), kein echtes Alpaca-Ergebnis - nur verwenden, wenn im Vortrag transparent gemacht wird, dass es keine echte Paper-Trading-Zahl ist.",
         "",
         "## Folie 7: Direkter Vergleich aller Universen",
         "- Plots: comparison/01, comparison/03, comparison/04",
@@ -660,6 +775,9 @@ python alpaca_trading/presentation_reporting/generate_presentation_reports.py --
 - `generate_presentation_reports.py` - Orchestrierung + Markdown-Berichte
 - `tests/test_presentation_metrics.py` - Plausibilitaetstests (kein pytest noetig, einfacher Assert-Runner)
 - `output/<universe>/01..04_*.png` - die vier Standardplots je Universum
+- `output/<universe>/05_simulated_paper_trading_extension.png` - zusaetzliche, klar als SIMULATION
+  gekennzeichnete Fortschreibung der Plot-1-Backtest-Methodik neben den echten (kurzen) Alpaca-Tagen;
+  kein eigener Standardplot und niemals mit den echten Alpaca-Daten zu einer Zahl vermischt
 - `output/comparison/` - universenuebergreifende Vergleichsplots + `final_universe_comparison.csv`
 - `output/data_validation_report.md`, `presentation_results_summary.md`, `presentation_slide_plan.md`
 

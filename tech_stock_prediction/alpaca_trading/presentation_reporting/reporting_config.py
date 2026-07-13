@@ -65,6 +65,11 @@ STATUS_READY = "READY"
 STATUS_PRELIMINARY = "PRELIMINARY"
 STATUS_MISSING = "MISSING"
 STATUS_INVALID = "INVALID"
+# Used only for the supplementary simulated paper-trading extension (Plot 5).
+# Never applied to real Alpaca data - marks a series as "computed from real
+# prices/predictions via the backtest methodology, not an actual broker
+# result" so it can never be confused with READY/PRELIMINARY real data.
+STATUS_SIMULATION = "SIMULATION"
 
 # Below this many observations, a time series is only ever shown as
 # "preliminary", never presented as a settled/robust result.

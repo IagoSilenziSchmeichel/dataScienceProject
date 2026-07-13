@@ -24,6 +24,9 @@ python alpaca_trading/presentation_reporting/generate_presentation_reports.py --
 - `generate_presentation_reports.py` - Orchestrierung + Markdown-Berichte
 - `tests/test_presentation_metrics.py` - Plausibilitaetstests (kein pytest noetig, einfacher Assert-Runner)
 - `output/<universe>/01..04_*.png` - die vier Standardplots je Universum
+- `output/<universe>/05_simulated_paper_trading_extension.png` - zusaetzliche, klar als SIMULATION
+  gekennzeichnete Fortschreibung der Plot-1-Backtest-Methodik neben den echten (kurzen) Alpaca-Tagen;
+  kein eigener Standardplot und niemals mit den echten Alpaca-Daten zu einer Zahl vermischt
 - `output/comparison/` - universenuebergreifende Vergleichsplots + `final_universe_comparison.csv`
 - `output/data_validation_report.md`, `presentation_results_summary.md`, `presentation_slide_plan.md`
 

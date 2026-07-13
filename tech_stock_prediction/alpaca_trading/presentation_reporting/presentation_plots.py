@@ -263,6 +263,82 @@ def plot_trade_activity_comparison(universes, buys, sells, statuses, output_path
     _save(fig, output_path)
 
 
+def plot_simulated_paper_trading_extension(
+    universe_title,
+    benchmark_ticker,
+    sim_dates,
+    sim_strategy_index,
+    sim_benchmark_index,
+    sim_top_k,
+    real_dates,
+    real_strategy_index,
+    real_benchmark_index,
+    real_observations,
+    output_path,
+    sim_metric_lines,
+    real_metric_lines=None,
+):
+    """
+    Supplementary plot (not one of the 4 standard plots): a two-panel chart
+    that always keeps SIMULATION and real Alpaca data visually and
+    numerically separate, per the project rule "Backtest und Alpaca Paper
+    Trading nicht vermischen".
+
+    Left panel: the same day-by-day Top-K backtest reconstruction used for
+    Plot 1 (real historical prices, real model predictions) shown as a
+    stand-in for "what a longer paper-trading run would look like". This is
+    a recomputation of Plot 1's own methodology, not a new/fabricated
+    number - but it is explicitly labeled SIMULATION and is never an actual
+    Alpaca broker result.
+
+    Right panel: only the real Alpaca daily observations for this universe
+    (if any). Never merged into the left panel's series.
+    """
+    has_real = real_dates is not None and len(real_dates) > 0
+
+    fig = plt.figure(figsize=(13.5, 6))
+    fig.suptitle(
+        f"Simulierte Paper-Trading-Fortschreibung - {universe_title} vs. {benchmark_ticker}",
+        fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.985,
+    )
+    fig.text(
+        0.5, 0.905,
+        "LINKS: SIMULATION - echte Kurse & Modellvorhersagen, KEIN echtes Alpaca-Broker-Ergebnis"
+        + ("   |   RECHTS: echte Alpaca-Daten" if has_real else "   |   RECHTS: keine echten Alpaca-Daten vorhanden"),
+        ha="center", va="center", fontsize=10.5, fontweight="bold", color="#8B4500",
+    )
+
+    left_width = 0.54 if has_real else 0.86
+    left = fig.add_axes([0.06, 0.16, left_width, 0.62])
+    left.plot(sim_dates, sim_strategy_index, color=COLOR_STRATEGY, linewidth=2.0, label=f"Top-{sim_top_k} Simulation")
+    left.plot(sim_dates, sim_benchmark_index, color=COLOR_BENCHMARK, linewidth=1.8, linestyle="--", label=f"{benchmark_ticker} (Index)")
+    left.axhline(100, color="#999999", linewidth=0.8)
+    _style_axis(left)
+    left.set_ylabel("Index (Start = 100)", fontsize=AXIS_LABEL_FONT_SIZE)
+    left.set_title(f"Simulation ({len(sim_dates)} Tage, Backtest-Methodik)", fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
+    left.legend(loc="upper left", fontsize=LEGEND_FONT_SIZE, frameon=True)
+
+    if has_real:
+        right = fig.add_axes([0.68, 0.16, 0.28, 0.62])
+        right.plot(real_dates, real_strategy_index, color=COLOR_STRATEGY, linewidth=2.2, marker="o", label="Portfolio (echt)")
+        right.plot(real_dates, real_benchmark_index, color=COLOR_BENCHMARK, linewidth=2.0, linestyle="--", marker="o", label=f"{benchmark_ticker} (echt)")
+        right.axhline(100, color="#999999", linewidth=0.8)
+        _style_axis(right)
+        right.set_title(f"Echt (n={real_observations} Tage)", fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
+        right.legend(loc="upper left", fontsize=9, frameon=True)
+        right.tick_params(axis="x", labelrotation=30)
+    else:
+        right = fig.add_axes([0.68, 0.16, 0.28, 0.62])
+        right.axis("off")
+        right.text(0.5, 0.5, "Keine echten\nAlpaca-Daten\nverfuegbar", ha="center", va="center", fontsize=11, color="#777777")
+
+    footer_lines = list(sim_metric_lines)
+    if real_metric_lines:
+        footer_lines = footer_lines + real_metric_lines
+    _footer_text(fig, footer_lines)
+    _save(fig, output_path)
+
+
 def plot_final_comparison(universes, backtest_values, hourly_values, daily_values, statuses_by_metric, output_path, title):
     """
     Grouped bar chart: backtest / hourly / daily outperformance per
