@@ -75,6 +75,14 @@ MIN_OBSERVATIONS_FOR_ROBUST = 30
 MIN_OBSERVATIONS_FOR_ANY_PLOT = 2
 
 TRADING_DAYS_PER_YEAR = 252
+TRADING_HOURS_PER_YEAR = 252 * 6
+PRESENTATION_HOURLY_TOP_K = 5
+
+# Presentation period for the actual Paper-Trading week. Paper-Trading
+# tables must never use historical backtest/testset rows before this window.
+PAPER_TRADING_START = "2026-07-06 00:00:00"
+PAPER_TRADING_END = "2026-07-13 23:59:59"
+PAPER_TRADING_PERIOD_LABEL = "Zeitraum: 06.07.2026-13.07.2026"
 
 # Exact wording required by the unified presentation spec for a main plot
 # that cannot be drawn because too little real data exists yet - used

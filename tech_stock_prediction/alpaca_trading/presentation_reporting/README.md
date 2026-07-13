@@ -1,13 +1,15 @@
 # Presentation Reporting
 
-Erzeugt ein einheitliches Reporting - exakt 5 Standardplots je Universum
-(+ 1 optionaler Modellinterpretations-Plot) + Vergleichsplots/CSV +
-Validierungs-/Zusammenfassungs-/Folienbericht - aus bereits vorhandenen
-Backtest-, Alpaca- und Log-Dateien.
+Erzeugt genau die Ergebnisplots, die fuer die Abschlusspraesentation
+gebraucht werden: 4 Plots je Universum plus 2 Vergleichsplots, dazu
+Validierungs-/Inventar-/Zusammenfassungsberichte - ausschliesslich aus
+bereits vorhandenen Backtest-, Daily-Paper-Trading- und
+Hourly-Paper-Trading-Log-Dateien.
 
 Diese Skripte trainieren kein Modell neu, veraendern keine bestehende
-Trading-Logik und schreiben ausschliesslich in
-`alpaca_trading/presentation_reporting/output/`.
+Trading-Logik, erfinden keine Backtests und schreiben ausschliesslich in
+`alpaca_trading/presentation_reporting/output/`. Alte/ueberholte Plots
+liegen unveraendert (nicht geloescht) in `archive_unused_plots/`.
 
 ## Ausfuehren
 
@@ -20,32 +22,37 @@ python alpaca_trading/presentation_reporting/generate_presentation_reports.py --
 
 - `reporting_config.py` - zentrale Pfade + Plot-Stil (Farben, Schrift, DPI, Groesse) - identisch fuer alle Universen
 - `presentation_data_loader.py` - laedt und validiert alle Quelldateien, liefert READY/PRELIMINARY/MISSING/INVALID
-- `presentation_metrics.py` - Sharpe, Max Drawdown, Top-K-Rekonstruktion, Signal-/Order-Statistiken (alles berechnet, nichts hartkodiert)
+- `presentation_metrics.py` - Sharpe, Max Drawdown, Top-K-Rekonstruktion, Daily- und Hourly-Statistiken
 - `presentation_plots.py` - gemeinsame Matplotlib-Plot-Bausteine (>= 220 DPI, identische Schrift/Farben/Groesse)
+- `hourly_hybrid_reporting.py` - ehrliche Hourly-Rekonstruktion (reale Beobachtungen + seedfeste, dokumentierte Simulation nur wenn ein realer Ankerpunkt existiert)
 - `generate_presentation_reports.py` - Orchestrierung + Markdown-Berichte
 - `tests/test_presentation_metrics.py` - Plausibilitaetstests (kein pytest noetig, einfacher Assert-Runner)
 
-## Plots je Universum (`output/<universe>/`)
+## Plots je Universum (`output/<universe>/`) - genau 4, keine weiteren
 
-- `01_backtest_vs_benchmark.png` - historischer Backtest, Top-K-Strategie vs. Benchmark
-- `02_top_k_results.png` - Top-1 bis Top-5 vs. Buy-and-Hold der Universums-Aktien
-- `03_hourly_alpaca_vs_benchmark.png` - Hybrid-Szenario fuer den stuendlichen Serverbetrieb (real + klar markierte Simulation)
-- `04_daily_alpaca_vs_benchmark.png` - Daily Paper Trading (isolierte Simulation je Universum)
-- `05_signal_selection_analysis.png` - Auswahlhaeufigkeit, Probability, Rang, Kauf/Verkauf, Haltedauer je Aktie
-- `06_signal_probability_distribution.png` (optional) - Verteilung der Modell-Wahrscheinlichkeiten
+- `01_backtest_vs_benchmark.png` - historischer Backtest, beste Top-K-Strategie vs. Benchmark
+- `02_top_k_analysis.png` - Top-1 bis Top-5 vs. Buy-and-Hold der Universums-Aktien (nicht der Benchmark)
+- `03_daily_paper_trading_dashboard.png` - Daily Paper Trading als Kennzahlentabelle
+- `04_hourly_paper_trading_dashboard.png` - Hourly Paper Trading als Kennzahlentabelle; wo echte Hourly-Logs
+  zu duenn sind, aber ein realer Ankerpunkt existiert, ein klar beschriftetes "Paper-Trading-Szenario"
+  (real + reproduzierbar ergaenzt, Seed 42); sonst ehrlich MISSING
 
 Fehlt echte Datenbasis fuer einen Plot, erscheint eine klar beschriftete
-Status-Grafik (MISSING/PRELIMINARY). Plot 03 nutzt nur dann eine Simulation,
-wenn reale Hourly-Punkte als Anker und eine belastbare Hourly-Renditebasis
-vorhanden sind; simulierte Abschnitte sind sichtbar markiert.
+Status-Grafik (MISSING/PRELIMINARY). Plot 03/04 verwenden keine Daily-Daten
+als Hourly-Ersatz, und der Hourly-Modell-Backtest wird nie als Paper Trading
+dargestellt.
 
-## Vergleichsplots (`output/comparison/`)
+## Vergleichsplots (`output/comparison/`) - genau 2
 
-`01_backtest_comparison.png`, `02_hourly_comparison.png`,
-`03_daily_comparison.png`, `04_signal_comparison.png`,
-`05_final_universe_comparison.png`, plus `final_universe_comparison.csv`.
+- `01_backtest_comparison.png` - Strategie- vs. Benchmark-Rendite (bestes Top-K), Max Drawdown, je Universum
+- `02_paper_trading_comparison_table.png` - Daily/Hourly Rendite, Outperformance, G/V USD, Trades je Universum
 
-## Wichtigster Datenstand (siehe data_validation_report.md fuer Details)
+(`universe_results_table.csv` bleibt als interne, nicht-grafische Rohdatentabelle erhalten.)
 
-Die Vollstaendigkeitspruefung am Ende jedes Laufs zeigt pro Universum, ob
-alle 5 Pflichtplots aus echten Daten erzeugt werden konnten.
+## Berichte (`output/`)
+
+- `reporting_inventory.md` - Bestandsaufnahme aller Quellen vor jeder Aenderung (Phase 1)
+- `data_validation_report.md` - Datenquelle/Status/Einschraenkung je Plot, inkl. Hourly-Szenario-Kennzeichnung
+- `presentation_results_summary.md` - Kernaussagen je Universum in Textform
+- `presentation_metrics.csv` - alle Kennzahlen aller Universen in einer Tabelle
+- `hourly_hybrid_methodology.md` / `hourly_hybrid_series.csv` - Methodik und Row-fuer-Row-Herkunft (real/simuliert) der Hourly-Szenarien

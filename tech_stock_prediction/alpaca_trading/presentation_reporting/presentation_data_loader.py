@@ -24,6 +24,8 @@ from reporting_config import (
     EXP_2_LSTM_ROOT,
     MIN_OBSERVATIONS_FOR_ANY_PLOT,
     MIN_OBSERVATIONS_FOR_ROBUST,
+    PAPER_TRADING_END,
+    PAPER_TRADING_START,
     PER_UNIVERSE_DAILY_ROOT,
     STATUS_INVALID,
     STATUS_MISSING,
@@ -83,6 +85,32 @@ def _read_csv_safe(path, parse_dates=None):
         print(f"Warning: could not read {message}")
         _READ_ERRORS.append(message)
         return None
+
+
+def _paper_period_bounds():
+    return pd.Timestamp(PAPER_TRADING_START), pd.Timestamp(PAPER_TRADING_END)
+
+
+def _filter_to_paper_period(data, timestamp_column):
+    start, end = _paper_period_bounds()
+    filtered = data.copy()
+    filtered[timestamp_column] = pd.to_datetime(filtered[timestamp_column], errors="coerce").dt.tz_localize(None)
+    filtered = filtered.dropna(subset=[timestamp_column])
+    return filtered[(filtered[timestamp_column] >= start) & (filtered[timestamp_column] <= end)].copy()
+
+
+def _filter_daily_period(data, date_column="date"):
+    return _filter_to_paper_period(data, date_column)
+
+
+def _filter_hourly_period(data):
+    # For hourly Paper Trading, bar_timestamp is the actual market bar.
+    # generated_at/timestamp can be later and must not make older bars look
+    # like Paper-Trading-period observations.
+    for column in ["bar_timestamp", "timestamp", "date", "generated_at"]:
+        if column in data.columns:
+            return _filter_to_paper_period(data, column), column
+    return data.iloc[0:0].copy(), None
 
 
 # ---------------------------------------------------------------------------
@@ -186,7 +214,15 @@ def load_daily_alpaca_performance(universe_name):
             note=f"Erforderliche Spalten fehlen in {path.name}: {sorted(missing_columns)}",
         )
 
-    data = data.sort_values("date").reset_index(drop=True)
+    data = _filter_daily_period(data, "date").sort_values("date").reset_index(drop=True)
+    if data.empty:
+        return DataSource(
+            "daily_alpaca",
+            STATUS_MISSING,
+            data=data,
+            source_path=path,
+            note=f"Keine Daily-Paper-Trading-Zeilen im Zeitraum {PAPER_TRADING_START} bis {PAPER_TRADING_END}.",
+        )
 
     duplicate_dates = int(data["date"].duplicated().sum())
     if duplicate_dates:
@@ -243,25 +279,81 @@ def load_daily_alpaca_orders(universe_name):
             note=f"Datei enthaelt fremde Universen: {foreign_universes}",
         )
 
+    data = _filter_daily_period(data, "date")
     return DataSource(
         "daily_alpaca_orders", STATUS_READY if len(data) else STATUS_MISSING,
         data=data, source_path=path, observations=len(data),
     )
 
 
+def load_daily_alpaca_positions(universe_name):
+    path = PER_UNIVERSE_DAILY_ROOT / universe_name / "logs" / "daily_mark_to_market_positions.csv"
+    if not path.exists():
+        return DataSource("daily_alpaca_positions", STATUS_MISSING, note=f"Datei nicht gefunden: {path}")
+
+    data = _read_csv_safe(path, parse_dates=["date"])
+    if data is None or data.empty:
+        return DataSource("daily_alpaca_positions", STATUS_MISSING, note=f"Datei leer oder nicht lesbar: {path}")
+
+    required = {"date", "universe", "symbol", "price", "market_value"}
+    missing_columns = required - set(data.columns)
+    if missing_columns:
+        return DataSource(
+            "daily_alpaca_positions",
+            STATUS_INVALID,
+            source_path=path,
+            note=f"Erforderliche Spalten fehlen in {path.name}: {sorted(missing_columns)}",
+        )
+
+    foreign_universes = set(data["universe"].unique()) - {universe_name}
+    if foreign_universes:
+        return DataSource(
+            "daily_alpaca_positions",
+            STATUS_INVALID,
+            data=data,
+            source_path=path,
+            note=f"Datei enthaelt fremde Universen: {foreign_universes}",
+        )
+
+    expected_tickers = set(UNIVERSES[universe_name])
+    foreign_tickers = set(data["symbol"].unique()) - expected_tickers
+    if foreign_tickers:
+        return DataSource(
+            "daily_alpaca_positions",
+            STATUS_INVALID,
+            data=data,
+            source_path=path,
+            note=f"Positionsdatei enthaelt Ticker ausserhalb des Universums: {foreign_tickers}",
+        )
+
+    data = _filter_daily_period(data, "date")
+    return DataSource(
+        "daily_alpaca_positions",
+        STATUS_READY if len(data) else STATUS_MISSING,
+        data=data.sort_values(["date", "symbol"]).reset_index(drop=True),
+        source_path=path,
+        observations=len(data),
+    )
+
+
 # ---------------------------------------------------------------------------
 # 3. Hourly Alpaca paper trading - scanned from alpaca_trading/logs, including
-#    legacy files, filtered strictly to timeframe == "1Hour"
+#    legacy files, filtered strictly to timeframe == "1Hour" and to the real
+#    Paper-Trading presentation period.
 # ---------------------------------------------------------------------------
 
-def _scan_hourly_rows(universe_name):
+def _scan_hourly_rows(universe_name, file_patterns):
     matched_frames = []
     scanned_files = []
 
     if not ALPACA_LOGS_DIR.exists():
         return None, []
 
-    for path in sorted(ALPACA_LOGS_DIR.glob("*.csv")):
+    paths = []
+    for pattern in file_patterns:
+        paths.extend(sorted(ALPACA_LOGS_DIR.glob(pattern)))
+
+    for path in sorted(set(paths)):
         data = _read_csv_safe(path)
         if data is None or data.empty:
             continue
@@ -272,8 +364,13 @@ def _scan_hourly_rows(universe_name):
         if subset.empty:
             continue
 
+        subset, period_column = _filter_hourly_period(subset)
+        if subset.empty:
+            continue
+
         subset = subset.copy()
         subset["__source_file"] = path.name
+        subset["__period_column"] = period_column
         matched_frames.append(subset)
         scanned_files.append(path.name)
 
@@ -285,18 +382,21 @@ def _scan_hourly_rows(universe_name):
 
 
 def load_hourly_alpaca_performance(universe_name):
-    combined, source_files = _scan_hourly_rows(universe_name)
+    combined, source_files = _scan_hourly_rows(
+        universe_name,
+        ["paper_performance*.csv", "performance_history*.csv"],
+    )
     if combined is None:
         return DataSource(
             "hourly_alpaca", STATUS_MISSING,
             note=(
-                "Keine 1Hour-Zeilen fuer dieses Universum in alpaca_trading/logs/ "
-                "(inklusive Legacy-Dateien) gefunden."
+                f"Keine 1Hour-Paper-Trading-Performance fuer dieses Universum im Zeitraum "
+                f"{PAPER_TRADING_START} bis {PAPER_TRADING_END} gefunden."
             ),
         )
 
     timestamp_column = None
-    for candidate in ["timestamp", "bar_timestamp"]:
+    for candidate in ["bar_timestamp", "timestamp", "date"]:
         if candidate in combined.columns:
             timestamp_column = candidate
             break
@@ -307,32 +407,194 @@ def load_hourly_alpaca_performance(universe_name):
             note=f"1Hour-Zeilen gefunden ({', '.join(sorted(set(source_files)))}), aber keine Zeitstempelspalte erkannt.",
         )
 
+    combined[timestamp_column] = pd.to_datetime(combined[timestamp_column], errors="coerce").dt.tz_localize(None)
+    combined = combined.dropna(subset=[timestamp_column]).sort_values(timestamp_column)
+
+    if "generated_at" in combined.columns:
+        combined["__generated_at"] = pd.to_datetime(combined["generated_at"], errors="coerce").dt.tz_localize(None)
+        combined = combined.sort_values([timestamp_column, "__generated_at"])
+    elif "timestamp" in combined.columns:
+        combined["__generated_at"] = pd.to_datetime(combined["timestamp"], errors="coerce").dt.tz_localize(None)
+        combined = combined.sort_values([timestamp_column, "__generated_at"])
+
+    combined = combined.drop_duplicates(subset=[timestamp_column], keep="last").reset_index(drop=True)
+    for column in ["portfolio_value", "benchmark_value"]:
+        if column in combined.columns:
+            combined[column] = pd.to_numeric(combined[column], errors="coerce")
+
     distinct_timestamps = int(combined[timestamp_column].nunique())
-    has_portfolio_columns = {"portfolio_value", "benchmark_value"}.issubset(combined.columns) or {
-        "portfolio_return",
-        "benchmark_return",
-    }.issubset(combined.columns)
+    has_portfolio_columns = {"portfolio_value", "benchmark_value"}.issubset(combined.columns)
+    has_enough_portfolio_values = False
+    if has_portfolio_columns:
+        has_enough_portfolio_values = combined[["portfolio_value", "benchmark_value"]].dropna().shape[0] >= 2
 
     note = (
-        f"{distinct_timestamps} eindeutige(r) 1Hour-Zeitstempel gefunden in: "
-        f"{', '.join(sorted(set(source_files)))}. Diese Zeilen stammen aus dem einmaligen "
-        "Alpaca-Dry-Run vor der Umstellung auf den Daily-Scheduler; die gleichen Logdateien "
-        "wurden danach mit 1Day-Zeilen weitergeschrieben (Schema-Wechsel, alte Zeilen als "
-        "Legacy-Datei archiviert)."
+        f"{distinct_timestamps} eindeutige(r) 1Hour-Zeitstempel im Paper-Trading-Zeitraum gefunden in: "
+        f"{', '.join(sorted(set(source_files)))}."
     )
 
-    if distinct_timestamps < MIN_OBSERVATIONS_FOR_ANY_PLOT or not has_portfolio_columns:
+    if distinct_timestamps < MIN_OBSERVATIONS_FOR_ANY_PLOT or not has_enough_portfolio_values:
         return DataSource(
             "hourly_alpaca", STATUS_MISSING, data=combined, observations=distinct_timestamps,
-            note=note + " Keine belastbare universenspezifische Performance-Attribution ueber die Zeit verfuegbar.",
+            source_path=", ".join(sorted(set(source_files))),
+            note=note + " Keine belastbare universenspezifische Hourly-Performance-Zeitreihe mit mindestens zwei Portfoliowerten.",
         )
 
     status = STATUS_READY if distinct_timestamps >= MIN_OBSERVATIONS_FOR_ROBUST else STATUS_PRELIMINARY
-    return DataSource("hourly_alpaca", status, data=combined, observations=distinct_timestamps, note=note)
+    return DataSource(
+        "hourly_alpaca",
+        status,
+        data=combined,
+        source_path=", ".join(sorted(set(source_files))),
+        observations=distinct_timestamps,
+        note=note,
+    )
+
+
+def load_hourly_alpaca_orders(universe_name):
+    combined, source_files = _scan_hourly_rows(
+        universe_name,
+        ["paper_orders*.csv", "orders_history*.csv"],
+    )
+    if combined is None:
+        return DataSource("hourly_alpaca_orders", STATUS_MISSING, note="Keine 1Hour-Orders im Paper-Trading-Zeitraum.")
+
+    if "action" not in combined.columns:
+        return DataSource("hourly_alpaca_orders", STATUS_INVALID, data=combined, note="Spalte 'action' fehlt.")
+
+    if "dry_run" in combined.columns:
+        dry_run = combined["dry_run"].astype(str).str.lower().isin(["true", "1", "yes"])
+        combined = combined[~dry_run].copy()
+
+    return DataSource(
+        "hourly_alpaca_orders",
+        STATUS_READY if len(combined) else STATUS_MISSING,
+        data=combined.reset_index(drop=True),
+        source_path=", ".join(sorted(set(source_files))),
+        observations=len(combined),
+        note=f"{len(combined)} ausgefuehrte 1Hour-Orderzeilen im Paper-Trading-Zeitraum.",
+    )
+
+
+def load_hourly_alpaca_signals(universe_name):
+    combined, source_files = _scan_hourly_rows(
+        universe_name,
+        ["paper_signals*.csv"],
+    )
+    if combined is None:
+        return DataSource("hourly_alpaca_signals", STATUS_MISSING, note="Keine 1Hour-Signale im Paper-Trading-Zeitraum.")
+
+    time_column = "bar_timestamp" if "bar_timestamp" in combined.columns else "timestamp"
+    combined[time_column] = pd.to_datetime(combined[time_column], errors="coerce").dt.tz_localize(None)
+    combined = combined.dropna(subset=[time_column]).sort_values(time_column)
+    if "generated_at" in combined.columns:
+        combined["__generated_at"] = pd.to_datetime(combined["generated_at"], errors="coerce").dt.tz_localize(None)
+        combined = combined.sort_values([time_column, "ticker", "__generated_at"])
+    if "ticker" in combined.columns:
+        combined = combined.drop_duplicates(subset=[time_column, "ticker"], keep="last")
+
+    observations = int(combined[time_column].nunique())
+    return DataSource(
+        "hourly_alpaca_signals",
+        STATUS_READY if observations >= MIN_OBSERVATIONS_FOR_ANY_PLOT else STATUS_PRELIMINARY,
+        data=combined.reset_index(drop=True),
+        source_path=", ".join(sorted(set(source_files))),
+        observations=observations,
+        note=f"{observations} 1Hour-Signalzeitpunkte im Paper-Trading-Zeitraum.",
+    )
 
 
 # ---------------------------------------------------------------------------
-# 4. Signal / selection history (Alpaca), from alpaca_trading/logs
+# 4. Hourly model backtest, from experiments/exp_2_lstm/hourly/data
+# ---------------------------------------------------------------------------
+
+def load_hourly_model_predictions(universe_name):
+    """
+    Load the existing hourly Outperformance-LSTM prediction file and filter
+    it to one presentation universe.
+
+    This is a reporting-only fallback when real Hourly Paper-Trading
+    performance history is incomplete. It uses hourly bars only; Daily rows
+    are never mixed into this dataset.
+    """
+    path = EXP_2_LSTM_ROOT / "hourly" / "data" / "hourly_outperformance_predictions.csv"
+    if not path.exists():
+        return DataSource("hourly_model_predictions", STATUS_MISSING, note=f"Datei nicht gefunden: {path}")
+
+    data = _read_csv_safe(path, parse_dates=["Date"])
+    if data is None or data.empty:
+        return DataSource("hourly_model_predictions", STATUS_MISSING, note=f"Datei leer oder nicht lesbar: {path}")
+
+    required = {
+        "Date",
+        "Ticker",
+        "Benchmark",
+        "Probability",
+        "Tradable_Return",
+        "Benchmark_Tradable_Return",
+    }
+    missing_columns = required - set(data.columns)
+    if missing_columns:
+        return DataSource(
+            "hourly_model_predictions",
+            STATUS_INVALID,
+            source_path=path,
+            note=f"Erforderliche Spalten fehlen in {path.name}: {sorted(missing_columns)}",
+        )
+
+    expected_tickers = set(UNIVERSES[universe_name])
+    expected_benchmark = BENCHMARKS[universe_name]
+    subset = data[
+        data["Ticker"].isin(expected_tickers)
+        & data["Benchmark"].astype(str).eq(expected_benchmark)
+    ].copy()
+
+    if subset.empty:
+        return DataSource(
+            "hourly_model_predictions",
+            STATUS_MISSING,
+            source_path=path,
+            note=f"Keine Hourly-Modellzeilen fuer Universum '{universe_name}' und Benchmark {expected_benchmark}.",
+        )
+
+    subset["Date"] = pd.to_datetime(subset["Date"], errors="coerce")
+    subset["Probability"] = pd.to_numeric(subset["Probability"], errors="coerce")
+    subset["Tradable_Return"] = pd.to_numeric(subset["Tradable_Return"], errors="coerce")
+    subset["Benchmark_Tradable_Return"] = pd.to_numeric(subset["Benchmark_Tradable_Return"], errors="coerce")
+    subset = subset.dropna(subset=["Date", "Probability", "Tradable_Return", "Benchmark_Tradable_Return"])
+    subset = subset.sort_values(["Date", "Ticker"]).reset_index(drop=True)
+
+    if subset.empty:
+        return DataSource(
+            "hourly_model_predictions",
+            STATUS_INVALID,
+            source_path=path,
+            note=f"Hourly-Modellzeilen fuer '{universe_name}' enthalten keine gueltigen numerischen Werte.",
+        )
+
+    observed_tickers = set(subset["Ticker"].unique())
+    missing_tickers = sorted(expected_tickers - observed_tickers)
+    observations = int(subset["Date"].nunique())
+    status = STATUS_READY if observations >= MIN_OBSERVATIONS_FOR_ROBUST and not missing_tickers else STATUS_PRELIMINARY
+    note = (
+        f"{observations} Hourly-Zeitpunkte ({subset['Date'].min()} bis {subset['Date'].max()}) "
+        f"aus bestehender Hourly-Outperformance-Auswertung."
+    )
+    if missing_tickers:
+        note += f" Fehlende Ticker in Hourly-Datei: {', '.join(missing_tickers)}."
+
+    return DataSource(
+        "hourly_model_predictions",
+        status,
+        data=subset,
+        source_path=path,
+        observations=observations,
+        note=note,
+    )
+
+
+# ---------------------------------------------------------------------------
+# 5. Signal / selection history (Alpaca), from alpaca_trading/logs
 # ---------------------------------------------------------------------------
 
 def load_signal_history(universe_name, timeframe="1Day"):

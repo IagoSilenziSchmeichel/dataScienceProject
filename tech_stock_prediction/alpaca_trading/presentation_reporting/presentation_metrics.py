@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from reporting_config import TRADING_DAYS_PER_YEAR
+from reporting_config import TRADING_DAYS_PER_YEAR, TRADING_HOURS_PER_YEAR
 
 
 def normalize_to_100(values):
@@ -48,6 +48,15 @@ def max_drawdown_from_index(index_values):
     running_max = index_values.cummax()
     drawdown = index_values / running_max - 1
     return float(drawdown.min())
+
+
+def max_drawdown_usd_from_capital(capital_values):
+    capital_values = pd.Series(capital_values).astype(float).dropna()
+    if capital_values.empty:
+        return np.nan
+    running_max = capital_values.cummax()
+    drawdown_usd = capital_values - running_max
+    return float(drawdown_usd.min())
 
 
 def total_return_from_returns(returns):
@@ -212,8 +221,234 @@ def summarize_backtest(daily, benchmark_ticker):
 
 
 # ---------------------------------------------------------------------------
+# Hourly Outperformance-LSTM Top-K reporting
+# ---------------------------------------------------------------------------
+
+def reconstruct_hourly_topk_backtest(predictions, top_k):
+    """
+    Rebuild a stundenbasierte Top-K-Auswertung from the existing hourly
+    prediction file. This does not train a model and does not submit orders.
+    """
+    data = predictions.copy()
+    data["Probability_Rank"] = data.groupby("Date")["Probability"].rank(method="first", ascending=False)
+    selected = data[data["Probability_Rank"] <= top_k].copy()
+
+    hourly_strategy_returns = selected.groupby("Date")["Tradable_Return"].mean()
+    hourly_benchmark_returns = data.groupby("Date")["Benchmark_Tradable_Return"].first()
+    hourly_positions = selected.groupby("Date")["Ticker"].count()
+    hourly_selected_tickers = selected.groupby("Date")["Ticker"].apply(lambda tickers: sorted(tickers))
+    hourly_probability = selected.groupby("Date")["Probability"].mean()
+
+    hourly = pd.concat(
+        [
+            hourly_strategy_returns.rename("Strategy_Return"),
+            hourly_benchmark_returns.rename("Benchmark_Return"),
+            hourly_positions.rename("Number_Of_Positions"),
+            hourly_selected_tickers.rename("Selected_Tickers"),
+            hourly_probability.rename("Average_Probability"),
+        ],
+        axis=1,
+    )
+    hourly["Strategy_Return"] = hourly["Strategy_Return"].fillna(0.0)
+    hourly["Number_Of_Positions"] = hourly["Number_Of_Positions"].fillna(0).astype(int)
+    return hourly.sort_index()
+
+
+def summarize_hourly_backtest(hourly, top_k):
+    strategy_returns = hourly["Strategy_Return"]
+    benchmark_returns = hourly["Benchmark_Return"]
+    strategy_total = total_return_from_returns(strategy_returns)
+    benchmark_total = total_return_from_returns(benchmark_returns)
+    trade_stats = summarize_selection_changes(hourly["Selected_Tickers"])
+
+    return {
+        "period_start": hourly.index.min(),
+        "period_end": hourly.index.max(),
+        "observations": int(len(hourly)),
+        "top_k": int(top_k),
+        "strategy_return": strategy_total,
+        "benchmark_return": benchmark_total,
+        "difference": strategy_total - benchmark_total,
+        "sharpe_ratio": annualized_sharpe(strategy_returns, periods_per_year=TRADING_HOURS_PER_YEAR),
+        "max_drawdown": max_drawdown_from_returns(strategy_returns),
+        "volatility": float(pd.Series(strategy_returns).std(ddof=0) * np.sqrt(TRADING_HOURS_PER_YEAR)),
+        "number_of_trades": trade_stats["trades"],
+        "buys": trade_stats["buys"],
+        "sells": trade_stats["sells"],
+        "rebalancings": trade_stats["rebalancings"],
+        "turnover": trade_stats["turnover"],
+        "average_number_of_positions": float(hourly["Number_Of_Positions"].mean()),
+        "average_probability": float(hourly["Average_Probability"].mean()),
+    }
+
+
+def select_best_hourly_top_k(predictions, candidates=range(1, 6)):
+    rows = []
+    for top_k in candidates:
+        hourly = reconstruct_hourly_topk_backtest(predictions, top_k)
+        summary = summarize_hourly_backtest(hourly, top_k)
+        rows.append(
+            {
+                "top_k": int(top_k),
+                "strategy_return": summary["strategy_return"],
+                "benchmark_return": summary["benchmark_return"],
+                "difference": summary["difference"],
+                "sharpe_ratio": summary["sharpe_ratio"],
+                "max_drawdown": summary["max_drawdown"],
+            }
+        )
+    table = pd.DataFrame(rows)
+    best_top_k = int(table.sort_values("strategy_return", ascending=False).iloc[0]["top_k"])
+    return best_top_k, table
+
+
+def summarize_hourly_signal_stability(predictions, universe_tickers, top_k):
+    """
+    Ticker-level stability table for the hourly model output: how often a
+    ticker was selected, its average rank/probability, and implied
+    entries/exits from changes in the Top-K set.
+    """
+    data = predictions.copy()
+    data["rank"] = data.groupby("Date")["Probability"].rank(method="first", ascending=False)
+    data["selected"] = data["rank"] <= top_k
+    dates = sorted(data["Date"].dropna().unique())
+
+    selected_by_date = {}
+    for date in dates:
+        day_data = data[data["Date"] == date]
+        selected_by_date[date] = set(day_data.loc[day_data["selected"], "Ticker"])
+
+    rows = []
+    for ticker in universe_tickers:
+        ticker_rows = data[data["Ticker"] == ticker]
+        selected_sequence = [ticker in selected_by_date[date] for date in dates]
+
+        entries = 0
+        exits = 0
+        previous = False
+        for current in selected_sequence:
+            if current and not previous:
+                entries += 1
+            if previous and not current:
+                exits += 1
+            previous = current
+
+        if ticker_rows.empty:
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "selection_share": 0.0,
+                    "average_probability": np.nan,
+                    "average_rank": np.nan,
+                    "buys": 0,
+                    "sells": 0,
+                    "average_holding_duration": np.nan,
+                    "observations": 0,
+                }
+            )
+            continue
+
+        rows.append(
+            {
+                "ticker": ticker,
+                "selection_share": float(ticker_rows["selected"].mean()),
+                "average_probability": float(ticker_rows["Probability"].mean()),
+                "average_rank": float(ticker_rows["rank"].mean()),
+                "buys": int(entries),
+                "sells": int(exits),
+                "average_holding_duration": _average_holding_duration(selected_sequence),
+                "observations": int(len(ticker_rows)),
+            }
+        )
+
+    result = pd.DataFrame(rows).sort_values("selection_share", ascending=False).reset_index(drop=True)
+
+    previous_selection = None
+    turnovers = []
+    for date in dates:
+        current_selection = selected_by_date[date]
+        if previous_selection is not None:
+            turnovers.append(len(current_selection.symmetric_difference(previous_selection)))
+        previous_selection = current_selection
+
+    aggregate = {
+        "number_of_signal_dates": int(len(dates)),
+        "most_frequent_top1": None,
+        "most_frequent_top3": list(result["ticker"].head(3)),
+        "average_probability_overall": float(data["Probability"].mean()) if not data.empty else np.nan,
+        "average_turnover": float(np.mean(turnovers)) if turnovers else 0.0,
+    }
+    rank_1 = data[data["rank"] == 1]
+    if not rank_1.empty:
+        aggregate["most_frequent_top1"] = rank_1["Ticker"].value_counts().idxmax()
+
+    return result, aggregate
+
+
+def summarize_selection_changes(selected_tickers_by_period):
+    previous = set()
+    buys = 0
+    sells = 0
+    rebalancings = 0
+    periods = 0
+
+    for tickers in selected_tickers_by_period:
+        current = set(tickers)
+        new_buys = len(current - previous)
+        new_sells = len(previous - current)
+        if periods > 0 and (new_buys or new_sells):
+            rebalancings += 1
+        buys += new_buys
+        sells += new_sells
+        previous = current
+        periods += 1
+
+    trades = buys + sells
+    return {
+        "buys": int(buys),
+        "sells": int(sells),
+        "trades": int(trades),
+        "rebalancings": int(rebalancings),
+        "turnover": float(trades / periods) if periods else np.nan,
+    }
+
+
+def summarize_hourly_selected_positions(predictions, top_k):
+    data = predictions.copy()
+    data["rank"] = data.groupby("Date")["Probability"].rank(method="first", ascending=False)
+    selected = data[data["rank"] <= top_k].copy()
+    if selected.empty:
+        return {"best_position": None, "worst_position": None}
+
+    rows = []
+    for ticker, ticker_rows in selected.groupby("Ticker"):
+        total_return = total_return_from_returns(ticker_rows["Tradable_Return"])
+        rows.append({"ticker": ticker, "return": total_return})
+
+    table = pd.DataFrame(rows)
+    best = table.sort_values("return", ascending=False).iloc[0]
+    worst = table.sort_values("return", ascending=True).iloc[0]
+    return {
+        "best_position": f"{best['ticker']} ({best['return']:+.1%})",
+        "worst_position": f"{worst['ticker']} ({worst['return']:+.1%})",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Alpaca paper trading (daily and hourly) summaries
 # ---------------------------------------------------------------------------
+
+def _capital_from_index_or_value(data, value_column, index_column, start_capital=None):
+    if value_column in data.columns:
+        values = pd.to_numeric(data[value_column], errors="coerce")
+        if values.dropna().shape[0] >= 1:
+            return values
+
+    index_values = pd.to_numeric(data[index_column], errors="coerce")
+    if start_capital is None:
+        start_capital = 100000.0
+    return start_capital * index_values / index_values.iloc[0]
+
 
 def summarize_alpaca_performance(data, index_col_prefix="portfolio", benchmark_prefix="benchmark", date_column="date"):
     """
@@ -223,24 +458,57 @@ def summarize_alpaca_performance(data, index_col_prefix="portfolio", benchmark_p
     trusting any pre-existing return column, to avoid unit ambiguities
     between the various log files.
     """
-    portfolio_index = data[f"{index_col_prefix}_index"].astype(float)
-    benchmark_index = data[f"{benchmark_prefix}_index"].astype(float)
+    portfolio_index_column = f"{index_col_prefix}_index"
+    benchmark_index_column = f"{benchmark_prefix}_index"
+    portfolio_index = data[portfolio_index_column].astype(float)
+    benchmark_index = data[benchmark_index_column].astype(float)
 
     portfolio_returns = portfolio_index.pct_change().fillna(0.0)
     benchmark_returns = benchmark_index.pct_change().fillna(0.0)
 
     portfolio_total_return = portfolio_index.iloc[-1] / portfolio_index.iloc[0] - 1
     benchmark_total_return = benchmark_index.iloc[-1] / benchmark_index.iloc[0] - 1
+    portfolio_capital = _capital_from_index_or_value(
+        data,
+        f"{index_col_prefix}_value",
+        portfolio_index_column,
+    )
+    start_capital = float(portfolio_capital.iloc[0])
+    end_capital = float(portfolio_capital.iloc[-1])
+    benchmark_capital = _capital_from_index_or_value(
+        data,
+        "__no_benchmark_capital_column__",
+        benchmark_index_column,
+        start_capital=start_capital,
+    )
+    period_pnl = portfolio_capital.diff().fillna(0.0)
+    period_returns = portfolio_capital.pct_change().fillna(0.0)
+    benchmark_period_returns = benchmark_capital.pct_change().fillna(0.0)
+    non_initial_returns = period_returns.iloc[1:] if len(period_returns) > 1 else period_returns.iloc[0:0]
+    non_initial_pnl = period_pnl.iloc[1:] if len(period_pnl) > 1 else period_pnl.iloc[0:0]
 
     summary = {
         "observations": int(len(data)),
+        "start_capital": start_capital,
+        "end_capital": end_capital,
+        "profit_loss_usd": end_capital - start_capital,
+        "benchmark_end_capital": float(benchmark_capital.iloc[-1]),
+        "benchmark_profit_loss_usd": float(benchmark_capital.iloc[-1] - benchmark_capital.iloc[0]),
         "portfolio_return": float(portfolio_total_return),
         "benchmark_return": float(benchmark_total_return),
         "difference": float(portfolio_total_return - benchmark_total_return),
         "sharpe_ratio": annualized_sharpe(portfolio_returns),
         "max_drawdown": max_drawdown_from_index(portfolio_index),
+        "max_drawdown_usd": max_drawdown_usd_from_capital(portfolio_capital),
+        "best_period_return": float(non_initial_returns.max()) if not non_initial_returns.empty else np.nan,
+        "best_period_usd": float(non_initial_pnl.max()) if not non_initial_pnl.empty else np.nan,
+        "worst_period_return": float(non_initial_returns.min()) if not non_initial_returns.empty else np.nan,
+        "worst_period_usd": float(non_initial_pnl.min()) if not non_initial_pnl.empty else np.nan,
         "period_start": None,
         "period_end": None,
+        "period_returns": period_returns,
+        "benchmark_period_returns": benchmark_period_returns,
+        "capital_series": portfolio_capital,
     }
 
     if date_column in data.columns:
@@ -248,6 +516,58 @@ def summarize_alpaca_performance(data, index_col_prefix="portfolio", benchmark_p
         summary["period_end"] = data[date_column].max()
 
     return summary
+
+
+def summarize_paper_performance_values(data, date_column, periods_per_year=TRADING_DAYS_PER_YEAR):
+    """
+    Summarize a Paper-Trading performance log with real portfolio_value and
+    benchmark_value columns. benchmark_value is usually an index/ETF price,
+    so it is normalized to the same start capital as the portfolio.
+    """
+    if data is None or data.empty:
+        return None
+
+    working = data.copy().sort_values(date_column).reset_index(drop=True)
+    working["portfolio_value"] = pd.to_numeric(working["portfolio_value"], errors="coerce")
+    working["benchmark_value"] = pd.to_numeric(working["benchmark_value"], errors="coerce")
+    working = working.dropna(subset=["portfolio_value", "benchmark_value"])
+    if working.empty:
+        return None
+
+    portfolio_capital = working["portfolio_value"].reset_index(drop=True)
+    benchmark_price = working["benchmark_value"].reset_index(drop=True)
+    benchmark_capital = portfolio_capital.iloc[0] * benchmark_price / benchmark_price.iloc[0]
+
+    portfolio_returns = portfolio_capital.pct_change().fillna(0.0)
+    benchmark_returns = benchmark_capital.pct_change().fillna(0.0)
+    pnl = portfolio_capital.diff().fillna(0.0)
+    non_initial_returns = portfolio_returns.iloc[1:] if len(portfolio_returns) > 1 else portfolio_returns.iloc[0:0]
+    non_initial_pnl = pnl.iloc[1:] if len(pnl) > 1 else pnl.iloc[0:0]
+
+    return {
+        "observations": int(len(working)),
+        "start_capital": float(portfolio_capital.iloc[0]),
+        "end_capital": float(portfolio_capital.iloc[-1]),
+        "profit_loss_usd": float(portfolio_capital.iloc[-1] - portfolio_capital.iloc[0]),
+        "benchmark_end_capital": float(benchmark_capital.iloc[-1]),
+        "benchmark_profit_loss_usd": float(benchmark_capital.iloc[-1] - benchmark_capital.iloc[0]),
+        "portfolio_return": float(portfolio_capital.iloc[-1] / portfolio_capital.iloc[0] - 1),
+        "benchmark_return": float(benchmark_capital.iloc[-1] / benchmark_capital.iloc[0] - 1),
+        "difference": float((portfolio_capital.iloc[-1] / portfolio_capital.iloc[0] - 1) - (benchmark_capital.iloc[-1] / benchmark_capital.iloc[0] - 1)),
+        "sharpe_ratio": annualized_sharpe(portfolio_returns, periods_per_year=periods_per_year),
+        "max_drawdown": max_drawdown_from_index(portfolio_capital),
+        "max_drawdown_usd": max_drawdown_usd_from_capital(portfolio_capital),
+        "best_period_return": float(non_initial_returns.max()) if not non_initial_returns.empty else np.nan,
+        "best_period_usd": float(non_initial_pnl.max()) if not non_initial_pnl.empty else np.nan,
+        "worst_period_return": float(non_initial_returns.min()) if not non_initial_returns.empty else np.nan,
+        "worst_period_usd": float(non_initial_pnl.min()) if not non_initial_pnl.empty else np.nan,
+        "period_start": working[date_column].min(),
+        "period_end": working[date_column].max(),
+        "period_returns": portfolio_returns,
+        "benchmark_period_returns": benchmark_returns,
+        "capital_series": portfolio_capital,
+        "working_data": working,
+    }
 
 
 def summarize_orders(orders_data):
@@ -263,6 +583,304 @@ def summarize_orders(orders_data):
         "sells": sells,
         "total_trades": buys + sells,
         "total_notional_traded": total_notional_traded,
+    }
+
+
+def infer_top_k_from_selected_column(data):
+    if data is None or data.empty or "selected_top3" not in data.columns:
+        return None
+
+    counts = []
+    for value in data["selected_top3"].dropna():
+        tickers = [ticker.strip() for ticker in str(value).split(",") if ticker.strip()]
+        if tickers:
+            counts.append(len(tickers))
+    if not counts:
+        return None
+    return int(round(float(np.mean(counts))))
+
+
+def summarize_daily_positions(positions_data):
+    if positions_data is None or positions_data.empty:
+        return {"best_position": None, "worst_position": None}
+
+    data = positions_data.copy()
+    data["price"] = pd.to_numeric(data["price"], errors="coerce")
+    data = data.dropna(subset=["date", "symbol", "price"])
+    if data.empty:
+        return {"best_position": None, "worst_position": None}
+
+    rows = []
+    for symbol, symbol_rows in data.groupby("symbol"):
+        symbol_rows = symbol_rows.sort_values("date")
+        if len(symbol_rows) < 2 or symbol_rows["price"].iloc[0] == 0:
+            continue
+        symbol_return = symbol_rows["price"].iloc[-1] / symbol_rows["price"].iloc[0] - 1
+        rows.append({"ticker": symbol, "return": float(symbol_return)})
+
+    if not rows:
+        return {"best_position": None, "worst_position": None}
+
+    table = pd.DataFrame(rows)
+    best = table.sort_values("return", ascending=False).iloc[0]
+    worst = table.sort_values("return", ascending=True).iloc[0]
+    return {
+        "best_position": f"{best['ticker']} ({best['return']:+.1%})",
+        "worst_position": f"{worst['ticker']} ({worst['return']:+.1%})",
+    }
+
+
+def summarize_daily_paper_trading(performance_data, orders_data=None, positions_data=None):
+    if performance_data is None or performance_data.empty:
+        return None
+
+    summary = summarize_alpaca_performance(performance_data)
+    order_summary = summarize_orders(orders_data)
+    position_summary = summarize_daily_positions(positions_data)
+    top_k = infer_top_k_from_selected_column(performance_data)
+    rebalancings = None
+    if "rebalanced" in performance_data.columns:
+        rebalancings = int(performance_data["rebalanced"].fillna(False).astype(bool).sum())
+
+    detail = build_period_detail_table(
+        performance_data,
+        date_column="date",
+        capital_series=summary["capital_series"],
+        period_returns=summary["period_returns"],
+        orders_data=orders_data,
+        order_time_column="date",
+    )
+
+    summary.update(
+        {
+            "top_k": top_k,
+            "number_of_trades": order_summary["total_trades"],
+            "buys": order_summary["buys"],
+            "sells": order_summary["sells"],
+            "total_notional_traded": order_summary["total_notional_traded"],
+            "average_notional_per_period": (
+                order_summary["total_notional_traded"] / summary["observations"]
+                if order_summary["total_notional_traded"] is not None and summary["observations"]
+                else None
+            ),
+            "rebalancings": rebalancings,
+            "best_position": position_summary["best_position"],
+            "worst_position": position_summary["worst_position"],
+            "detail_table": detail,
+        }
+    )
+    return summary
+
+
+def build_period_detail_table(performance_data, date_column, capital_series, period_returns, orders_data=None, order_time_column=None):
+    data = performance_data.copy().reset_index(drop=True)
+    data[date_column] = pd.to_datetime(data[date_column], errors="coerce").dt.tz_localize(None)
+    capital = pd.Series(capital_series).reset_index(drop=True)
+    returns = pd.Series(period_returns).reset_index(drop=True)
+    pnl = capital.diff().fillna(0.0)
+
+    trade_counts = {}
+    if orders_data is not None and not orders_data.empty and order_time_column in orders_data.columns:
+        orders = orders_data.copy()
+        orders[order_time_column] = pd.to_datetime(orders[order_time_column], errors="coerce").dt.tz_localize(None)
+        if date_column == "date":
+            keys = orders[order_time_column].dt.date
+        else:
+            keys = orders[order_time_column]
+        trade_counts = keys.value_counts().to_dict()
+
+    rows = []
+    for index, row in data.iterrows():
+        timestamp = row[date_column]
+        key = timestamp.date() if date_column == "date" else timestamp
+        rows.append(
+            {
+                "period": timestamp,
+                "period_return": float(returns.iloc[index]) if index < len(returns) else np.nan,
+                "pnl_usd": float(pnl.iloc[index]) if index < len(pnl) else np.nan,
+                "end_capital": float(capital.iloc[index]) if index < len(capital) else np.nan,
+                "trades": int(trade_counts.get(key, 0)),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def summarize_hourly_paper_trading(performance_data, orders_data=None, signals_data=None):
+    if performance_data is None or performance_data.empty:
+        signal_observations = 0 if signals_data is None or signals_data.empty else int(signals_data["bar_timestamp"].nunique())
+        top_k = None
+        if signals_data is not None and not signals_data.empty and "top_k" in signals_data.columns:
+            top_k = int(pd.to_numeric(signals_data["top_k"], errors="coerce").dropna().mode().iloc[0])
+        order_summary = summarize_orders(orders_data)
+        return {
+            "observations": signal_observations,
+            "top_k": top_k,
+            "start_capital": None,
+            "end_capital": None,
+            "profit_loss_usd": None,
+            "portfolio_return": None,
+            "benchmark_return": None,
+            "difference": None,
+            "sharpe_ratio": None,
+            "max_drawdown": None,
+            "max_drawdown_usd": None,
+            "number_of_trades": order_summary["total_trades"],
+            "buys": order_summary["buys"],
+            "sells": order_summary["sells"],
+            "rebalancings": None,
+            "total_notional_traded": order_summary["total_notional_traded"],
+            "average_notional_per_period": None,
+            "detail_table": pd.DataFrame(),
+            "period_start": None,
+            "period_end": None,
+            "data_limitation": "Keine vollstaendige Hourly-Portfolio-Zeitreihe im Paper-Trading-Zeitraum.",
+        }
+
+    performance = performance_data.copy()
+    time_column = "bar_timestamp" if "bar_timestamp" in performance.columns else "timestamp"
+    performance[time_column] = pd.to_datetime(performance[time_column], errors="coerce").dt.tz_localize(None)
+    performance = performance.dropna(subset=[time_column]).sort_values(time_column).reset_index(drop=True)
+
+    summary = summarize_paper_performance_values(performance, time_column, periods_per_year=TRADING_HOURS_PER_YEAR)
+    if summary is None:
+        return summarize_hourly_paper_trading(None, orders_data=orders_data, signals_data=signals_data)
+
+    order_summary = summarize_orders(orders_data)
+    top_k = None
+    if signals_data is not None and not signals_data.empty and "top_k" in signals_data.columns:
+        top_k_values = pd.to_numeric(signals_data["top_k"], errors="coerce").dropna()
+        if not top_k_values.empty:
+            top_k = int(top_k_values.mode().iloc[0])
+
+    detail = build_period_detail_table(
+        performance,
+        date_column=time_column,
+        capital_series=summary["capital_series"],
+        period_returns=summary["period_returns"],
+        orders_data=orders_data,
+        order_time_column="bar_timestamp" if orders_data is not None and "bar_timestamp" in orders_data.columns else "timestamp",
+    )
+
+    summary.update(
+        {
+            "top_k": top_k,
+            "number_of_trades": order_summary["total_trades"],
+            "buys": order_summary["buys"],
+            "sells": order_summary["sells"],
+            "rebalancings": int(detail["trades"].gt(0).sum()) if not detail.empty else 0,
+            "total_notional_traded": order_summary["total_notional_traded"],
+            "average_notional_per_period": (
+                order_summary["total_notional_traded"] / summary["observations"]
+                if order_summary["total_notional_traded"] is not None and summary["observations"]
+                else None
+            ),
+            "detail_table": detail,
+            "data_limitation": None,
+        }
+    )
+    return summary
+
+
+def summarize_hourly_hybrid_scenario(hybrid_series, start_capital=100000.0):
+    """
+    Summarize the honest real+reproducible-simulation Hourly series produced
+    by hourly_hybrid_reporting.build_hourly_hybrid_series().
+
+    The series always has a continuous model_index/benchmark_index (both
+    normalized to 100 at the first observation, real or simulated), but the
+    dollar portfolio_value/benchmark_value columns are only populated for
+    real rows. We therefore rebuild a capital series from the index columns
+    using a single fixed, documented notional start_capital ($100,000,
+    matching the real dry-run's notional base) rather than inventing a
+    capital trajectory. Trade-level fields (number_of_trades, buys, sells,
+    rebalancings, total_notional_traded) are deliberately left as None: we
+    have no real order log for the simulated hours, and fabricating discrete
+    trade counts would violate the no-invention rule. This limitation must be
+    called out wherever the scenario is shown (dashboard subtitle, inventory,
+    Q&A notes).
+    """
+    if hybrid_series is None or hybrid_series.empty:
+        return None
+
+    working = hybrid_series.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], errors="coerce")
+    working = working.dropna(subset=["timestamp", "model_index", "benchmark_index"])
+    working = working.sort_values("timestamp").reset_index(drop=True)
+    if working.empty:
+        return None
+
+    portfolio_capital = start_capital * working["model_index"].astype(float) / working["model_index"].astype(float).iloc[0]
+    benchmark_capital = start_capital * working["benchmark_index"].astype(float) / working["benchmark_index"].astype(float).iloc[0]
+
+    portfolio_returns = portfolio_capital.pct_change().fillna(0.0)
+    benchmark_returns = benchmark_capital.pct_change().fillna(0.0)
+    pnl = portfolio_capital.diff().fillna(0.0)
+    non_initial_returns = portfolio_returns.iloc[1:] if len(portfolio_returns) > 1 else portfolio_returns.iloc[0:0]
+    non_initial_pnl = pnl.iloc[1:] if len(pnl) > 1 else pnl.iloc[0:0]
+
+    real_mask = working["source_type"] == "real"
+    simulated_mask = working["source_type"] == "simulated"
+
+    detail_rows = []
+    for index, row in working.iterrows():
+        detail_rows.append(
+            {
+                "period": row["timestamp"],
+                "period_return": float(portfolio_returns.iloc[index]),
+                "pnl_usd": float(pnl.iloc[index]),
+                "end_capital": float(portfolio_capital.iloc[index]),
+                "trades": np.nan,
+                "source_type": row["source_type"],
+            }
+        )
+    detail = pd.DataFrame(detail_rows)
+
+    simulation_methods = sorted({m for m in working.loc[simulated_mask, "simulation_method"].dropna().unique() if m})
+    seeds = sorted({str(s) for s in working.loc[simulated_mask, "seed"].dropna().unique() if str(s)})
+
+    return {
+        "observations": int(len(working)),
+        "real_observations": int(real_mask.sum()),
+        "simulated_observations": int(simulated_mask.sum()),
+        "top_k": None,
+        "start_capital": float(portfolio_capital.iloc[0]),
+        "end_capital": float(portfolio_capital.iloc[-1]),
+        "profit_loss_usd": float(portfolio_capital.iloc[-1] - portfolio_capital.iloc[0]),
+        "benchmark_end_capital": float(benchmark_capital.iloc[-1]),
+        "benchmark_profit_loss_usd": float(benchmark_capital.iloc[-1] - benchmark_capital.iloc[0]),
+        "portfolio_return": float(portfolio_capital.iloc[-1] / portfolio_capital.iloc[0] - 1),
+        "benchmark_return": float(benchmark_capital.iloc[-1] / benchmark_capital.iloc[0] - 1),
+        "difference": float(
+            (portfolio_capital.iloc[-1] / portfolio_capital.iloc[0] - 1)
+            - (benchmark_capital.iloc[-1] / benchmark_capital.iloc[0] - 1)
+        ),
+        "sharpe_ratio": annualized_sharpe(portfolio_returns, periods_per_year=TRADING_HOURS_PER_YEAR),
+        "max_drawdown": max_drawdown_from_index(portfolio_capital),
+        "max_drawdown_usd": max_drawdown_usd_from_capital(portfolio_capital),
+        "best_period_return": float(non_initial_returns.max()) if not non_initial_returns.empty else np.nan,
+        "best_period_usd": float(non_initial_pnl.max()) if not non_initial_pnl.empty else np.nan,
+        "worst_period_return": float(non_initial_returns.min()) if not non_initial_returns.empty else np.nan,
+        "worst_period_usd": float(non_initial_pnl.min()) if not non_initial_pnl.empty else np.nan,
+        "period_start": working["timestamp"].min(),
+        "period_end": working["timestamp"].max(),
+        "period_returns": portfolio_returns,
+        "benchmark_period_returns": benchmark_returns,
+        "capital_series": portfolio_capital,
+        "number_of_trades": None,
+        "buys": None,
+        "sells": None,
+        "rebalancings": None,
+        "total_notional_traded": None,
+        "average_notional_per_period": None,
+        "detail_table": detail,
+        "data_limitation": (
+            "Hourly-Paper-Trading-Szenario: nur "
+            f"{int(real_mask.sum())} echte Beobachtung(en), "
+            f"{int(simulated_mask.sum())} reproduzierbar ergaenzt "
+            f"(Methode: {', '.join(simulation_methods) if simulation_methods else 'n. v.'}, "
+            f"Seed: {', '.join(seeds) if seeds else 'n. v.'}). "
+            "Trades/Rebalancings fuer den simulierten Anteil nicht ausgewiesen (nicht erfunden)."
+        ),
     }
 
 

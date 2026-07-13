@@ -211,7 +211,7 @@ def test_duplicate_dates_are_flagged_invalid():
         duplicate_file = universe_dir / "daily_mark_to_market_with_baselines.csv"
         pd.DataFrame(
             {
-                "date": ["2026-01-01", "2026-01-01"],
+                "date": ["2026-07-06", "2026-07-06"],
                 "universe": ["original_tech", "original_tech"],
                 "benchmark": ["QQQ", "QQQ"],
                 "portfolio_index": [100.0, 101.0],
@@ -240,7 +240,7 @@ def test_hourly_scan_only_keeps_1hour_rows():
             {
                 "timeframe": ["1Hour", "1Day", "1Day"],
                 "universe": ["original_tech", "original_tech", "original_tech"],
-                "timestamp": ["t1", "t2", "t3"],
+                "timestamp": ["2026-07-06T14:00:00", "2026-07-06T15:00:00", "2026-07-06T16:00:00"],
                 "portfolio_value": [1.0, 2.0, 3.0],
                 "benchmark_value": [1.0, 2.0, 3.0],
             }
@@ -249,7 +249,7 @@ def test_hourly_scan_only_keeps_1hour_rows():
         original_logs_dir = cfg.ALPACA_LOGS_DIR
         try:
             loader.ALPACA_LOGS_DIR = logs_dir  # type: ignore[attr-defined]
-            combined, files = loader._scan_hourly_rows("original_tech")  # noqa: SLF001
+            combined, files = loader._scan_hourly_rows("original_tech", ["performance_history.csv"])  # noqa: SLF001
             check("hourly scan drops 1Day rows from a mixed file", len(combined) == 1, str(len(combined) if combined is not None else None))
             check("hourly scan keeps only the 1Hour row", combined.iloc[0]["timeframe"] == "1Hour")
         finally:
@@ -530,6 +530,46 @@ def test_hourly_hybrid_does_not_simulate_when_enough_real_data():
     )
     simulated, method, _ = hourly_hybrid.simulate_missing_hourly_points(real, "original_tech")
     check("hybrid does not simulate when enough real data exists", simulated.empty and method == "not_needed", method)
+
+
+# ---------------------------------------------------------------------------
+# 10. Hourly model reporting
+# ---------------------------------------------------------------------------
+
+def test_reconstruct_hourly_topk_backtest_uses_top_probabilities():
+    predictions = pd.DataFrame(
+        {
+            "Date": pd.to_datetime(["2026-01-01 15:30", "2026-01-01 15:30", "2026-01-01 16:30", "2026-01-01 16:30"]),
+            "Ticker": ["AAA", "BBB", "AAA", "BBB"],
+            "Probability": [0.8, 0.2, 0.1, 0.9],
+            "Tradable_Return": [0.10, -0.20, -0.30, 0.05],
+            "Benchmark_Tradable_Return": [0.01, 0.01, 0.02, 0.02],
+        }
+    )
+    hourly = metrics.reconstruct_hourly_topk_backtest(predictions, top_k=1)
+    check("hourly top-k keeps one row per timestamp", len(hourly) == 2, str(hourly))
+    check("hourly top-k picks AAA in first hour", hourly.iloc[0]["Selected_Tickers"] == ["AAA"], str(hourly.iloc[0]["Selected_Tickers"]))
+    check("hourly top-k picks BBB in second hour", hourly.iloc[1]["Selected_Tickers"] == ["BBB"], str(hourly.iloc[1]["Selected_Tickers"]))
+    check("hourly strategy return is selected ticker return", abs(hourly.iloc[1]["Strategy_Return"] - 0.05) < 1e-9)
+
+
+def test_hourly_signal_stability_counts_entries_and_exits():
+    predictions = pd.DataFrame(
+        {
+            "Date": pd.to_datetime(["2026-01-01 15:30", "2026-01-01 15:30", "2026-01-01 16:30", "2026-01-01 16:30"]),
+            "Ticker": ["AAA", "BBB", "AAA", "BBB"],
+            "Probability": [0.8, 0.2, 0.1, 0.9],
+            "Tradable_Return": [0.10, -0.20, -0.30, 0.05],
+            "Benchmark_Tradable_Return": [0.01, 0.01, 0.02, 0.02],
+        }
+    )
+    stability, aggregate = metrics.summarize_hourly_signal_stability(predictions, ["AAA", "BBB"], top_k=1)
+    aaa = stability[stability["ticker"] == "AAA"].iloc[0]
+    bbb = stability[stability["ticker"] == "BBB"].iloc[0]
+    check("hourly stability selection share AAA is 50%", abs(aaa["selection_share"] - 0.5) < 1e-9, str(aaa))
+    check("hourly stability selection share BBB is 50%", abs(bbb["selection_share"] - 0.5) < 1e-9, str(bbb))
+    check("hourly stability counts AAA entry and exit", aaa["buys"] == 1 and aaa["sells"] == 1, str(aaa))
+    check("hourly aggregate tracks two signal timestamps", aggregate["number_of_signal_dates"] == 2, str(aggregate))
 
 
 def main():

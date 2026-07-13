@@ -386,8 +386,7 @@ def plot_top_k_results(
     """
     Plot 2: grouped bar chart, Top-1..Top-5 strategy return vs. buy-and-hold
     return, straight from the pipeline's own lstm_outperformance_top_k_results.csv
-    (nothing recomputed/estimated). Difference and average number of
-    positions are annotated per group.
+    (nothing recomputed/estimated). The best strategy bar is highlighted.
     """
     fig = _new_figure()
     ax = fig.add_axes([0.08, 0.22, 0.88, 0.60])
@@ -401,14 +400,20 @@ def plot_top_k_results(
     strategy_pct = [v * 100 for v in strategy_returns]
     buy_hold_pct = [v * 100 for v in buy_and_hold_returns]
 
+    best_index = int(np.nanargmax(strategy_pct)) if strategy_pct else 0
+    strategy_colors = [COLOR_STRATEGY for _ in strategy_pct]
+    strategy_colors[best_index] = COLOR_POSITIVE
+
     bars_strategy = ax.bar(
         [i - width / 2 for i in index_positions], strategy_pct,
-        width, color=COLOR_STRATEGY, label="Strategie-Rendite",
+        width, color=strategy_colors, label="Strategie-Rendite",
     )
     bars_buy_hold = ax.bar(
         [i + width / 2 for i in index_positions], buy_hold_pct,
-        width, color=COLOR_BENCHMARK, label="Buy-and-Hold-Rendite",
+        width, color=COLOR_BENCHMARK, alpha=0.75, label="Buy-and-Hold Universum",
     )
+    bars_strategy[best_index].set_edgecolor("#111111")
+    bars_strategy[best_index].set_linewidth(2.0)
 
     ax.set_xticks(index_positions)
     ax.set_xticklabels(labels)
@@ -419,11 +424,29 @@ def plot_top_k_results(
     # Headroom above the tallest bar so the difference labels and the legend
     # never overlap a bar or each other, regardless of how tall the tallest
     # bar in a given universe turns out to be.
-    tallest_bar = max(strategy_pct + buy_hold_pct + [0])
-    ax.set_ylim(top=tallest_bar * 1.3 if tallest_bar > 0 else 1)
+    all_bar_values = strategy_pct + buy_hold_pct + [0]
+    tallest_bar = max(all_bar_values)
+    lowest_bar = min(all_bar_values)
+    ax.set_ylim(
+        bottom=lowest_bar * 1.25 if lowest_bar < 0 else None,
+        top=tallest_bar * 1.35 if tallest_bar > 0 else 1,
+    )
 
-    diff_labels = [f"{diff:+.1%}" for diff in differences]
-    ax.bar_label(bars_strategy, labels=diff_labels, padding=3, fontsize=ANNOTATION_FONT_SIZE)
+    strategy_labels = [f"{value:+.1f}%" for value in strategy_pct]
+    buy_hold_labels = [f"{value:+.1f}%" for value in buy_hold_pct]
+    ax.bar_label(bars_strategy, labels=strategy_labels, padding=3, fontsize=ANNOTATION_FONT_SIZE)
+    ax.bar_label(bars_buy_hold, labels=buy_hold_labels, padding=3, fontsize=ANNOTATION_FONT_SIZE)
+    for index, diff in enumerate(differences):
+        ax.text(
+            index,
+            ax.get_ylim()[0] + (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.04,
+            f"Diff {diff:+.1%}",
+            ha="center",
+            va="bottom",
+            fontsize=ANNOTATION_FONT_SIZE,
+            color=COLOR_POSITIVE if diff >= 0 else COLOR_NEGATIVE,
+            fontweight="bold",
+        )
 
     ax.legend(loc="upper right", fontsize=LEGEND_FONT_SIZE)
 
@@ -435,6 +458,431 @@ def plot_top_k_results(
         ax.set_title(subtitle, fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
 
     _footer_text(fig, metric_lines)
+    _save(fig, output_path)
+
+
+def plot_hourly_dashboard_table(title, subtitle, sections, output_path, footnote=None):
+    """
+    Plot 3: presentation dashboard as a compact table. `sections` is a list
+    of (section_title, [(metric, value, tone), ...]) where tone can be
+    positive/negative/neutral.
+    """
+    fig = _new_figure()
+    ax = fig.add_axes([0.06, 0.08, 0.88, 0.78])
+    ax.axis("off")
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.text(0.0, 0.98, subtitle, ha="left", va="top", fontsize=SUBTITLE_FONT_SIZE, color="#444444")
+
+    table_rows = []
+    row_colors = []
+    for section_title, rows in sections:
+        table_rows.append([section_title, ""])
+        row_colors.append(["#E5E7EB", "#E5E7EB"])
+        for metric, value, tone in rows:
+            table_rows.append([metric, value])
+            if tone == "positive":
+                value_color = "#DDEFE5"
+            elif tone == "negative":
+                value_color = "#F3D9D8"
+            else:
+                value_color = "#F3F4F6"
+            row_colors.append(["#FFFFFF", value_color])
+
+    table = ax.table(
+        cellText=table_rows,
+        cellColours=row_colors,
+        colLabels=["Kennzahl", "Wert"],
+        colWidths=[0.58, 0.34],
+        cellLoc="left",
+        bbox=[0.02, 0.10, 0.96, 0.78],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(11)
+    table.scale(1.0, 1.35)
+
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.6)
+        if row == 0:
+            cell.set_text_props(weight="bold", color="#111111")
+            cell.set_facecolor("#D1D5DB")
+        if row > 0 and table_rows[row - 1][1] == "":
+            cell.set_text_props(weight="bold")
+
+    if footnote:
+        ax.text(0.5, 0.02, footnote, ha="center", va="bottom", fontsize=ANNOTATION_FONT_SIZE, color="#555555")
+
+    _save(fig, output_path)
+
+
+def plot_paper_trading_metric_table(title, subtitle, sections, output_path, footnote=None):
+    """
+    Presentation table for Daily and Hourly Paper Trading with identical
+    structure: metric, model value, benchmark value, and difference.
+    """
+    fig = _new_figure()
+    ax = fig.add_axes([0.04, 0.08, 0.92, 0.80])
+    ax.axis("off")
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.text(0.0, 0.96, subtitle, ha="left", va="top", fontsize=SUBTITLE_FONT_SIZE, color="#444444")
+
+    table_rows = []
+    cell_colors = []
+    for section_title, rows in sections:
+        table_rows.append([section_title, "", "", ""])
+        cell_colors.append(["#E5E7EB"] * 4)
+        for metric, model_value, benchmark_value, difference_value, tone in rows:
+            diff_color = "#F3F4F6"
+            if tone == "positive":
+                diff_color = "#DDEFE5"
+            elif tone == "negative":
+                diff_color = "#F3D9D8"
+            table_rows.append([metric, model_value, benchmark_value, difference_value])
+            cell_colors.append(["#FFFFFF", "#FFFFFF", "#FFFFFF", diff_color])
+
+    table = ax.table(
+        cellText=table_rows,
+        cellColours=cell_colors,
+        colLabels=["Kennzahl", "Modell", "Benchmark", "Differenz"],
+        colWidths=[0.36, 0.20, 0.20, 0.20],
+        cellLoc="center",
+        bbox=[0.0, 0.08, 1.0, 0.78],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10.5)
+    table.scale(1.0, 1.35)
+
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.55)
+        if row == 0:
+            cell.set_text_props(weight="bold", color="#111111")
+            cell.set_facecolor("#D1D5DB")
+        elif row > 0 and table_rows[row - 1][1] == "":
+            cell.set_text_props(weight="bold")
+            if col > 0:
+                cell.get_text().set_text("")
+        if col == 0:
+            cell.set_text_props(ha="left")
+
+    if footnote:
+        ax.text(0.5, 0.015, footnote, ha="center", va="bottom", fontsize=ANNOTATION_FONT_SIZE, color="#555555")
+
+    _save(fig, output_path)
+
+
+def plot_paper_trading_summary_table(title, subtitle, summary_rows, detail_rows, detail_columns, output_path):
+    """
+    Presentation-ready Daily/Hourly Paper-Trading table.
+
+    The PNG intentionally contains only presentation numbers. Technical
+    source notes and limitations are written to markdown validation reports.
+    """
+    fig = _new_figure()
+    ax = fig.add_axes([0.04, 0.05, 0.92, 0.84])
+    ax.axis("off")
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    ax.text(0.0, 0.965, subtitle, ha="left", va="top", fontsize=SUBTITLE_FONT_SIZE, color="#444444")
+
+    main_table = ax.table(
+        cellText=summary_rows,
+        colLabels=["Kennzahl", "Wert", "Kennzahl", "Wert"],
+        colWidths=[0.28, 0.20, 0.30, 0.20],
+        cellLoc="center",
+        bbox=[0.0, 0.42, 1.0, 0.48],
+    )
+    main_table.auto_set_font_size(False)
+    main_table.set_fontsize(9.2)
+    main_table.scale(1.0, 1.18)
+
+    for (row, col), cell in main_table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.5)
+        if row == 0:
+            cell.set_facecolor("#D1D5DB")
+            cell.set_text_props(weight="bold")
+        elif col in (1, 3):
+            text = cell.get_text().get_text()
+            if text.startswith("+"):
+                cell.set_facecolor("#DDEFE5")
+            elif text.startswith("-"):
+                cell.set_facecolor("#F3D9D8")
+            else:
+                cell.set_facecolor("#F8F8F8")
+        if col in (0, 2):
+            cell.set_text_props(ha="left")
+
+    ax.text(0.0, 0.365, "Detailwerte", ha="left", va="center", fontsize=11, fontweight="bold")
+    detail_table = ax.table(
+        cellText=detail_rows,
+        colLabels=detail_columns,
+        colWidths=[0.30, 0.20, 0.24, 0.22, 0.12][: len(detail_columns)],
+        cellLoc="center",
+        bbox=[0.0, 0.02, 1.0, 0.31],
+    )
+    detail_table.auto_set_font_size(False)
+    detail_table.set_fontsize(8.8)
+    detail_table.scale(1.0, 1.15)
+
+    for (row, col), cell in detail_table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.5)
+        if row == 0:
+            cell.set_facecolor("#D1D5DB")
+            cell.set_text_props(weight="bold")
+        if col == 0:
+            cell.set_text_props(ha="left")
+        if row > 0 and col in (1, 2):
+            text = cell.get_text().get_text()
+            if text.startswith("+"):
+                cell.set_facecolor("#DDEFE5")
+            elif text.startswith("-"):
+                cell.set_facecolor("#F3D9D8")
+
+    _save(fig, output_path)
+
+
+def plot_daily_hourly_comparison_table(title, subtitle, rows, output_path):
+    """Optional per-universe table: metric | Daily | Hourly."""
+    fig = _new_figure()
+    ax = fig.add_axes([0.08, 0.10, 0.84, 0.76])
+    ax.axis("off")
+
+    table = ax.table(
+        cellText=rows,
+        colLabels=["Kennzahl", "Daily", "Hourly"],
+        colWidths=[0.44, 0.26, 0.26],
+        cellLoc="center",
+        bbox=[0.0, 0.08, 1.0, 0.78],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(11)
+    table.scale(1.0, 1.35)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.55)
+        if row == 0:
+            cell.set_facecolor("#D1D5DB")
+            cell.set_text_props(weight="bold")
+        if col == 0:
+            cell.set_text_props(ha="left")
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.text(0.0, 0.96, subtitle, ha="left", va="top", fontsize=SUBTITLE_FONT_SIZE, color="#444444")
+
+    _save(fig, output_path)
+
+
+def plot_signal_stability_matrix(
+    title,
+    subtitle,
+    selection_df,
+    output_path,
+    metric_lines=None,
+    preliminary=False,
+):
+    """
+    Plot 4: compact ranking matrix. Left side shows Top-K selection share;
+    right side shows numeric stability columns without long bar annotations.
+    """
+    data = selection_df.copy().reset_index(drop=True)
+    fig = _new_figure()
+    ax_bar = fig.add_axes([0.10, 0.22, 0.37, 0.58])
+    ax_table = fig.add_axes([0.50, 0.22, 0.44, 0.58])
+    ax_table.axis("off")
+
+    labels = data["ticker"].tolist()
+    values = data["selection_share"].fillna(0.0).tolist()
+    colors = [COLOR_POSITIVE if index == 0 and value > 0 else COLOR_STRATEGY for index, value in enumerate(values)]
+    bars = ax_bar.barh(labels, values, color=colors)
+    ax_bar.invert_yaxis()
+    ax_bar.set_xlabel("Anteil in Top-K", fontsize=AXIS_LABEL_FONT_SIZE)
+    ax_bar.set_xlim(0, 1)
+    _style_axis(ax_bar)
+    ax_bar.bar_label(bars, labels=[f"{value:.0%}" for value in values], padding=3, fontsize=ANNOTATION_FONT_SIZE)
+
+    def fmt_number(value, pattern):
+        if pd.isna(value):
+            return "n. v."
+        return pattern.format(value)
+
+    table_rows = []
+    for _, row in data.iterrows():
+        table_rows.append(
+            [
+                fmt_number(row["average_rank"], "{:.1f}"),
+                fmt_number(row["average_probability"], "{:.2f}"),
+                str(int(row["buys"])),
+                str(int(row["sells"])),
+                fmt_number(row["average_holding_duration"], "{:.1f}"),
+            ]
+        )
+
+    table = ax_table.table(
+        cellText=table_rows,
+        rowLabels=labels,
+        colLabels=["Ø Rang", "Ø p", "Kauf", "Verkauf", "Ø Halt"],
+        cellLoc="center",
+        rowLoc="center",
+        bbox=[0.0, 0.0, 1.0, 1.0],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(9.5)
+    table.scale(1.0, 1.25)
+
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.5)
+        if row == 0:
+            cell.set_facecolor("#D1D5DB")
+            cell.set_text_props(weight="bold")
+        elif row == 1:
+            cell.set_facecolor("#E8F3ED")
+
+    title_text = title
+    if preliminary:
+        title_text += "  (vorlaeufig)"
+    fig.suptitle(title_text, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    ax_bar.set_title(subtitle, fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
+    if metric_lines:
+        _footer_text(fig, metric_lines)
+
+    _save(fig, output_path)
+
+
+def plot_comparison_table(title, subtitle, rows, output_path):
+    """Comparison dashboard table across all universes."""
+    fig = _new_figure()
+    ax = fig.add_axes([0.04, 0.08, 0.92, 0.80])
+    ax.axis("off")
+
+    columns = [
+        "Universum",
+        "Benchmark",
+        "Strategie",
+        "Benchmark",
+        "Outperf.",
+        "Trades",
+        "Beste Aktie",
+        "Ø p",
+    ]
+    table_rows = []
+    cell_colors = []
+    for row in rows:
+        diff = row.get("difference")
+        table_rows.append(
+            [
+                row.get("universe_title", "n. v."),
+                row.get("benchmark", "n. v."),
+                row.get("strategy_return", "n. v."),
+                row.get("benchmark_return", "n. v."),
+                row.get("difference_label", "n. v."),
+                row.get("trades", "n. v."),
+                row.get("best_ticker", "n. v."),
+                row.get("average_probability", "n. v."),
+            ]
+        )
+        diff_color = "#F3F4F6"
+        if diff is not None:
+            diff_color = "#DDEFE5" if diff >= 0 else "#F3D9D8"
+        cell_colors.append(["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", diff_color, "#FFFFFF", "#FFFFFF", "#FFFFFF"])
+
+    table = ax.table(
+        cellText=table_rows,
+        cellColours=cell_colors,
+        colLabels=columns,
+        cellLoc="center",
+        bbox=[0.0, 0.05, 1.0, 0.82],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(9.8)
+    table.scale(1.0, 1.35)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.5)
+        if row == 0:
+            cell.set_facecolor("#D1D5DB")
+            cell.set_text_props(weight="bold")
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.text(0.0, 0.95, subtitle, ha="left", va="top", fontsize=SUBTITLE_FONT_SIZE, color="#444444")
+
+    _save(fig, output_path)
+
+
+def plot_universe_results_table(title, subtitle, table_df, output_path):
+    """Large final comparison table with one row per universe."""
+    display_columns = [
+        "Universum",
+        "Benchmark",
+        "Top-K",
+        "Backtest",
+        "Bench.",
+        "BT-Outp.",
+        "Sharpe",
+        "MaxDD",
+        "Daily",
+        "Daily-Outp.",
+        "Hourly",
+        "Hourly-Outp.",
+        "Trades",
+    ]
+
+    fig = _new_figure()
+    ax = fig.add_axes([0.02, 0.08, 0.96, 0.80])
+    ax.axis("off")
+
+    text_rows = table_df[display_columns].values.tolist()
+    colors = [["#FFFFFF"] * len(display_columns) for _ in text_rows]
+
+    highlight_columns = ["BT-Outp.", "Sharpe", "MaxDD", "Daily-Outp.", "Hourly-Outp."]
+    for column in highlight_columns:
+        if column not in table_df.columns:
+            continue
+        raw_column = f"__raw_{column}"
+        if raw_column not in table_df.columns:
+            continue
+        raw_values = pd.to_numeric(table_df[raw_column], errors="coerce")
+        if raw_values.dropna().empty:
+            continue
+        best_index = raw_values.idxmax()
+        if column == "MaxDD":
+            best_index = raw_values.idxmax()  # closest to zero is best because values are negative
+        col_index = display_columns.index(column)
+        row_position = list(table_df.index).index(best_index)
+        colors[row_position][col_index] = "#DDEFE5"
+
+    table = ax.table(
+        cellText=text_rows,
+        cellColours=colors,
+        colLabels=display_columns,
+        colWidths=[0.11, 0.07, 0.07, 0.085, 0.075, 0.085, 0.07, 0.08, 0.075, 0.09, 0.075, 0.095, 0.065],
+        cellLoc="center",
+        bbox=[0.0, 0.04, 1.0, 0.82],
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(8.2)
+    table.scale(1.0, 1.30)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.45)
+        if row == 0:
+            cell.set_facecolor("#D1D5DB")
+            cell.set_text_props(weight="bold")
+        if col == 0:
+            cell.set_text_props(ha="left")
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.text(0.0, 0.96, subtitle, ha="left", va="top", fontsize=SUBTITLE_FONT_SIZE, color="#444444")
+
     _save(fig, output_path)
 
 
@@ -714,4 +1162,156 @@ def plot_ranking_bars(
 
     if metric_lines:
         _footer_text(fig, metric_lines)
+    _save(fig, output_path)
+
+
+def plot_backtest_comparison(
+    title,
+    subtitle,
+    universe_titles,
+    universe_names,
+    strategy_returns,
+    benchmark_returns,
+    best_top_k,
+    max_drawdowns,
+    output_path,
+):
+    """
+    Grouped bar chart: Strategie-Rendite (bestes Top-K) vs. Benchmark-Rendite,
+    je Universum. Bestes Top-K und Max Drawdown werden als kompakte
+    Annotation unter jeder Gruppe angezeigt statt als eigene Balken.
+    """
+    fig = _new_figure()
+    ax = fig.add_axes([0.08, 0.24, 0.88, 0.6])
+
+    n = len(universe_titles)
+    x = np.arange(n)
+    width = 0.36
+
+    strategy_pct = [v * 100 if v is not None else 0.0 for v in strategy_returns]
+    benchmark_pct = [v * 100 if v is not None else 0.0 for v in benchmark_returns]
+
+    bars_strategy = ax.bar(x - width / 2, strategy_pct, width, color=COLOR_STRATEGY, label="Strategie (bestes Top-K)")
+    bars_benchmark = ax.bar(x + width / 2, benchmark_pct, width, color=COLOR_BENCHMARK, label="Benchmark")
+
+    ax.bar_label(bars_strategy, labels=[f"{v:+.1f}%" for v in strategy_pct], padding=3, fontsize=ANNOTATION_FONT_SIZE)
+    ax.bar_label(bars_benchmark, labels=[f"{v:+.1f}%" for v in benchmark_pct], padding=3, fontsize=ANNOTATION_FONT_SIZE)
+
+    ax.axhline(0, color="#111111", linewidth=1)
+    ax.set_xticks(list(x))
+    ax.set_xticklabels(universe_titles)
+    ax.set_ylabel("Rendite (%)", fontsize=AXIS_LABEL_FONT_SIZE)
+    _style_axis(ax)
+    ax.legend(loc="upper right", fontsize=LEGEND_FONT_SIZE)
+
+    top = max(strategy_pct + benchmark_pct + [0]) * 1.28 + 1
+    bottom = min(strategy_pct + benchmark_pct + [0]) * 1.35 - 1
+    ax.set_ylim(bottom=bottom, top=top)
+
+    for i, (top_k, max_dd) in enumerate(zip(best_top_k, max_drawdowns)):
+        top_k_text = f"Top-{int(top_k)}" if top_k is not None else "n. v."
+        dd_text = f"{max_dd:.1%}" if max_dd is not None else "n. v."
+        ax.text(
+            i, bottom + (top - bottom) * 0.02, f"bestes K: {top_k_text}\nMaxDD: {dd_text}",
+            ha="center", va="bottom", fontsize=ANNOTATION_FONT_SIZE, color="#444444",
+        )
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.set_title(subtitle, fontsize=SUBTITLE_FONT_SIZE, color="#444444", loc="left")
+
+    _save(fig, output_path)
+
+
+def plot_paper_trading_comparison_table(title, subtitle, rows, output_path):
+    """
+    Vergleichstabelle: Universum, Benchmark, Daily-Rendite, Daily-Outperformance,
+    Hourly-Rendite, Hourly-Outperformance, Gewinn/Verlust Daily USD,
+    Gewinn/Verlust Hourly USD, Trades Daily, Trades Hourly.
+
+    Bester Wert je numerischer Spalte dezent gruen, schwaechster dezent rot
+    hervorgehoben (nur unter bereits vorhandenen/berechneten Werten - 'n. v.'
+    wird nie in die Best/Worst-Bewertung einbezogen).
+    """
+    fig = _new_figure(figsize=(12.8, 6.4))
+    ax = fig.add_axes([0.03, 0.08, 0.94, 0.78])
+    ax.axis("off")
+
+    columns = [
+        "Universum", "Benchmark",
+        "Daily-\nRendite", "Daily-\nOutperf.",
+        "Hourly-\nRendite", "Hourly-\nOutperf.",
+        "G/V Daily\n(USD)", "G/V Hourly\n(USD)",
+        "Trades\nDaily", "Trades\nHourly",
+    ]
+    # Nur Performance-Kennzahlen werden best/worst-markiert. Trades sind eine
+    # Aktivitaetskennzahl ohne "besser/schlechter"-Richtung und werden bewusst
+    # nicht hervorgehoben.
+    numeric_keys = [
+        "daily_return", "daily_outperformance",
+        "hourly_return", "hourly_outperformance",
+        "daily_pnl_usd", "hourly_pnl_usd",
+    ]
+    column_widths = [0.14, 0.09, 0.10, 0.11, 0.10, 0.11, 0.11, 0.12, 0.06, 0.06]
+
+    def best_worst(key, higher_is_better=True):
+        values = [(i, r[key]) for i, r in enumerate(rows) if r.get(key) is not None]
+        if len(values) < 2:
+            return None, None
+        best_i = max(values, key=lambda t: t[1])[0] if higher_is_better else min(values, key=lambda t: t[1])[0]
+        worst_i = min(values, key=lambda t: t[1])[0] if higher_is_better else max(values, key=lambda t: t[1])[0]
+        return best_i, worst_i
+
+    highlight = {key: best_worst(key) for key in numeric_keys}
+
+    table_rows = []
+    cell_colors = []
+    for i, r in enumerate(rows):
+        table_rows.append(
+            [
+                r.get("universe_title", "n. v."),
+                r.get("benchmark", "n. v."),
+                r.get("daily_return_label", "n. v."),
+                r.get("daily_outperformance_label", "n. v."),
+                r.get("hourly_return_label", "n. v."),
+                r.get("hourly_outperformance_label", "n. v."),
+                r.get("daily_pnl_usd_label", "n. v."),
+                r.get("hourly_pnl_usd_label", "n. v."),
+                r.get("daily_trades_label", "n. v."),
+                r.get("hourly_trades_label", "n. v."),
+            ]
+        )
+        row_colors = ["#FFFFFF", "#FFFFFF"]
+        for key in numeric_keys:
+            best_i, worst_i = highlight[key]
+            if best_i == i:
+                row_colors.append("#DDEFE5")
+            elif worst_i == i:
+                row_colors.append("#F3D9D8")
+            else:
+                row_colors.append("#FFFFFF")
+        row_colors.extend(["#FFFFFF", "#FFFFFF"])  # Trades Daily / Trades Hourly: nicht hervorgehoben
+        cell_colors.append(row_colors)
+
+    table = ax.table(
+        cellText=table_rows, cellColours=cell_colors, colLabels=columns,
+        cellLoc="center", bbox=[0.0, 0.05, 1.0, 0.82], colWidths=column_widths,
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10.5)
+    table.scale(1.0, 1.7)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#CCCCCC")
+        cell.set_linewidth(0.5)
+        if col == 0:
+            cell.set_text_props(ha="left")
+            cell.PAD = 0.02
+        if row == 0:
+            cell.set_facecolor("#D1D5DB")
+            cell.set_text_props(weight="bold", ha="center" if col != 0 else "left")
+
+    fig.suptitle(title, fontsize=TITLE_FONT_SIZE, fontweight="bold", y=0.97)
+    if subtitle:
+        ax.text(0.0, 0.95, subtitle, ha="left", va="top", fontsize=SUBTITLE_FONT_SIZE, color="#444444")
+
     _save(fig, output_path)
