@@ -3,7 +3,7 @@
 # Which universe (see config/stock_universes.py) this run belongs to.
 # Determines the outperformance benchmark: QQQ for tech universes, SPY for
 # defensive_non_tech. Set via set_universe.py, not by hand.
-UNIVERSE: "original_tech"
+UNIVERSE: "defensive_non_tech"
 DATA:
   # We reuse the processed Random Forest data from experiment exp_1_randomforest.
   # This makes the LSTM comparable to the Random Forest model.
