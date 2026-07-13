@@ -1,0 +1,17 @@
+date,universe,symbol,action,price,quantity,notional,reason
+2026-07-06,new_tech,MU,buy,984.75,84.62384700008462,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-06,new_tech,DELL,buy,411.79998779296875,202.363612927616,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-06,new_tech,SNOW,buy,262.0899963378906,317.9569403553223,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-07,new_tech,MU,hold,938.3800048828125,0.0,0.0,No new signal; carried position forward.
+2026-07-07,new_tech,DELL,hold,417.2799987792969,0.0,0.0,No new signal; carried position forward.
+2026-07-07,new_tech,SNOW,hold,262.739990234375,0.0,0.0,No new signal; carried position forward.
+2026-07-08,new_tech,MU,hold,948.7999877929688,0.0,0.0,No new signal; carried position forward.
+2026-07-08,new_tech,DELL,hold,431.9700012207031,0.0,0.0,No new signal; carried position forward.
+2026-07-08,new_tech,SNOW,hold,261.30999755859375,0.0,0.0,No new signal; carried position forward.
+2026-07-09,new_tech,SNOW,sell,267.489990234375,317.9569403553223,85050.2988705969,Ticker left Daily Top-3.
+2026-07-09,new_tech,MU,buy,991.6400146484375,2.7986161138336376,2775.2197241173417,Equal-weight Daily Top-3 rebalance.
+2026-07-09,new_tech,DELL,sell,450.2200012207031,9.80972290087962,4416.5334564087825,Equal-weight Daily Top-3 rebalance.
+2026-07-09,new_tech,ORCL,buy,144.22000122070312,601.1067249279956,86691.61260288839,Equal-weight Daily Top-3 rebalance.
+2026-07-10,new_tech,MU,sell,979.2999877929688,0.9975897580408042,976.9396378717502,Equal-weight Daily Top-3 rebalance.
+2026-07-10,new_tech,ORCL,buy,140.63999938964844,0.6842149875596845,96.22799543278234,Equal-weight Daily Top-3 rebalance.
+2026-07-10,new_tech,DELL,buy,434.9700012207031,2.0247640985984345,880.7116424389969,Equal-weight Daily Top-3 rebalance.

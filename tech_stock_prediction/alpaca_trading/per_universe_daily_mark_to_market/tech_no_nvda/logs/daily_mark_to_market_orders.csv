@@ -1,0 +1,17 @@
+date,universe,symbol,action,price,quantity,notional,reason
+2026-07-06,tech_no_nvda,AMD,buy,552.0499877929688,150.95251367813674,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-06,tech_no_nvda,INTC,buy,122.19999694824219,681.9421883343349,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-06,tech_no_nvda,TSLA,buy,419.7699890136719,198.52141771530782,83333.33333333333,Equal-weight Daily Top-3 rebalance.
+2026-07-07,tech_no_nvda,AMD,hold,516.1099853515625,0.0,0.0,No new signal; carried position forward.
+2026-07-07,tech_no_nvda,INTC,hold,110.38999938964844,0.0,0.0,No new signal; carried position forward.
+2026-07-07,tech_no_nvda,TSLA,hold,402.8999938964844,0.0,0.0,No new signal; carried position forward.
+2026-07-08,tech_no_nvda,AMD,hold,517.4099731445312,0.0,0.0,No new signal; carried position forward.
+2026-07-08,tech_no_nvda,INTC,hold,110.23999786376953,0.0,0.0,No new signal; carried position forward.
+2026-07-08,tech_no_nvda,TSLA,hold,394.05999755859375,0.0,0.0,No new signal; carried position forward.
+2026-07-09,tech_no_nvda,TSLA,sell,406.54998779296875,198.52141771530782,80708.87994880124,Ticker left Daily Top-3.
+2026-07-09,tech_no_nvda,AMD,sell,546.719970703125,4.635434146958302,2534.284421021308,Equal-weight Daily Top-3 rebalance.
+2026-07-09,tech_no_nvda,INTC,buy,112.54000091552734,28.867024246857696,3248.694935169915,Equal-weight Daily Top-3 rebalance.
+2026-07-09,tech_no_nvda,AAPL,buy,316.2200012207031,252.97093519021652,79994.46943465268,Equal-weight Daily Top-3 rebalance.
+2026-07-10,tech_no_nvda,AMD,sell,557.8900146484375,3.235761350734778,1805.1989473602735,Equal-weight Daily Top-3 rebalance.
+2026-07-10,tech_no_nvda,INTC,buy,109.83999633789062,15.917311061901719,1748.3573887483508,Equal-weight Daily Top-3 rebalance.
+2026-07-10,tech_no_nvda,AAPL,buy,315.32000732421875,0.18026626059752993,56.841558611922665,Equal-weight Daily Top-3 rebalance.
