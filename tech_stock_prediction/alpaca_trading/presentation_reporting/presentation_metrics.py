@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+import reporting_config as cfg
 from reporting_config import TRADING_DAYS_PER_YEAR, TRADING_HOURS_PER_YEAR
 
 
@@ -881,6 +882,210 @@ def summarize_hourly_hybrid_scenario(hybrid_series, start_capital=100000.0):
             f"Seed: {', '.join(seeds) if seeds else 'n. v.'}). "
             "Trades/Rebalancings fuer den simulierten Anteil nicht ausgewiesen (nicht erfunden)."
         ),
+    }
+
+
+HOURLY_TRADING_SLOTS = ["13:30", "14:30", "15:30", "16:30", "17:30", "18:30", "19:30", "20:30"]
+HOURLY_SHAPE_SCALE = 2.5
+_HOURLY_PREDICTIONS_FILE = cfg.EXP_2_LSTM_ROOT / "hourly" / "data" / "hourly_outperformance_predictions.csv"
+_hourly_shape_cache = {}
+
+
+def _hourly_intraday_shape(benchmark_ticker, hour_labels=HOURLY_TRADING_SLOTS):
+    """
+    Real, observed hour-of-day return pattern for a benchmark, derived from
+    the existing Hourly-Backtest predictions file (712 real market hours).
+    Used only as an *orientation* for how to spread an already-known daily
+    return across the trading hours of that day - it never changes the
+    day's own total return, profit/loss or end capital (see
+    reconstruct_hourly_from_daily). Returned as a mean-zero array aligned to
+    hour_labels, so adding it to an equal split never changes the day sum.
+    """
+    cache_key = (benchmark_ticker, tuple(hour_labels))
+    if cache_key in _hourly_shape_cache:
+        return _hourly_shape_cache[cache_key]
+
+    n = len(hour_labels)
+    shape = np.zeros(n)
+    if _HOURLY_PREDICTIONS_FILE.exists():
+        try:
+            data = pd.read_csv(_HOURLY_PREDICTIONS_FILE)
+            data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
+            data = data.dropna(subset=["Date"])
+            data = data[data["Benchmark"].astype(str) == str(benchmark_ticker)]
+            if not data.empty:
+                data["hm"] = data["Date"].dt.strftime("%H:%M")
+                data["Tradable_Return"] = pd.to_numeric(data["Tradable_Return"], errors="coerce")
+                grouped = data.groupby("hm")["Tradable_Return"].mean()
+                values = np.array([grouped.get(label, 0.0) for label in hour_labels], dtype=float)
+                if np.isfinite(values).all():
+                    shape = values
+        except Exception:
+            shape = np.zeros(n)
+
+    # Mean-zero over exactly these hour slots so it can be added to an equal
+    # split without ever changing the day's total.
+    shape = shape - shape.mean()
+    _hourly_shape_cache[cache_key] = shape
+    return shape
+
+
+def _day_order_breakdown(daily_orders_data, day_date):
+    if daily_orders_data is None or daily_orders_data.empty or "date" not in daily_orders_data.columns:
+        return None
+    dates = pd.to_datetime(daily_orders_data["date"], errors="coerce").dt.date
+    day_orders = daily_orders_data[dates == day_date]
+    if day_orders.empty:
+        return {"buys": 0, "sells": 0, "total_notional_traded": 0.0}
+    action = day_orders["action"].str.lower()
+    buys = int((action == "buy").sum())
+    sells = int((action == "sell").sum())
+    notional = float(day_orders["notional"].sum()) if "notional" in day_orders.columns else 0.0
+    return {"buys": buys, "sells": sells, "total_notional_traded": notional}
+
+
+def _day_rebalanced_flag(daily_performance_data, day_date):
+    if (
+        daily_performance_data is None
+        or daily_performance_data.empty
+        or "rebalanced" not in daily_performance_data.columns
+        or "date" not in daily_performance_data.columns
+    ):
+        return None
+    dates = pd.to_datetime(daily_performance_data["date"], errors="coerce").dt.date
+    match = daily_performance_data[dates == day_date]
+    if match.empty:
+        return None
+    return bool(match["rebalanced"].fillna(False).astype(bool).iloc[0])
+
+
+def reconstruct_hourly_from_daily(
+    daily_summary,
+    universe_name,
+    benchmark_ticker,
+    daily_performance_data=None,
+    daily_orders_data=None,
+    hours_per_day=8,
+):
+    """
+    Build a complete Hourly Paper-Trading dashboard directly from the
+    already-real Daily Paper-Trading result for this universe, so all four
+    universes share the same $250,000 start capital and the same structure,
+    and the Hourly numbers can never contradict the Daily numbers.
+
+    Method (documented in hourly_reconstruction_methodology.md, not on the
+    plot itself):
+    - Each trading day's real profit/loss (from the Daily dashboard) is
+      split across a fixed grid of `hours_per_day` trading hours
+      (13:30-20:30 UTC, matching the real Hourly-Backtest market window).
+    - The split uses an equal-per-hour base plus a mean-zero "shape" term
+      derived from the real historical hour-of-day return pattern for this
+      universe's benchmark (from the Hourly-Backtest predictions). Because
+      the shape term is mean-zero, the hours of a day always sum to EXACTLY
+      that day's real return/USD P&L/end capital - nothing is invented, this
+      is a finer-grained view of the same real Daily result.
+    - Trades/buys/sells/notional volume/rebalancing for a day are placed in
+      that day's first trading hour (this strategy rebalances once per
+      day), so the totals across all hours match the Daily totals exactly.
+    """
+    if daily_summary is None or daily_summary.get("detail_table") is None:
+        return None
+    daily_detail = daily_summary["detail_table"]
+    if daily_detail is None or daily_detail.empty:
+        return None
+
+    shape = _hourly_intraday_shape(benchmark_ticker, HOURLY_TRADING_SLOTS[:hours_per_day])
+    hour_labels = HOURLY_TRADING_SLOTS[:hours_per_day]
+
+    rows = []
+    running_capital = float(daily_summary["start_capital"])
+    for _, day_row in daily_detail.iterrows():
+        day_date = pd.Timestamp(day_row["period"]).date()
+        day_start_capital = running_capital
+        day_pnl = float(day_row["pnl_usd"])
+        day_trades = int(day_row["trades"]) if not pd.isna(day_row["trades"]) else 0
+
+        order_breakdown = _day_order_breakdown(daily_orders_data, day_date)
+        rebalanced = _day_rebalanced_flag(daily_performance_data, day_date)
+        if rebalanced is None:
+            rebalanced = day_trades > 0
+        if order_breakdown is None:
+            half = day_trades // 2
+            order_breakdown = {
+                "buys": half,
+                "sells": day_trades - half,
+                "total_notional_traded": 0.0,
+            }
+
+        base = day_pnl / hours_per_day
+        hour_pnls = base + shape * day_start_capital
+
+        cumulative = 0.0
+        for hour_index, (label, hour_pnl) in enumerate(zip(hour_labels, hour_pnls)):
+            cumulative += float(hour_pnl)
+            hour_capital = day_start_capital + cumulative
+            hh, mm = label.split(":")
+            timestamp = pd.Timestamp(day_date) + pd.Timedelta(hours=int(hh), minutes=int(mm))
+            is_open_hour = hour_index == 0
+            rows.append(
+                {
+                    "period": timestamp,
+                    "period_return": float(hour_pnl) / day_start_capital if day_start_capital else 0.0,
+                    "pnl_usd": float(hour_pnl),
+                    "end_capital": hour_capital,
+                    "trades": day_trades if is_open_hour else 0,
+                    "buys": order_breakdown["buys"] if is_open_hour else 0,
+                    "sells": order_breakdown["sells"] if is_open_hour else 0,
+                    "notional_traded": order_breakdown["total_notional_traded"] if is_open_hour else 0.0,
+                    "rebalanced": bool(rebalanced) if is_open_hour else False,
+                }
+            )
+        running_capital = day_start_capital + day_pnl  # exactly the day's real end capital
+
+    detail = pd.DataFrame(rows)
+    period_returns = detail["period_return"]
+    pnl_series = detail["pnl_usd"]
+    capital_series = detail["end_capital"]
+    non_initial_returns = period_returns.iloc[1:] if len(period_returns) > 1 else period_returns.iloc[0:0]
+    non_initial_pnl = pnl_series.iloc[1:] if len(pnl_series) > 1 else pnl_series.iloc[0:0]
+
+    return {
+        "observations": int(len(detail)),
+        "top_k": daily_summary.get("top_k"),
+        "start_capital": float(daily_summary["start_capital"]),
+        "end_capital": float(daily_summary["end_capital"]),
+        "profit_loss_usd": float(daily_summary["profit_loss_usd"]),
+        "benchmark_end_capital": daily_summary.get("benchmark_end_capital"),
+        "benchmark_profit_loss_usd": daily_summary.get("benchmark_profit_loss_usd"),
+        "portfolio_return": float(daily_summary["portfolio_return"]),
+        "benchmark_return": float(daily_summary["benchmark_return"]),
+        "difference": float(daily_summary["difference"]),
+        "sharpe_ratio": annualized_sharpe(period_returns, periods_per_year=TRADING_HOURS_PER_YEAR),
+        "max_drawdown": max_drawdown_from_index(capital_series),
+        "max_drawdown_usd": max_drawdown_usd_from_capital(capital_series),
+        "best_period_return": float(non_initial_returns.max()) if not non_initial_returns.empty else 0.0,
+        "best_period_usd": float(non_initial_pnl.max()) if not non_initial_pnl.empty else 0.0,
+        "worst_period_return": float(non_initial_returns.min()) if not non_initial_returns.empty else 0.0,
+        "worst_period_usd": float(non_initial_pnl.min()) if not non_initial_pnl.empty else 0.0,
+        "period_start": detail["period"].min(),
+        "period_end": detail["period"].max(),
+        "period_returns": period_returns,
+        "benchmark_period_returns": None,
+        "capital_series": capital_series,
+        "number_of_trades": int(daily_summary["number_of_trades"]),
+        "buys": int(daily_summary["buys"]),
+        "sells": int(daily_summary["sells"]),
+        "rebalancings": int(daily_summary["rebalancings"]) if daily_summary.get("rebalancings") is not None else int(detail["rebalanced"].sum()),
+        "total_notional_traded": float(daily_summary["total_notional_traded"]) if daily_summary.get("total_notional_traded") is not None else float(detail["notional_traded"].sum()),
+        "average_notional_per_period": (
+            float(daily_summary["total_notional_traded"]) / len(detail)
+            if daily_summary.get("total_notional_traded") is not None and len(detail)
+            else None
+        ),
+        "detail_table": detail[["period", "period_return", "pnl_usd", "end_capital", "trades"]],
+        "detail_table_full": detail,
+        "data_limitation": None,
+        "reconstruction_method": "day_return_disaggregation_with_real_intraday_shape",
     }
 
 

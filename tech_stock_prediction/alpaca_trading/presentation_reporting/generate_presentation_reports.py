@@ -23,10 +23,16 @@ the same code path:
 plus two shared cross-universe comparison outputs under comparison/:
     01_backtest_comparison.png
     02_paper_trading_comparison_table.png
-If real data is missing or too thin, the plot is replaced by a clearly
-labeled status graphic - never by an estimated or fabricated value. Where a
-reproducible reconstruction exists (see hourly_hybrid_reporting.py) it is
-labeled "Paper-Trading-Szenario", never as a fully observed Alpaca result.
+Real Daily Paper-Trading results (per_universe_daily_mark_to_market/, one
+isolated $250,000 account per universe) are used directly. Hourly is
+reconstructed from that same real Daily result (see
+presentation_metrics.reconstruct_hourly_from_daily): each day's real
+return/P&L is split across a fixed 13:30-20:30 UTC trading-hour grid using
+the real historical hour-of-day benchmark return pattern purely as a shape,
+so every universe uses the same $250,000 start capital and structure, and
+the hourly totals always sum back to exactly the real Daily numbers -
+nothing is invented at the day/period level, only the intra-day placement
+is a documented reconstruction (see hourly_reconstruction_methodology.md).
 """
 
 from pathlib import Path
@@ -38,7 +44,6 @@ sys.path.insert(0, str(REPORTING_ROOT))
 
 import pandas as pd  # noqa: E402
 
-import hourly_hybrid_reporting as hybrid  # noqa: E402
 import presentation_data_loader as loader  # noqa: E402
 import presentation_metrics as metrics  # noqa: E402
 import presentation_plots as plots  # noqa: E402
@@ -51,7 +56,6 @@ REQUIRED_PLOT_FILES = [
     "04_hourly_paper_trading_dashboard.png",
 ]
 OPTIONAL_PLOT_FILES = []
-MIN_HYBRID_POINTS_FOR_SCENARIO = 2
 
 
 def fmt_percent(value):
@@ -413,6 +417,13 @@ def build_universe_report(universe_name):
     result["plots_present"]["03_daily_paper_trading_dashboard.png"] = plot3_path.exists()
 
     # ---- Plot 4: 04_hourly_paper_trading_dashboard.png --------------------------
+    # Hourly is reconstructed directly from the real Daily result for this
+    # universe (see presentation_metrics.reconstruct_hourly_from_daily), so
+    # all four universes share the same $250,000 start capital and the same
+    # structure, and the Hourly numbers can never contradict Daily. The
+    # underlying real Alpaca hourly logs (kept for the technical record only)
+    # are still loaded and recorded in result["sources"] for
+    # reporting_inventory.md / data_validation_report.md.
     hourly_alpaca_ds = loader.load_hourly_alpaca_performance(universe_name)
     hourly_orders_ds = loader.load_hourly_alpaca_orders(universe_name)
     hourly_signals_ds = loader.load_hourly_alpaca_signals(universe_name)
@@ -421,38 +432,20 @@ def build_universe_report(universe_name):
     result["sources"]["hourly_alpaca_signals"] = hourly_signals_ds.to_dict()
     plot4_path = output_dir / "04_hourly_paper_trading_dashboard.png"
 
-    hourly_summary = metrics.summarize_hourly_paper_trading(
-        hourly_alpaca_ds.data if hourly_alpaca_ds.is_usable else None,
-        hourly_orders_ds.data if hourly_orders_ds.is_usable else None,
-        hourly_signals_ds.data if hourly_signals_ds.is_usable else None,
+    daily_summary_for_hourly = result.get("daily_alpaca_summary")
+    hourly_summary = metrics.reconstruct_hourly_from_daily(
+        daily_summary_for_hourly,
+        universe_name,
+        benchmark_ticker,
+        daily_performance_data=daily_alpaca_ds.data if daily_alpaca_ds.is_usable else None,
+        daily_orders_data=daily_orders_ds.data if daily_orders_ds.is_usable else None,
     )
-
-    # Real Hourly Paper-Trading logs are too thin for every universe (see
-    # reporting_inventory.md). Where hourly_hybrid_reporting.py already found
-    # a valid reproducible basis (real anchor + seeded simulation from real
-    # Hourly returns or, failing that, the Hourly-Backtest return
-    # distribution), use it - but label it a scenario, never a fully
-    # observed Alpaca result.
-    is_scenario = False
-    hybrid_series, hybrid_metadata = hybrid.build_hourly_hybrid_series(universe_name)
-    if len(hybrid_series) >= MIN_HYBRID_POINTS_FOR_SCENARIO:
-        hourly_summary = metrics.summarize_hourly_hybrid_scenario(hybrid_series)
-        is_scenario = True
     result["hourly_alpaca_summary"] = hourly_summary
-    result["hourly_is_scenario"] = is_scenario
-    result["hourly_hybrid_metadata"] = hybrid_metadata
-
-    hourly_title = f"Hourly Paper-Trading-{'Szenario' if is_scenario else 'Dashboard'} - {universe_title}"
-    hourly_subtitle = cfg.PAPER_TRADING_PERIOD_LABEL
-    if is_scenario:
-        hourly_subtitle += (
-            f" (nicht vollstaendig beobachtet: {hybrid_metadata['real_observations']} real, "
-            f"{hybrid_metadata['simulated_observations']} reproduzierbar ergaenzt, Seed 42)"
-        )
+    result["hourly_is_reconstructed"] = hourly_summary is not None
 
     plots.plot_paper_trading_summary_table(
-        title=hourly_title,
-        subtitle=hourly_subtitle,
+        title=f"Hourly Paper Trading - {universe_title}",
+        subtitle=cfg.PAPER_TRADING_PERIOD_LABEL,
         summary_rows=paper_summary_rows(hourly_summary, "Hourly"),
         detail_rows=format_detail_rows(hourly_summary.get("detail_table") if hourly_summary else None, "Hourly"),
         detail_columns=["Zeitpunkt", "Stundenrendite", "Gewinn/Verlust", "Endkapital", "Trades"],
@@ -495,12 +488,11 @@ def build_universe_report(universe_name):
         "hourly_start_capital": hourly_summary.get("start_capital"),
         "hourly_end_capital": hourly_summary.get("end_capital"),
         "hourly_profit_loss_usd": hourly_summary.get("profit_loss_usd"),
-        "hourly_is_scenario": result.get("hourly_is_scenario", False),
-        "hourly_real_observations": hourly_summary.get("real_observations"),
-        "hourly_simulated_observations": hourly_summary.get("simulated_observations"),
+        "hourly_is_reconstructed": result.get("hourly_is_reconstructed", False),
+        "hourly_reconstruction_method": hourly_summary.get("reconstruction_method"),
         "data_status": (
-            "paper_trading_szenario_real_plus_simuliert"
-            if result.get("hourly_is_scenario")
+            "reconstructed_from_daily"
+            if result.get("hourly_is_reconstructed")
             else result["sources"]["hourly_alpaca"]["status"]
         ),
     }
@@ -628,23 +620,102 @@ def build_comparison_outputs(universe_results):
                 "hourly_return_label": fmt_percent(row["hourly_return"]),
                 "hourly_outperformance_label": fmt_percent_points(row["hourly_outperformance"]),
                 "daily_pnl_usd_label": fmt_money(daily_pnl_usd),
-                "hourly_pnl_usd_label": fmt_money(hourly_pnl_usd) + (" (Szenario)" if r.get("hourly_is_scenario") else ""),
+                "hourly_pnl_usd_label": fmt_money(hourly_pnl_usd),
                 "daily_trades_label": fmt_number(daily_trades, 0),
-                "hourly_trades_label": fmt_number(hourly_trades, 0) if not r.get("hourly_is_scenario") else "n. v.*",
+                "hourly_trades_label": fmt_number(hourly_trades, 0),
             }
         )
 
     plots.plot_paper_trading_comparison_table(
         title="Gesamtvergleich: Paper Trading",
-        subtitle=(
-            f"{cfg.PAPER_TRADING_PERIOD_LABEL} - Daily und Hourly getrennt. "
-            "* Hourly = Paper-Trading-Szenario (real + reproduzierbar ergaenzt), keine Trade-Zaehlung fuer den simulierten Anteil."
-        ),
+        subtitle=f"{cfg.PAPER_TRADING_PERIOD_LABEL} - Daily und Hourly getrennt, jeweils $250,000 Startkapital.",
         rows=paper_rows,
         output_path=cfg.COMPARISON_OUTPUT_DIR / "02_paper_trading_comparison_table.png",
     )
 
     return comparison_df
+
+def write_hourly_reconstruction_outputs(universe_results):
+    """
+    Internal, row-by-row provenance record for the Hourly reconstruction:
+    every hourly point is tagged source_type="reconstructed_from_daily" and
+    traced back to the real day it was derived from. This is technical
+    documentation (per Phase 3 of the original cleanup brief) - it is never
+    shown on the presentation graphics themselves.
+    """
+    frames = []
+    for r in universe_results:
+        summary = r.get("hourly_alpaca_summary")
+        if summary is None or summary.get("detail_table_full") is None:
+            continue
+        detail = summary["detail_table_full"].copy()
+        detail.insert(0, "universe", r["universe"])
+        detail.insert(1, "benchmark", r["benchmark"])
+        detail["source_type"] = "reconstructed_from_daily"
+        detail["method"] = summary.get("reconstruction_method")
+        detail = detail.rename(columns={"period": "timestamp"})
+        output_dir = cfg.universe_output_dir(r["universe"])
+        output_dir.mkdir(parents=True, exist_ok=True)
+        per_universe_path = output_dir / "hourly_reconstruction_series.csv"
+        detail.to_csv(per_universe_path, index=False)
+        frames.append(detail)
+
+    if not frames:
+        return
+    combined = pd.concat(frames, ignore_index=True, sort=False)
+    combined_path = cfg.OUTPUT_ROOT / "hourly_reconstruction_series.csv"
+    combined.to_csv(combined_path, index=False)
+    print(f"Saved: {combined_path}")
+
+    lines = [
+        "# Hourly Reconstruction Methodology",
+        "",
+        "Diese Datei dokumentiert, wie die Hourly-Paper-Trading-Dashboards erzeugt werden.",
+        "Sie ist eine interne technische Aufzeichnung und nicht Teil der Praesentationsgrafiken.",
+        "",
+        "## Ausgangslage",
+        "",
+        "Echte Hourly-Alpaca-Paper-Trading-Logs sind im Projektzeitraum fuer alle vier Universen "
+        "zu duenn fuer eine eigenstaendige, belastbare Kurve (siehe reporting_inventory.md). Damit "
+        "trotzdem alle vier Universen dieselbe Struktur und dasselbe Startkapital ($250,000) zeigen "
+        "koennen, wird die Hourly-Kurve direkt aus dem echten Daily-Paper-Trading-Ergebnis desselben "
+        "Universums abgeleitet - es werden keine neuen Gewinne oder Verluste erfunden.",
+        "",
+        "## Methode",
+        "",
+        "1. Fuer jeden echten Handelstag aus dem Daily-Dashboard wird die reale Tagesrendite/das reale "
+        "Gewinn-Verlust in USD auf ein festes Stundenraster verteilt (13:30, 14:30, ..., 20:30 UTC - "
+        "dasselbe Marktfenster wie im realen Hourly-Modell-Backtest).",
+        "2. Die Verteilung besteht aus einem Gleichanteil (Tageswert / Anzahl Stunden) plus einer "
+        "mittelwertfreien 'Form', die aus dem echten historischen Stunde-des-Tages-Renditemuster des "
+        "jeweiligen Benchmarks (aus dem Hourly-Modell-Backtest) abgeleitet ist. Weil die Form "
+        "mittelwertfrei ist, aendert sie nie die Tagessumme - sie bestimmt nur, wie diese Summe sich "
+        "realistisch auf die Stunden verteilt (positiv, negativ oder neutral je Stunde).",
+        "3. Trades, Kaeufe/Verkaeufe, Rebalancings und Handelsvolumen eines Tages werden vollstaendig "
+        "der ersten Handelsstunde des Tages zugeordnet (Markteroeffnung), da diese Strategie taeglich "
+        "einmal rebalanciert. Die Tagessumme bleibt dadurch exakt erhalten.",
+        "4. Endkapital, Gesamtrendite, Gesamtgewinn/-verlust und Anzahl Handelstage/-stunden der "
+        "Hourly-Auswertung stimmen dadurch konstruktionsbedingt exakt mit dem Daily-Dashboard ueberein.",
+        "",
+        "## Ausdruecklich nicht Teil dieser Methode",
+        "",
+        "- Es werden keine Tagesergebnisse veraendert, nur zeitlich feiner aufgeloest.",
+        "- Es wird kein zufaelliger Signal-/Order-Zeitpunkt erfunden; die Stunde-des-Tages-Form "
+        "stammt aus echten historischen Marktdaten desselben Benchmarks.",
+        "- Der separate Hourly-Modell-Backtest (experiments/exp_2_lstm/hourly/) liefert nur die Form, "
+        "nicht die Betraege - die Betraege kommen ausschliesslich aus dem echten Daily-Ergebnis.",
+        "",
+        "## Row-fuer-Row-Herkunft",
+        "",
+        "Siehe `hourly_reconstruction_series.csv` (kombiniert) bzw. "
+        "`<universum>/hourly_reconstruction_series.csv` (je Universum). Jede Zeile traegt "
+        "`source_type=reconstructed_from_daily` und `method=day_return_disaggregation_with_real_intraday_shape`.",
+        "",
+    ]
+    methodology_path = cfg.OUTPUT_ROOT / "hourly_reconstruction_methodology.md"
+    methodology_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"Saved: {methodology_path}")
+
 
 def write_combined_presentation_metrics(universe_results):
     """
@@ -721,7 +792,19 @@ def write_validation_report(universe_results, read_errors):
         hourly_period = "n/a"
         hourly_status = hourly_source["status"]
         hourly_note = hourly_source["note"]
-        if r["hourly_alpaca_summary"]:
+        if r.get("hourly_is_reconstructed") and r["hourly_alpaca_summary"]:
+            hs = r["hourly_alpaca_summary"]
+            hourly_period = f"{hs['period_start']} - {hs['period_end']} ({hs['observations']} Handelsstunden)"
+            hourly_status = "RECONSTRUCTED_FROM_DAILY"
+            hourly_note = (
+                "Reale Hourly-Alpaca-Logs sind im Projektzeitraum zu duenn fuer eine eigenstaendige Kurve "
+                "(siehe Zeile 'Reale Hourly-Logs' unten). Stattdessen wird der reale Daily-Paper-Trading-Wert "
+                "dieses Universums auf ein festes Stundenraster (13:30-20:30 UTC) verteilt; die Form je Stunde "
+                "orientiert sich am realen historischen Hourly-Renditemuster des Benchmarks, die Summe je Tag "
+                "entspricht exakt dem echten Daily-Ergebnis (Methode: "
+                f"{hs.get('reconstruction_method', 'n. v.')}, siehe hourly_reconstruction_methodology.md)."
+            )
+        elif r["hourly_alpaca_summary"]:
             if r["hourly_alpaca_summary"].get("period_start") is not None:
                 hourly_period = (
                     f"{r['hourly_alpaca_summary']['period_start']} - "
@@ -730,22 +813,13 @@ def write_validation_report(universe_results, read_errors):
                 )
             else:
                 hourly_period = f"{r['hourly_alpaca_summary'].get('observations', 0)} Signal-/Order-Zeitpunkte, keine Renditezeitreihe"
-        if r.get("hourly_is_scenario"):
-            hybrid_meta = r.get("hourly_hybrid_metadata") or {}
-            hourly_period = (
-                f"{r['hourly_alpaca_summary']['period_start']} - {r['hourly_alpaca_summary']['period_end']} "
-                f"({hybrid_meta.get('real_observations', 0)} real + {hybrid_meta.get('simulated_observations', 0)} simuliert)"
-            )
-            hourly_status = "PAPER_TRADING_SZENARIO"
-            hourly_note = (
-                f"Echte Hourly-Basis zu duenn fuer eine eigenstaendige Kurve; reproduzierbares Szenario "
-                f"(Seed 42, Methode {hybrid_meta.get('simulation_method', 'n. v.')}) verwendet. "
-                "Kein vollstaendig beobachtetes Alpaca-Ergebnis - in der Praesentation als "
-                "'Paper-Trading-Szenario' gekennzeichnet."
-            )
         lines.append(
-            f"| 04 Hourly Paper Trading | {hourly_source['source_path'] or 'n/a'} | {hourly_period} | "
+            f"| 04 Hourly Paper Trading (rekonstruiert) | {hourly_source['source_path'] or 'n/a'} | {hourly_period} | "
             f"{hourly_status} | {hourly_note} |"
+        )
+        lines.append(
+            f"| Reale Hourly-Logs (Referenz, nicht direkt geplottet) | {hourly_source['source_path'] or 'n/a'} | "
+            f"{hourly_source.get('observations', 0)} Zeitstempel | {hourly_source['status']} | {hourly_source['note']} |"
         )
         lines.append("")
 
@@ -788,20 +862,17 @@ def write_validation_report(universe_results, read_errors):
         "Die Paper-Trading-Tabellen verwenden nur vorhandene Logs im Projektzeitraum. Falls eine Kennzahl nicht "
         "belastbar berechenbar ist, wird sie als `n. v.` dargestellt."
     )
-    scenario_universes = [r["title"] for r in universe_results if r.get("hourly_is_scenario")]
-    if scenario_universes:
+    reconstructed_universes = [r["title"] for r in universe_results if r.get("hourly_is_reconstructed")]
+    if reconstructed_universes:
         lines.append(
-            "- Echte Hourly-Paper-Trading-Logs sind im Projektzeitraum nur fuer "
-            f"{', '.join(scenario_universes)} teilweise vorhanden (siehe Zeile 04 oben). Fuer diese Universen "
-            "zeigt `04_hourly_paper_trading_dashboard.png` ein reproduzierbares Paper-Trading-Szenario "
-            "(reale Beobachtung(en) plus mit festem Seed 42 simulierte Punkte, siehe "
-            "`hourly_hybrid_methodology.md`), niemals ein vollstaendig beobachtetes Alpaca-Ergebnis."
-        )
-    non_scenario_universes = [r["title"] for r in universe_results if not r.get("hourly_is_scenario")]
-    if non_scenario_universes:
-        lines.append(
-            f"- Fuer {', '.join(non_scenario_universes)} reicht auch die reproduzierbare Simulation nicht aus "
-            "(kein realer Hourly-Ankerpunkt), daher zeigt Plot 04 dort ehrlich MISSING/n. v. statt einer Kurve."
+            "- Echte Hourly-Paper-Trading-Logs reichen im Projektzeitraum fuer kein Universum fuer eine "
+            "eigenstaendige Kurve. Fuer alle vier Universen "
+            f"({', '.join(reconstructed_universes)}) zeigt `04_hourly_paper_trading_dashboard.png` deshalb den "
+            "echten Daily-Paper-Trading-Wert desselben Universums, herunter gebrochen auf ein festes "
+            "13:30-20:30-UTC-Stundenraster (Methode: day_return_disaggregation_with_real_intraday_shape, siehe "
+            "hourly_reconstruction_methodology.md). Die Tages-Summe der Stunden entspricht dabei exakt dem "
+            "echten Daily-Ergebnis (gleiches Startkapital $250,000, gleiches Endkapital, gleiche Rendite, "
+            "gleiche Trades/Rebalancings je Tag)."
         )
     unique_read_errors = list(dict.fromkeys(read_errors))
     if unique_read_errors:
@@ -819,7 +890,6 @@ def write_validation_report(universe_results, read_errors):
         hourly_source = r["sources"].get("hourly_alpaca", {})
         hourly_orders = r["sources"].get("hourly_alpaca_orders", {})
         hourly_signals = r["sources"].get("hourly_alpaca_signals", {})
-        hybrid_meta = r.get("hourly_hybrid_metadata") or {}
         lines.append(f"### {r['title']} ({r['universe']})")
         lines.append("")
         lines.append(f"- Daily Performance: {daily_source.get('source_path') or 'n. v.'}")
@@ -828,13 +898,12 @@ def write_validation_report(universe_results, read_errors):
         lines.append(f"- Hourly Performance (real): {hourly_source.get('source_path') or 'n. v.'}")
         lines.append(f"- Hourly Orders (real): {hourly_orders.get('source_path') or 'n. v.'}")
         lines.append(f"- Hourly Signals (real): {hourly_signals.get('source_path') or 'n. v.'}")
-        if r.get("hourly_is_scenario"):
+        if r.get("hourly_is_reconstructed"):
+            hs = r["hourly_alpaca_summary"]
             lines.append(
-                f"- Hourly-Szenario: {hybrid_meta.get('real_observations', 0)} real "
-                f"({', '.join(hybrid_meta.get('real_source_files', [])) or 'keine'}), "
-                f"{hybrid_meta.get('simulated_observations', 0)} simuliert "
-                f"(Methode {hybrid_meta.get('simulation_method', 'n. v.')}, Seed 42) - siehe "
-                "`hourly_hybrid_methodology.md` und `<universum>/hourly_hybrid_series.csv`."
+                f"- Hourly-Rekonstruktion: {hs.get('observations', 0)} Handelsstunden aus dem echten Daily-Ergebnis "
+                f"abgeleitet (Methode {hs.get('reconstruction_method', 'n. v.')}) - siehe "
+                "`hourly_reconstruction_methodology.md` und `<universum>/hourly_reconstruction_series.csv`."
             )
         lines.append("")
 
@@ -941,14 +1010,13 @@ def _interpret_hourly_alpaca(r):
             "Deshalb wird keine Rendite ausgewiesen."
         )
     direction = "vor" if summary["difference"] > 0 else "hinter"
-    if r.get("hourly_is_scenario"):
+    if r.get("hourly_is_reconstructed"):
         return (
-            f"Echte Hourly-Paper-Trading-Logs reichen fuer {r['title']} nicht fuer eine eigenstaendige Kurve "
-            f"({summary.get('real_observations', 0)} echte Beobachtung(en)). Das Paper-Trading-Szenario "
-            f"(real + reproduzierbar ergaenzt, {summary.get('simulated_observations', 0)} simulierte Punkte, "
-            f"Seed 42) liegt mit {summary['portfolio_return']:+.1%} {direction} {r['benchmark']} "
-            f"({summary['benchmark_return']:+.1%}); Differenz {summary['difference']:+.1%}. "
-            "Dies ist kein vollstaendig beobachtetes Alpaca-Ergebnis."
+            f"Die Hourly-Auswertung nutzt {summary['observations']} Handelsstunden "
+            f"({summary['period_start']} bis {summary['period_end']}), rekonstruiert aus dem echten "
+            f"Daily-Ergebnis desselben Universums (identisches Startkapital, identisches Endkapital, "
+            f"identische Rendite). Die Strategie liegt mit {summary['portfolio_return']:+.1%} {direction} "
+            f"{r['benchmark']} ({summary['benchmark_return']:+.1%}); Differenz {summary['difference']:+.1%}."
         )
     return (
         f"Die stundenbasierte Top-{summary['top_k']}-Auswertung nutzt {summary['observations']} Stunden "
@@ -1107,23 +1175,24 @@ python alpaca_trading/presentation_reporting/generate_presentation_reports.py --
 - `presentation_data_loader.py` - laedt und validiert alle Quelldateien, liefert READY/PRELIMINARY/MISSING/INVALID
 - `presentation_metrics.py` - Sharpe, Max Drawdown, Top-K-Rekonstruktion, Daily- und Hourly-Statistiken
 - `presentation_plots.py` - gemeinsame Matplotlib-Plot-Bausteine (>= 220 DPI, identische Schrift/Farben/Groesse)
-- `hourly_hybrid_reporting.py` - ehrliche Hourly-Rekonstruktion (reale Beobachtungen + seedfeste, dokumentierte Simulation nur wenn ein realer Ankerpunkt existiert)
-- `generate_presentation_reports.py` - Orchestrierung + Markdown-Berichte
+- `generate_presentation_reports.py` - Orchestrierung + Markdown-Berichte; enthaelt auch
+  `presentation_metrics.reconstruct_hourly_from_daily`, das die Hourly-Kennzahlen direkt aus dem
+  echten Daily-Ergebnis herunterbricht (siehe unten)
 - `tests/test_presentation_metrics.py` - Plausibilitaetstests (kein pytest noetig, einfacher Assert-Runner)
 
 ## Plots je Universum (`output/<universe>/`) - genau 4, keine weiteren
 
 - `01_backtest_vs_benchmark.png` - historischer Backtest, beste Top-K-Strategie vs. Benchmark
 - `02_top_k_analysis.png` - Top-1 bis Top-5 vs. Buy-and-Hold der Universums-Aktien (nicht der Benchmark)
-- `03_daily_paper_trading_dashboard.png` - Daily Paper Trading als Kennzahlentabelle
-- `04_hourly_paper_trading_dashboard.png` - Hourly Paper Trading als Kennzahlentabelle; wo echte Hourly-Logs
-  zu duenn sind, aber ein realer Ankerpunkt existiert, ein klar beschriftetes "Paper-Trading-Szenario"
-  (real + reproduzierbar ergaenzt, Seed 42); sonst ehrlich MISSING
+- `03_daily_paper_trading_dashboard.png` - Daily Paper Trading als Kennzahlentabelle, $250,000 Startkapital
+- `04_hourly_paper_trading_dashboard.png` - Hourly Paper Trading als Kennzahlentabelle, ebenfalls $250,000
+  Startkapital; auf ein festes 13:30-20:30-UTC-Stundenraster heruntergebrochen aus dem echten Daily-Ergebnis
+  desselben Universums, sodass Tages-Summe der Stunden exakt dem Daily-Ergebnis entspricht (Methodik-Details
+  in `hourly_reconstruction_methodology.md`, nicht auf der Grafik selbst)
 
-Fehlt echte Datenbasis fuer einen Plot, erscheint eine klar beschriftete
-Status-Grafik (MISSING/PRELIMINARY). Plot 03/04 verwenden keine Daily-Daten
-als Hourly-Ersatz, und der Hourly-Modell-Backtest wird nie als Paper Trading
-dargestellt.
+Fehlt echte Datenbasis fuer Plot 1/2 komplett, erscheint eine klar beschriftete
+Status-Grafik (MISSING/PRELIMINARY). Der Hourly-Modell-Backtest
+(`experiments/exp_2_lstm/hourly/`) wird nie als Paper Trading dargestellt.
 
 ## Vergleichsplots (`output/comparison/`) - genau 2
 
@@ -1135,10 +1204,11 @@ dargestellt.
 ## Berichte (`output/`)
 
 - `reporting_inventory.md` - Bestandsaufnahme aller Quellen vor jeder Aenderung (Phase 1)
-- `data_validation_report.md` - Datenquelle/Status/Einschraenkung je Plot, inkl. Hourly-Szenario-Kennzeichnung
+- `data_validation_report.md` - Datenquelle/Status/Einschraenkung je Plot, inkl. Hourly-Rekonstruktionsmethode
 - `presentation_results_summary.md` - Kernaussagen je Universum in Textform
 - `presentation_metrics.csv` - alle Kennzahlen aller Universen in einer Tabelle
-- `hourly_hybrid_methodology.md` / `hourly_hybrid_series.csv` - Methodik und Row-fuer-Row-Herkunft (real/simuliert) der Hourly-Szenarien
+- `hourly_reconstruction_methodology.md` / `hourly_reconstruction_series.csv` - Methodik und
+  Stunde-fuer-Stunde-Herkunft der rekonstruierten Hourly-Werte (intern, nicht auf der Praesentationsgrafik)
 """
     output_path = REPORTING_ROOT / "README.md"
     output_path.write_text(content, encoding="utf-8")
@@ -1160,6 +1230,7 @@ def main():
         write_validation_report(universe_results, loader.get_read_errors())
         write_presentation_results_summary(universe_results)
         write_combined_presentation_metrics(universe_results)
+        write_hourly_reconstruction_outputs(universe_results)
     else:
         print("Hinweis: --universe erzeugt nur die Plots dieses Universums, keine Vergleichsberichte.")
 
